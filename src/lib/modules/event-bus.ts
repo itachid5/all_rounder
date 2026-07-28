@@ -1,4 +1,4 @@
-import { logger } from '../logger';
+import { logger } from "@/shared/utils/logger";
 
 type EventHandler = (payload: any, context?: any) => Promise<void> | void;
 

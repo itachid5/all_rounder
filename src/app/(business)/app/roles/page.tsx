@@ -1,16 +1,16 @@
 "use client";
 
-import { PageHeader } from "@/components/shared/page-header";
-import { DataTable, Column } from "@/components/shared/data-table";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { PageHeader } from "@/shared/components/page-header";
+import { DataTable, Column } from "@/shared/components/data-table";
+import { Button } from "@/shared/components/button";
+import { Badge } from "@/shared/components/badge";
 import { Plus, MoreHorizontal, Edit, Trash2, Users } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from "@/shared/components/dropdown-menu";
 
 type Role = {
   id: string;

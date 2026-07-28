@@ -1,8 +1,8 @@
 "use client";
 
-import { PageHeader } from "@/components/shared/page-header";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { PageHeader } from "@/shared/components/page-header";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/components/card";
+import { Badge } from "@/shared/components/badge";
 import { ShieldAlert, ShieldCheck } from "lucide-react";
 
 const permissionCategories = [

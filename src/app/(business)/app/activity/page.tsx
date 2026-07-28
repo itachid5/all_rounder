@@ -1,11 +1,11 @@
 "use client";
 
-import { PageHeader } from "@/components/shared/page-header";
-import { Card, CardContent } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+import { PageHeader } from "@/shared/components/page-header";
+import { Card, CardContent } from "@/shared/components/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/shared/components/table";
+import { Badge } from "@/shared/components/badge";
+import { Input } from "@/shared/components/input";
+import { Button } from "@/shared/components/button";
 import { Search, Filter, Download } from "lucide-react";
 
 const activities = [

@@ -1,10 +1,14 @@
 import { ChevronRight } from "lucide-react";
 import Link from "next/link";
-import { ManageCustomersClient } from "@/components/business/customers/manage-customers-client";
+import { getTemplateSlug } from "@/app/actions/navigation";
+import { ManageCustomersClient as EggShopCustomersClient } from "@/templates/egg-shop/components/customers/manage-customers-client";
+import { ManageCustomersClient as EggTastaCustomersClient } from "@/templates/egg-tasta/components/customers/manage-customers-client";
 import { listCustomersAction } from "@/app/actions/customers";
 
 export default async function ManageCustomersPage() {
-  const result = await listCustomersAction({ page: 1, limit: 10 });
+  const result = await listCustomersAction({ status: 'ACTIVE', page: 1, limit: 10 });
+  const templateSlug = await getTemplateSlug();
+  const Client = templateSlug === 'egg-tasta' ? EggTastaCustomersClient : EggShopCustomersClient;
 
   return (
     <div className="space-y-6">
@@ -22,7 +26,7 @@ export default async function ManageCustomersPage() {
         <p className="text-slate-500 dark:text-slate-400 mt-1">View and manage your customer directory.</p>
       </div>
 
-      <ManageCustomersClient initialData={result.data || []} initialTotal={result.total || 0} />
+      <Client initialData={result.data || []} initialTotal={result.total || 0} />
     </div>
   );
 }

@@ -12,7 +12,12 @@ export function NewSaleClient({ customers, products }: { customers: any[], produ
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
-  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+  const [date, setDate] = useState("");
+
+  React.useEffect(() => {
+    setDate(new Date().toISOString().split('T')[0]);
+  }, []);
+  
   const [customerId, setCustomerId] = useState("");
   
   // Find selected customer due
@@ -20,7 +25,7 @@ export function NewSaleClient({ customers, products }: { customers: any[], produ
   const customerDue = selectedCustomer ? selectedCustomer.previousDue : 0;
 
   const [items, setItems] = useState<any[]>([
-    { id: Date.now(), productId: "", availableStock: 0, sellingPrice: 0, quantity: 1, itemDiscount: 0, total: 0 }
+    { id: 1, productId: "", availableStock: 0, sellingPrice: 0, quantity: 1, itemDiscount: 0, total: 0 }
   ]);
 
   const [discount, setDiscount] = useState(0);
@@ -31,7 +36,7 @@ export function NewSaleClient({ customers, products }: { customers: any[], produ
   const [notes, setNotes] = useState("");
 
   const handleAddItem = () => {
-    setItems([...items, { id: Date.now(), productId: "", availableStock: 0, sellingPrice: 0, quantity: 1, itemDiscount: 0, total: 0 }]);
+    setItems([...items, { id: Date.now() + Math.random(), productId: "", availableStock: 0, sellingPrice: 0, quantity: 1, itemDiscount: 0, total: 0 }]);
   };
 
   const handleRemoveItem = (id: number) => {
@@ -111,8 +116,7 @@ export function NewSaleClient({ customers, products }: { customers: any[], produ
       if (res.success && res.sale) {
         setSuccess(`Sales Invoice ${res.sale.invoiceNo} saved successfully!`);
         if (stay) {
-          // Reset form
-          setItems([{ id: Date.now(), productId: "", availableStock: 0, sellingPrice: 0, quantity: 1, itemDiscount: 0, total: 0 }]);
+          setItems([{ id: Date.now() + Math.random(), productId: "", availableStock: 0, sellingPrice: 0, quantity: 1, itemDiscount: 0, total: 0 }]);
           setCustomerId("");
           setDiscount(0);
           setOtherCharges(0);

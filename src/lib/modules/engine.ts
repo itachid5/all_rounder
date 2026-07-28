@@ -1,6 +1,6 @@
 import { IModule, ModuleContext, ModuleStatus } from './sdk';
 import { platformEventBus } from './event-bus';
-import { logger } from '../logger';
+import { logger } from "@/shared/utils/logger";
 
 export class ModuleEngine {
   private modules: Map<string, IModule> = new Map();

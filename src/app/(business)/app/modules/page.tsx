@@ -1,11 +1,11 @@
 "use client";
 
-import { PageHeader } from "@/components/shared/page-header";
-import { Card, CardContent } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { StatusBadge } from "@/components/shared/status-badge";
+import { PageHeader } from "@/shared/components/page-header";
+import { Card, CardContent } from "@/shared/components/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/shared/components/table";
+import { Button } from "@/shared/components/button";
+import { Badge } from "@/shared/components/badge";
+import { StatusBadge } from "@/shared/components/status-badge";
 import { Settings, Plus, Power, PowerOff } from "lucide-react";
 
 const modules = [

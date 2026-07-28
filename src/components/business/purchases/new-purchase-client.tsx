@@ -12,7 +12,12 @@ export function NewPurchaseClient({ suppliers, products }: { suppliers: any[], p
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
-  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+  const [date, setDate] = useState("");
+
+  React.useEffect(() => {
+    setDate(new Date().toISOString().split('T')[0]);
+  }, []);
+  
   const [supplierId, setSupplierId] = useState("");
   
   // Find selected supplier due
@@ -20,7 +25,7 @@ export function NewPurchaseClient({ suppliers, products }: { suppliers: any[], p
   const supplierDue = selectedSupplier ? selectedSupplier.previousDue : 0;
 
   const [items, setItems] = useState<any[]>([
-    { id: Date.now(), productId: "", purchasePrice: 0, quantity: 1, total: 0 }
+    { id: 1, productId: "", purchasePrice: 0, quantity: 1, total: 0 }
   ]);
 
   const [discount, setDiscount] = useState(0);
@@ -32,7 +37,7 @@ export function NewPurchaseClient({ suppliers, products }: { suppliers: any[], p
   const [notes, setNotes] = useState("");
 
   const handleAddItem = () => {
-    setItems([...items, { id: Date.now(), productId: "", purchasePrice: 0, quantity: 1, total: 0 }]);
+    setItems([...items, { id: Date.now() + Math.random(), productId: "", purchasePrice: 0, quantity: 1, total: 0 }]);
   };
 
   const handleRemoveItem = (id: number) => {
@@ -99,8 +104,7 @@ export function NewPurchaseClient({ suppliers, products }: { suppliers: any[], p
       if (res.success && res.purchase) {
         setSuccess(`Purchase Invoice ${res.purchase.invoiceNo} saved successfully!`);
         if (stay) {
-          // Reset form
-          setItems([{ id: Date.now(), productId: "", purchasePrice: 0, quantity: 1, total: 0 }]);
+          setItems([{ id: Date.now() + Math.random(), productId: "", purchasePrice: 0, quantity: 1, total: 0 }]);
           setSupplierId("");
           setDiscount(0);
           setTransportCost(0);

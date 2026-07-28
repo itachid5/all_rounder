@@ -1,14 +1,14 @@
 "use client";
 
-import { PageHeader } from "@/components/shared/page-header";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Separator } from "@/components/ui/separator";
-import { Switch } from "@/components/ui/switch";
+import { PageHeader } from "@/shared/components/page-header";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/shared/components/card";
+import { Button } from "@/shared/components/button";
+import { Input } from "@/shared/components/input";
+import { Label } from "@/shared/components/label";
+import { Avatar, AvatarFallback, AvatarImage } from "@/shared/components/avatar";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/components/tabs";
+import { Separator } from "@/shared/components/separator";
+import { Switch } from "@/shared/components/switch";
 import { Camera } from "lucide-react";
 
 export default function ProfilePage() {

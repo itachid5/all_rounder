@@ -1,13 +1,13 @@
 "use client";
 
-import { PageHeader } from "@/components/shared/page-header";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
-import { Select } from "@/components/ui/select";
-import { Separator } from "@/components/ui/separator";
+import { PageHeader } from "@/shared/components/page-header";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/shared/components/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/components/tabs";
+import { Input } from "@/shared/components/input";
+import { Label } from "@/shared/components/label";
+import { Button } from "@/shared/components/button";
+import { Select } from "@/shared/components/select";
+import { Separator } from "@/shared/components/separator";
 import { Building2, Globe, Clock, Save } from "lucide-react";
 
 export default function SettingsPage() {

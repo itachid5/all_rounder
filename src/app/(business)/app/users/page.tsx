@@ -1,12 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { PageHeader } from "@/components/shared/page-header";
-import { DataTable, Column } from "@/components/shared/data-table";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { PageHeader } from "@/shared/components/page-header";
+import { DataTable, Column } from "@/shared/components/data-table";
+import { Button } from "@/shared/components/button";
+import { Input } from "@/shared/components/input";
+import { Badge } from "@/shared/components/badge";
+import { Avatar, AvatarFallback } from "@/shared/components/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,7 +14,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from "@/shared/components/dropdown-menu";
 import { MoreHorizontal, Plus, Search, Shield, UserCog, KeyRound, Ban, CheckCircle } from "lucide-react";
 
 type User = {
