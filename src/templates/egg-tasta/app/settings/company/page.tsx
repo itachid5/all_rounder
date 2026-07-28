@@ -3,7 +3,7 @@
 import React from "react";
 import { MapPin } from "lucide-react";
 import GenericSettingsPage from "@/templates/egg-tasta/components/settings/generic-settings-page";
-import { FormGrid, TextField, Textarea } from "@/templates/egg-shop/components";
+import { FormGrid, TextField, Textarea } from "@/templates/egg-tasta/components";
 
 export default function CompanyInformationPage() {
   return (

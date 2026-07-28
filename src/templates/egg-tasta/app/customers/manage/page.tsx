@@ -1,7 +1,7 @@
 import { ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { getTemplateSlug } from "@/shared/actions/navigation";
-import { ManageCustomersClient as EggShopCustomersClient } from "@/templates/egg-shop/components/customers/manage-customers-client";
+import { ManageCustomersClient as EggShopCustomersClient } from "@/templates/egg-tasta/components/customers/manage-customers-client";
 import { ManageCustomersClient as EggTastaCustomersClient } from "@/templates/egg-tasta/components/customers/manage-customers-client";
 import { listCustomersAction } from "@/templates/egg-tasta/actions/customers";
 

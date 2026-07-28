@@ -3,7 +3,7 @@
 import React from "react";
 import { Mail, Edit, ChevronRight } from "lucide-react";
 import Link from "next/link";
-import { Table, Thead, Tbody, Tr, Th, Td } from "@/templates/egg-shop/components";
+import { Table, Thead, Tbody, Tr, Th, Td } from "@/templates/egg-tasta/components";
 
 export default function EmailTemplatesPage() {
   const templates = [

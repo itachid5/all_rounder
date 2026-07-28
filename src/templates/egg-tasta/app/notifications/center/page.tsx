@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { Bell, Info, CheckCircle, AlertTriangle, XCircle, Search, Trash2, ChevronRight } from "lucide-react";
 import Link from "next/link";
-import { Button, EmptyState } from "@/templates/egg-shop/components";
+import { Button, EmptyState } from "@/templates/egg-tasta/components";
 
 export default function NotificationCenterPage() {
   const [filter, setFilter] = useState("all");

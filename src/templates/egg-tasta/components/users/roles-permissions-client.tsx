@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { Search, Plus, Edit, ShieldAlert, Check } from "lucide-react";
 import Link from "next/link";
-import { Button, Table, Thead, Tbody, Tr, Th, Td } from "@/templates/egg-shop/components";
+import { Button, Table, Thead, Tbody, Tr, Th, Td } from "@/templates/egg-tasta/components";
 
 export function RolesPermissionsClient() {
   const [activeTab, setActiveTab] = useState<"roles" | "permissions">("roles");

@@ -3,7 +3,7 @@
 import React from "react";
 import { ChevronRight, Search, Key } from "lucide-react";
 import Link from "next/link";
-import { Table, Thead, Tbody, Tr, Th, Td, EmptyState } from "@/templates/egg-shop/components";
+import { Table, Thead, Tbody, Tr, Th, Td, EmptyState } from "@/templates/egg-tasta/components";
 
 export default function LoginHistoryPage() {
   const data = [

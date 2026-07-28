@@ -1,7 +1,7 @@
 import React from "react";
 import { ChevronRight, Settings } from "lucide-react";
 import Link from "next/link";
-import { Button } from "@/templates/egg-shop/components";
+import { Button } from "@/templates/egg-tasta/components";
 
 interface GenericSettingsPageProps {
   title: string;

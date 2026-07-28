@@ -3,7 +3,7 @@
 import React, { useState, useMemo } from "react";
 import { Search, Plus, FileDown, ArrowUpDown, Edit, Eye, Printer, XCircle } from "lucide-react";
 import Link from "next/link";
-import { Button, Table, Thead, Tbody, Tr, Th, Td, EmptyState, StatusBadge } from "@/templates/egg-shop/components";
+import { Button, Table, Thead, Tbody, Tr, Th, Td, EmptyState, StatusBadge } from "@/templates/egg-tasta/components";
 
 export function ManagePaymentsClient({ initialData = [] }: { initialData?: any[] }) {
   const [search, setSearch] = useState("");

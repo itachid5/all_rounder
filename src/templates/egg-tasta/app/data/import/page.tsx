@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { UploadCloud, FileDown, CheckCircle2, AlertCircle, ChevronRight } from "lucide-react";
 import Link from "next/link";
-import { Button, FormGrid, SelectField } from "@/templates/egg-shop/components";
+import { Button, FormGrid, SelectField } from "@/templates/egg-tasta/components";
 
 export default function ImportDataPage() {
   const [file, setFile] = useState<File | null>(null);

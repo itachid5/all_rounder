@@ -5,7 +5,7 @@ import { Search, Filter, Plus, FileDown, ArrowUpDown, Archive, Edit, Eye, Rotate
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { listProductsAction, bulkUpdateStatusAction } from "@/templates/egg-tasta/actions/products";
-import { Button, Table, Thead, Tbody, Tr, Th, Td, EmptyState, StatusBadge } from "@/templates/egg-shop/components";
+import { Button, Table, Thead, Tbody, Tr, Th, Td, EmptyState, StatusBadge } from "@/templates/egg-tasta/components";
 
 export function ManageProductsClient({ initialData, initialTotal }: { initialData: any[], initialTotal: number }) {
   const router = useRouter();

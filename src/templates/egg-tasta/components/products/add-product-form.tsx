@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createProductAction } from "@/templates/egg-tasta/actions/products";
 import { Save, RotateCcw, X, PlusCircle, DollarSign, Package } from "lucide-react";
-import { FormLayout, FormGrid, TextField, NumberField, SelectField, Button } from "@/templates/egg-shop/components";
+import { FormLayout, FormGrid, TextField, NumberField, SelectField, Button } from "@/templates/egg-tasta/components";
 
 export function AddProductForm() {
   const [error, setError] = useState<string | null>(null);

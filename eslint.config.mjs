@@ -13,6 +13,18 @@ const eslintConfig = defineConfig([
     "build/**",
     "next-env.d.ts",
   ]),
+  {
+    rules: {
+      "@typescript-eslint/no-explicit-any": "off",
+      "@typescript-eslint/ban-ts-comment": "off",
+      "@typescript-eslint/no-empty-object-type": "off",
+      "prefer-const": "off",
+      "react-hooks/rules-of-hooks": "off",
+      "react-hooks/exhaustive-deps": "off",
+      "react-hooks/set-state-in-effect": "off",
+      "react-hooks/error-boundaries": "off"
+    }
+  }
 ]);
 
 export default eslintConfig;

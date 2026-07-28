@@ -3,7 +3,7 @@
 import React from "react";
 import { Calculator, FileDown, ChevronRight } from "lucide-react";
 import Link from "next/link";
-import { Button, Table, Thead, Tbody, Tr, Th, Td } from "@/templates/egg-shop/components";
+import { Button, Table, Thead, Tbody, Tr, Th, Td } from "@/templates/egg-tasta/components";
 
 export default function StockValuationPage() {
   const valuations = [

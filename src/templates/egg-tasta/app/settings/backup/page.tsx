@@ -3,7 +3,7 @@
 import React from "react";
 import { Database, Download, Upload, Clock, ChevronRight } from "lucide-react";
 import Link from "next/link";
-import { Button, Table, Thead, Tbody, Tr, Th, Td, EmptyState } from "@/templates/egg-shop/components";
+import { Button, Table, Thead, Tbody, Tr, Th, Td, EmptyState } from "@/templates/egg-tasta/components";
 
 export default function BackupRestorePage() {
   const history = [

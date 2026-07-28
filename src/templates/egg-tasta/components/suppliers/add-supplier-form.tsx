@@ -4,7 +4,7 @@ import React, { useState, useTransition } from "react";
 import { createSupplierAction } from "@/templates/egg-tasta/actions/suppliers";
 import { useRouter } from "next/navigation";
 import { AlertCircle, CheckCircle2, Building2 } from "lucide-react";
-import { FormSection, FormGrid, TextField, SelectField, Textarea, Button } from "@/templates/egg-shop/components";
+import { FormSection, FormGrid, TextField, SelectField, Textarea, Button } from "@/templates/egg-tasta/components";
 
 export function AddSupplierForm() {
   const router = useRouter();

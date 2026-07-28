@@ -3,7 +3,7 @@
 import React from "react";
 import { Database, Activity, HardDrive, ShieldCheck, Zap, ChevronRight } from "lucide-react";
 import Link from "next/link";
-import { Button } from "@/templates/egg-shop/components";
+import { Button } from "@/templates/egg-tasta/components";
 
 export default function DatabaseMaintenancePage() {
   return (

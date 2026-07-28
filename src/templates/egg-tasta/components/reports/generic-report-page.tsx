@@ -1,6 +1,6 @@
 import { ChevronRight, BarChart3, Search, Printer, FileDown } from "lucide-react";
 import Link from "next/link";
-import { EmptyState, Table, Thead, Tbody, Tr, Th, Td } from "@/templates/egg-shop/components";
+import { EmptyState, Table, Thead, Tbody, Tr, Th, Td } from "@/templates/egg-tasta/components";
 
 export default function GenericReportPage({ title = "Report", description = "View and analyze report data.", type = "General" }) {
   return (

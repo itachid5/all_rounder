@@ -4,7 +4,7 @@ import React, { useState, useEffect, useTransition } from "react";
 import { Search, Plus, ArrowUpDown, AlertTriangle } from "lucide-react";
 import Link from "next/link";
 import { listProductsAction } from "@/templates/egg-tasta/actions/products";
-import { Button, Table, Thead, Tbody, Tr, Th, Td, EmptyState, StatusBadge } from "@/templates/egg-shop/components";
+import { Button, Table, Thead, Tbody, Tr, Th, Td, EmptyState, StatusBadge } from "@/templates/egg-tasta/components";
 
 export function ProductListClient({ initialData, initialTotal }: { initialData: any[], initialTotal: number }) {
   const [isPending, startTransition] = useTransition();

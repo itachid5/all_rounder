@@ -3,7 +3,7 @@
 import React from "react";
 import { Store } from "lucide-react";
 import GenericSettingsPage from "@/templates/egg-tasta/components/settings/generic-settings-page";
-import { FormGrid, TextField } from "@/templates/egg-shop/components";
+import { FormGrid, TextField } from "@/templates/egg-tasta/components";
 
 export default function BusinessProfilePage() {
   return (

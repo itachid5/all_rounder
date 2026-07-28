@@ -1,7 +1,7 @@
 import React from "react";
 import { ChevronRight, Search, Plus, Edit, Archive } from "lucide-react";
 import Link from "next/link";
-import { Table, Thead, Tbody, Tr, Th, Td, EmptyState, Button, StatusBadge } from "@/templates/egg-shop/components";
+import { Table, Thead, Tbody, Tr, Th, Td, EmptyState, Button, StatusBadge } from "@/templates/egg-tasta/components";
 import { getAccountsAction } from "@/templates/egg-tasta/actions/accounts";
 
 export default async function BankAccountsPage() {

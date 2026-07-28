@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { UploadCloud, AlertTriangle, CheckCircle2, ChevronRight } from "lucide-react";
 import Link from "next/link";
-import { Button, FormGrid } from "@/templates/egg-shop/components";
+import { Button, FormGrid } from "@/templates/egg-tasta/components";
 
 export default function RestorePage() {
   const [file, setFile] = useState<File | null>(null);

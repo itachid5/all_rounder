@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { UserPlus } from "lucide-react";
 import Link from "next/link";
-import { FormSection, FormGrid, TextField, SelectField, Button } from "@/templates/egg-shop/components";
+import { FormSection, FormGrid, TextField, SelectField, Button } from "@/templates/egg-tasta/components";
 
 export function AddEmployeeClient() {
   const [loading, setLoading] = useState(false);

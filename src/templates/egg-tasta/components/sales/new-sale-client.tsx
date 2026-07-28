@@ -3,7 +3,7 @@
 import React, { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { AlertCircle, CheckCircle2, ShoppingCart, Plus, Trash2, Printer } from "lucide-react";
-import { FormSection, FormGrid, Button, Table, Thead, Tbody, Tr, Th, Td } from "@/templates/egg-shop/components";
+import { FormSection, FormGrid, Button, Table, Thead, Tbody, Tr, Th, Td } from "@/templates/egg-tasta/components";
 import { createSaleAction } from "@/templates/egg-tasta/actions/sales";
 
 export function NewSaleClient({ customers, products }: { customers: any[], products: any[] }) {

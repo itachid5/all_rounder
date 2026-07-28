@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { FormSection, FormGrid, TextField, SelectField, Textarea, Button } from "@/templates/egg-shop/components";
+import { FormSection, FormGrid, TextField, SelectField, Textarea, Button } from "@/templates/egg-tasta/components";
 import { CreditCard } from "lucide-react";
 import { createSupplierPaymentAction } from "@/templates/egg-tasta/actions/supplierPayments";
 

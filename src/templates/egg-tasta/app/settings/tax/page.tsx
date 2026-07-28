@@ -3,7 +3,7 @@
 import React from "react";
 import { Percent } from "lucide-react";
 import GenericSettingsPage from "@/templates/egg-tasta/components/settings/generic-settings-page";
-import { FormGrid, TextField, SelectField } from "@/templates/egg-shop/components";
+import { FormGrid, TextField, SelectField } from "@/templates/egg-tasta/components";
 
 export default function TaxSettingsPage() {
   return (

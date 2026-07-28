@@ -3,7 +3,7 @@ import {
   Package, Users, DollarSign, Archive, AlertTriangle, CreditCard, 
   Clock, Zap, ShoppingCart, TrendingUp, TrendingDown, Bell, Wallet, Building, Smartphone
 } from "lucide-react";
-import { PageHeader, ContentContainer, StatCard, SummaryCard } from "@/templates/egg-shop/components";
+import { PageHeader, ContentContainer, StatCard, SummaryCard } from "@/templates/egg-tasta/components";
 import Link from "next/link";
 import { getDashboardSummaryAction } from "@/templates/egg-tasta/actions/dashboard";
 

@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { FileDown, Printer, Filter, Download, ChevronRight } from "lucide-react";
 import Link from "next/link";
-import { Button, Table, Thead, Tbody, Tr, Th, Td } from "@/templates/egg-shop/components";
+import { Button, Table, Thead, Tbody, Tr, Th, Td } from "@/templates/egg-tasta/components";
 
 export default function AdjustmentReportPage() {
   const [reportType, setReportType] = useState("daily");

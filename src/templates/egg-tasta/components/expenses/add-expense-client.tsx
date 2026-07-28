@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { Receipt, XCircle, Printer } from "lucide-react";
 import Link from "next/link";
-import { FormSection, FormGrid, TextField, SelectField, Textarea, Button } from "@/templates/egg-shop/components";
+import { FormSection, FormGrid, TextField, SelectField, Textarea, Button } from "@/templates/egg-tasta/components";
 import { createExpenseAction } from "@/templates/egg-tasta/actions/expenses";
 import { useRouter } from "next/navigation";
 

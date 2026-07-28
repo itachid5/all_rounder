@@ -3,7 +3,7 @@
 import React from "react";
 import { DollarSign } from "lucide-react";
 import GenericSettingsPage from "@/templates/egg-tasta/components/settings/generic-settings-page";
-import { FormGrid, SelectField } from "@/templates/egg-shop/components";
+import { FormGrid, SelectField } from "@/templates/egg-tasta/components";
 
 export default function FinancialSettingsPage() {
   return (

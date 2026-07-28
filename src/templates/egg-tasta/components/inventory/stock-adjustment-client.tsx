@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { Save, PlusCircle, RotateCcw, X, Info } from "lucide-react";
-import { Button, FormGrid, TextField, SelectField } from "@/templates/egg-shop/components";
+import { Button, FormGrid, TextField, SelectField } from "@/templates/egg-tasta/components";
 import { createStockAdjustmentAction } from "@/templates/egg-tasta/actions/inventory";
 import { useRouter } from "next/navigation";
 

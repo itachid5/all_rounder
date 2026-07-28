@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { MessageSquare, Edit, ChevronRight } from "lucide-react";
 import Link from "next/link";
-import { Button, Table, Thead, Tbody, Tr, Th, Td } from "@/templates/egg-shop/components";
+import { Button, Table, Thead, Tbody, Tr, Th, Td } from "@/templates/egg-tasta/components";
 
 export default function SmsTemplatesPage() {
   const templates = [

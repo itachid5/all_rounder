@@ -3,7 +3,7 @@
 import React from "react";
 import { ChevronRight, Search, Plus, ArrowRightLeft } from "lucide-react";
 import Link from "next/link";
-import { Table, Thead, Tbody, Tr, Th, Td, EmptyState, Button } from "@/templates/egg-shop/components";
+import { Table, Thead, Tbody, Tr, Th, Td, EmptyState, Button } from "@/templates/egg-tasta/components";
 
 export default function FundTransferPage() {
   const data = [

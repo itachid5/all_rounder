@@ -3,7 +3,7 @@
 import React from "react";
 import { Zap, ChevronRight } from "lucide-react";
 import Link from "next/link";
-import { Button, FormGrid, SelectField } from "@/templates/egg-shop/components";
+import { Button, FormGrid, SelectField } from "@/templates/egg-tasta/components";
 
 export default function AutomationRulesPage() {
   return (

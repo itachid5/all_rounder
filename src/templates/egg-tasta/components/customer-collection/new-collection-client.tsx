@@ -3,7 +3,7 @@
 import React, { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { CreditCard, AlertCircle, CheckCircle2 } from "lucide-react";
-import { FormSection, FormGrid, Button } from "@/templates/egg-shop/components";
+import { FormSection, FormGrid, Button } from "@/templates/egg-tasta/components";
 import { createCustomerCollectionAction } from "@/templates/egg-tasta/actions/customerCollections";
 
 export function NewCollectionClient({ customers }: { customers: any[] }) {

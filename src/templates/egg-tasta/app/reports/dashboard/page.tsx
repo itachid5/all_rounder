@@ -1,6 +1,6 @@
 import { ChevronRight, BarChart3, TrendingUp, DollarSign, Users, Package, ShoppingCart } from "lucide-react";
 import Link from "next/link";
-import { EmptyState } from "@/templates/egg-shop/components";
+import { EmptyState } from "@/templates/egg-tasta/components";
 
 export default function DashboardReportPage() {
   const kpis = [

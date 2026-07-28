@@ -1,6 +1,6 @@
 import { ChevronRight, Search, Printer, FileDown, Plus } from "lucide-react";
 import Link from "next/link";
-import { Table, Thead, Tbody, Tr, Th, Td, EmptyState, Button } from "@/templates/egg-shop/components";
+import { Table, Thead, Tbody, Tr, Th, Td, EmptyState, Button } from "@/templates/egg-tasta/components";
 import { getTransactionsAction } from "@/templates/egg-tasta/actions/accounts";
 
 export default async function CashBookPage() {

@@ -3,7 +3,7 @@
 import React from "react";
 import { Smartphone, Edit, ChevronRight } from "lucide-react";
 import Link from "next/link";
-import { Table, Thead, Tbody, Tr, Th, Td } from "@/templates/egg-shop/components";
+import { Table, Thead, Tbody, Tr, Th, Td } from "@/templates/egg-tasta/components";
 
 export default function WhatsappTemplatesPage() {
   const templates = [

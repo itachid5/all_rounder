@@ -3,7 +3,7 @@
 import React from "react";
 import { FileText } from "lucide-react";
 import GenericSettingsPage from "@/templates/egg-tasta/components/settings/generic-settings-page";
-import { FormGrid, TextField, SelectField, Textarea } from "@/templates/egg-shop/components";
+import { FormGrid, TextField, SelectField, Textarea } from "@/templates/egg-tasta/components";
 
 export default function InvoiceSettingsPage() {
   return (

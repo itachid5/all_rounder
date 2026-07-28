@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { Search, Plus, Printer, XCircle } from "lucide-react";
 import Link from "next/link";
-import { Button, Table, Thead, Tbody, Tr, Th, Td, EmptyState, StatusBadge } from "@/templates/egg-shop/components";
+import { Button, Table, Thead, Tbody, Tr, Th, Td, EmptyState, StatusBadge } from "@/templates/egg-tasta/components";
 
 export function ManageExpensesClient({ initialData }: { initialData: any[] }) {
   const [search, setSearch] = useState("");
