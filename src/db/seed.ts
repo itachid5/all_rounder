@@ -1,4 +1,4 @@
-import { db } from './index';
+import { db } from '@/shared/db/database';
 import * as platformSchema from "@/platform/db/schema";
 import * as businessSchema from "@/templates/egg-tasta/db/schema";
 const schema = { ...platformSchema, ...businessSchema };
