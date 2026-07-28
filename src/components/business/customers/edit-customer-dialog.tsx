@@ -3,7 +3,7 @@
 import React, { useState, useTransition, useEffect } from "react";
 import { updateCustomerAction } from "@/app/actions/customers";
 import { AlertCircle, CheckCircle2 } from "lucide-react";
-import { TextField, SelectField, Textarea, Button } from "@/templates/egg-tasta/components";
+import { TextField, SelectField, Textarea, Button } from "@/components/business";
 
 export function EditCustomerDialog({ customer, onClose, onSuccess }: { customer: any, onClose: () => void, onSuccess: () => void }) {
   const [isPending, startTransition] = useTransition();

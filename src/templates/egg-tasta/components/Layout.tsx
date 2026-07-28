@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import "../styles/theme.css";
 import { ThemeToggle } from "@/components/platform/theme-toggle";
 import { Menu } from "lucide-react";
-import { EggShopSidebar, NavItem } from "./Sidebar";
+import { BusinessSidebar, NavItem } from "./sidebar";
 
 export function ContentContainer({ children }: { children: React.ReactNode }) {
   return <div className="space-y-6">{children}</div>;
@@ -63,7 +63,7 @@ export function BusinessLayout({
 
   return (
     <div className="egg-shop-theme flex min-h-screen bg-slate-50 dark:bg-slate-950">
-      <EggShopSidebar 
+      <BusinessSidebar 
         navigation={navigation} 
         open={sidebarOpen} 
         setOpen={setSidebarOpen} 

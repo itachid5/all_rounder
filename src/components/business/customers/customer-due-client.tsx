@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { Search, FileDown, ArrowUpDown, Clock } from "lucide-react";
-import { Button, Table, Thead, Tbody, Tr, Th, Td, EmptyState } from "@/templates/egg-tasta/components";
+import { Button, Table, Thead, Tbody, Tr, Th, Td, EmptyState } from "@/components/business";
 
 export function CustomerDueClient() {
   const [search, setSearch] = useState("");

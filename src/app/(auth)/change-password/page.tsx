@@ -2,7 +2,7 @@
 
 import { ShieldAlert } from 'lucide-react';
 import { useState } from 'react';
-import { changePassword } from '@/app/actions/auth';
+import { changePassword } from '@/shared/actions/auth';
 import { useRouter } from 'next/navigation';
 
 export default function ChangePasswordPage() {

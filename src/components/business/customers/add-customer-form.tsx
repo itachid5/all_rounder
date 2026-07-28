@@ -4,7 +4,7 @@ import React, { useState, useTransition } from "react";
 import { createCustomerAction } from "@/app/actions/customers";
 import { useRouter } from "next/navigation";
 import { AlertCircle, CheckCircle2, UserCircle } from "lucide-react";
-import { FormSection, FormGrid, TextField, SelectField, Textarea, Button } from "@/templates/egg-tasta/components";
+import { FormSection, FormGrid, TextField, SelectField, Textarea, Button } from "@/components/business";
 
 export function AddCustomerForm() {
   const router = useRouter();

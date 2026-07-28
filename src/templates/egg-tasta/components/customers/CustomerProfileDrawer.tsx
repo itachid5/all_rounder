@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { X, User, Phone, Mail, MapPin, Calendar, CreditCard, Activity, Clock, Download, ArrowRight, Printer, AlertCircle } from "lucide-react";
-import { getCustomerProfileAction } from "@/app/actions/customers";
+import { getCustomerProfileAction } from "@/templates/egg-tasta/actions/customers";
 import { StatusBadge, Button } from "@/templates/egg-tasta/components";
 
 export function CustomerProfileDrawer({ 

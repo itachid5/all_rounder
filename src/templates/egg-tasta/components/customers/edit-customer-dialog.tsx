@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useTransition, useEffect } from "react";
-import { updateCustomerAction } from "@/app/actions/customers";
+import { updateCustomerAction } from "@/templates/egg-tasta/actions/customers";
 import { AlertCircle, CheckCircle2 } from "lucide-react";
 import { TextField, SelectField, Textarea, Button } from "@/templates/egg-tasta/components";
 

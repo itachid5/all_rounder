@@ -1,7 +1,7 @@
 import { BusinessLayout as EggShopLayout } from "@/templates/egg-shop/components";
 import { BusinessLayout as EggTastaLayout } from "@/templates/egg-tasta/components";
-import { getBusinessNavigation, getCurrentUser } from "@/app/actions/navigation";
-import { getTemplateSlug } from "@/app/actions/navigation";
+import { getBusinessNavigation, getCurrentUser } from "@/shared/actions/navigation";
+import { getTemplateSlug } from "@/shared/actions/navigation";
 
 export default async function BusinessLayout({
   children,

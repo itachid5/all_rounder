@@ -4,9 +4,10 @@ import React, { useState, useEffect, useTransition } from "react";
 import { Search, Plus, FileDown, ArrowUpDown, Archive, Trash2, Edit, Eye, RotateCcw, Scale } from "lucide-react";
 import Link from "next/link";
 import { listCustomersAction, updateCustomerStatusAction } from "@/app/actions/customers";
-import { Button, Table, Thead, Tbody, Tr, Th, Td, EmptyState, StatusBadge } from "@/templates/egg-tasta/components";
+import { Button, Table, Thead, Tbody, Tr, Th, Td, EmptyState, StatusBadge } from "@/components/business";
 import { EditCustomerDialog } from "./edit-customer-dialog";
 import { BalanceAdjustmentDialog } from "./balance-adjustment-dialog";
+import { CustomerProfileDrawer } from "./CustomerProfileDrawer";
 
 export interface CustomerPermissions {
   view: boolean;
@@ -32,6 +33,7 @@ export function ManageCustomersClient({ initialData, initialTotal, permissions =
   const limit = 10;
   
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [viewingCustomerCode, setViewingCustomerCode] = useState<string | null>(null);
   const [editingCustomer, setEditingCustomer] = useState<any>(null);
   const [adjustingBalanceCustomer, setAdjustingBalanceCustomer] = useState<any>(null);
   const [customerToArchive, setCustomerToArchive] = useState<string | null>(null);
@@ -136,6 +138,21 @@ export function ManageCustomersClient({ initialData, initialTotal, permissions =
         <div className="bg-emerald-50 border border-emerald-200 text-emerald-700 p-4 rounded-md flex items-center gap-3">
           <p>{successMessage}</p>
         </div>
+      )}
+      
+      {viewingCustomerCode && (
+        <CustomerProfileDrawer
+          customerCode={viewingCustomerCode}
+          onClose={() => setViewingCustomerCode(null)}
+          onEdit={(customer) => {
+            setViewingCustomerCode(null);
+            setEditingCustomer(customer);
+          }}
+          onAdjustBalance={(customer) => {
+            setViewingCustomerCode(null);
+            setAdjustingBalanceCustomer(customer);
+          }}
+        />
       )}
       
       {editingCustomer && (
@@ -313,7 +330,7 @@ export function ManageCustomersClient({ initialData, initialTotal, permissions =
                   <Td className="text-right">
                     <div className="flex items-center justify-end gap-1">
                       {permissions.view && (
-                        <button className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded dark:hover:text-slate-300 dark:hover:bg-slate-800 transition-colors" title="View">
+                        <button onClick={() => setViewingCustomerCode(item.customerCode)} className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded dark:hover:text-slate-300 dark:hover:bg-slate-800 transition-colors" title="View">
                           <Eye className="h-4 w-4" />
                         </button>
                       )}

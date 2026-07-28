@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { provisionBusiness } from "@/app/actions/businesses";
+import { provisionBusiness } from "@/shared/actions/businesses";
 import { Copy, Check, ArrowRight } from "lucide-react";
 
 export default function NewBusinessPage() {

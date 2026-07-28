@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { Shield } from 'lucide-react';
 import { useState } from 'react';
-import { login } from '@/app/actions/auth';
+import { login } from '@/shared/actions/auth';
 import { useRouter } from 'next/navigation';
 
 export default function PlatformLogin() {

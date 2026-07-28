@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useTransition } from "react";
-import { adjustCustomerBalanceAction } from "@/app/actions/customers";
+import { adjustCustomerBalanceAction } from "@/templates/egg-tasta/actions/customers";
 import { AlertCircle } from "lucide-react";
 import { TextField, SelectField, Textarea, Button } from "@/templates/egg-tasta/components";
 

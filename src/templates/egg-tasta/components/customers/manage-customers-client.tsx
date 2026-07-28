@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useTransition } from "react";
 import { Search, Plus, FileDown, ArrowUpDown, Archive, Trash2, Edit, Eye, RotateCcw, Scale } from "lucide-react";
 import Link from "next/link";
-import { listCustomersAction, updateCustomerStatusAction } from "@/app/actions/customers";
+import { listCustomersAction, updateCustomerStatusAction } from "@/templates/egg-tasta/actions/customers";
 import { Button, Table, Thead, Tbody, Tr, Th, Td, EmptyState, StatusBadge } from "@/templates/egg-tasta/components";
 import { EditCustomerDialog } from "./edit-customer-dialog";
 import { BalanceAdjustmentDialog } from "./balance-adjustment-dialog";
