@@ -1,10 +1,10 @@
 import { InferSelectModel } from 'drizzle-orm';
-import * as schema from '../db/schema';
+import * as platformSchema from "@/platform/db/schema";
 
-export type User = InferSelectModel<typeof schema.users>;
-export type Session = InferSelectModel<typeof schema.sessions>;
-export type Tenant = InferSelectModel<typeof schema.tenants>;
-export type Role = InferSelectModel<typeof schema.roles>;
-export type Permission = InferSelectModel<typeof schema.permissions>;
-export type AuditLog = InferSelectModel<typeof schema.auditLogs>;
-export type Template = InferSelectModel<typeof schema.templates>;
+export type User = InferSelectModel<typeof platformSchema.users>;
+export type Session = InferSelectModel<typeof platformSchema.sessions>;
+export type Tenant = InferSelectModel<typeof platformSchema.tenants>;
+export type Role = InferSelectModel<typeof platformSchema.roles>;
+export type Permission = InferSelectModel<typeof platformSchema.permissions>;
+export type AuditLog = InferSelectModel<typeof platformSchema.auditLogs>;
+export type Template = InferSelectModel<typeof platformSchema.templates>;

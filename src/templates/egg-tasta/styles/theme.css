@@ -1,10 +1,10 @@
 /* Egg Shop specific theme overrides and variables */
 
-.egg-shop-theme {
+.egg-tasta-theme {
   /* You can put specific Egg Shop template variables here */
   /* This ensures template isolation while responding to the global .dark class */
 }
 
-.dark .egg-shop-theme {
+.dark .egg-tasta-theme {
   /* Dark mode overrides for Egg Shop */
 }

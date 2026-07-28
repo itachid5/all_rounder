@@ -1,8 +1,9 @@
 "use server";
 
-import { db } from "@/db";
-import { SupplierPaymentRepository } from "@/templates/egg-tasta/repositories/SupplierPaymentRepository";
-import { userRoles } from "@/db/schema";
+import { db } from "@/shared/db/database";
+import { SupplierPaymentRepository } from "@/templates/egg-tasta/db/repositories/SupplierPaymentRepository";
+import { userRoles } from "@/platform/db/schema";
+
 import { eq } from "drizzle-orm";
 import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
@@ -27,7 +28,8 @@ export async function createSupplierPaymentAction(data: any) {
     }
 
     if (!data.accountId) {
-      const { accounts } = await import("@/db/schema");
+      const { accounts } = await import("@/templates/egg-tasta/db/schema");
+
       const and = (await import("drizzle-orm")).and;
       const account = await db.select().from(accounts).where(and(eq(accounts.tenantId, tenantId), eq(accounts.type, "CASH"))).get();
       if (account) {

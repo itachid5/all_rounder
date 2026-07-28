@@ -1,7 +1,9 @@
 import { ChevronRight } from "lucide-react";
 import Link from "next/link";
-import { db } from "@/db";
-import { userRoles, suppliers, accounts } from "@/db/schema";
+import { db } from "@/shared/db/database";
+import { userRoles } from "@/platform/db/schema";
+import { suppliers, accounts } from "@/templates/egg-tasta/db/schema";
+
 import { eq, and } from "drizzle-orm";
 import { cookies } from "next/headers";
 import NewPaymentClient from "@/templates/egg-tasta/components/supplier-payments/new-payment-client";

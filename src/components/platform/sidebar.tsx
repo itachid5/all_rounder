@@ -15,7 +15,7 @@ interface SidebarProps {
 
 const navItems = [
   { icon: LayoutDashboard, label: "Dashboard", href: "/platform/dashboard" },
-  { icon: Building2, label: "Businesses", href: "/platform/businesses" },
+  { icon: Building2, label: "Businesses", href: "/platform/tenants" },
   { icon: Users, label: "Users", href: "/platform/users" },
   { icon: Shield, label: "Roles", href: "/platform/roles" },
   { icon: Key, label: "Permissions", href: "/platform/permissions" },

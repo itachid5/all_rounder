@@ -1,11 +1,13 @@
 "use server";
 
-import { db } from "@/db";
-import { productCategories, productUnits } from "@/db/schema";
+import { db } from "@/shared/db/database";
+import { productCategories, productUnits } from "@/templates/egg-tasta/db/schema";
+
 import { eq } from "drizzle-orm";
 import { cookies } from "next/headers";
-import { ProductRepository } from "@/templates/egg-tasta/repositories/ProductRepository";
-import { userRoles } from "@/db/schema";
+import { ProductRepository } from "@/templates/egg-tasta/db/repositories/ProductRepository";
+import { userRoles } from "@/platform/db/schema";
+
 import { randomUUID } from "crypto";
 
 async function getTenantId() {

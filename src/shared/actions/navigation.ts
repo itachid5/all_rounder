@@ -1,5 +1,6 @@
-import { db } from "@/db";
-import { users, userRoles, tenants, templateNavigations, templates } from "@/db/schema";
+import { db } from "@/shared/db/database";
+import { users, userRoles, tenants, templateNavigations, templates } from "@/platform/db/schema";
+
 import { eq, and, asc, isNull } from "drizzle-orm";
 import { cookies } from "next/headers";
 import { NavItem } from "@/templates/egg-tasta/components/sidebar";

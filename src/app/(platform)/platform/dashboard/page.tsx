@@ -1,6 +1,7 @@
 import { Building2, Users, Layers, Activity, AlertCircle, CheckCircle2 } from "lucide-react";
-import { db } from "@/db";
-import { tenants, users, auditLogs } from "@/db/schema";
+import { db } from "@/shared/db/database";
+import { tenants, users, auditLogs } from "@/platform/db/schema";
+
 import { eq, count, desc } from "drizzle-orm";
 
 export default async function DashboardPage() {

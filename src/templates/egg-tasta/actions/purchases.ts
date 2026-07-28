@@ -1,8 +1,9 @@
 "use server";
 
-import { db } from "@/db";
-import { PurchaseRepository } from "@/templates/egg-tasta/repositories/PurchaseRepository";
-import { userRoles } from "@/db/schema";
+import { db } from "@/shared/db/database";
+import { PurchaseRepository } from "@/templates/egg-tasta/db/repositories/PurchaseRepository";
+import { userRoles } from "@/platform/db/schema";
+
 import { eq } from "drizzle-orm";
 import { cookies } from "next/headers";
 
@@ -28,7 +29,8 @@ export async function createPurchaseAction(data: any) {
 
     // Default to the first account if none provided and paidAmount > 0
     if (data.paidAmount > 0 && !data.accountId) {
-      const { accounts } = await import("@/db/schema");
+      const { accounts } = await import("@/templates/egg-tasta/db/schema");
+
       const and = (await import("drizzle-orm")).and;
       const account = await db.select().from(accounts).where(and(eq(accounts.tenantId, tenantId), eq(accounts.type, "CASH"))).get();
       if (account) {

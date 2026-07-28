@@ -62,7 +62,7 @@ export function BusinessLayout({
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
-    <div className="egg-shop-theme flex min-h-screen bg-slate-50 dark:bg-slate-950">
+    <div className="egg-tasta-theme flex min-h-screen bg-slate-50 dark:bg-slate-950">
       <BusinessSidebar 
         navigation={navigation} 
         open={sidebarOpen} 

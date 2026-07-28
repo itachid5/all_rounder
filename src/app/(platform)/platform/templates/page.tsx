@@ -1,6 +1,7 @@
 import { Layers, CheckCircle } from "lucide-react";
-import { db } from "@/db";
-import { templates } from "@/db/schema";
+import { db } from "@/shared/db/database";
+import { templates } from "@/platform/db/schema";
+
 
 export default async function TemplatesPage() {
   const allTemplates = await db.select().from(templates).all();

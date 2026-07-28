@@ -1,8 +1,9 @@
 "use server";
 
-import { db } from "@/db";
-import { SupplierRepository } from "@/templates/egg-tasta/repositories/SupplierRepository";
-import { userRoles } from "@/db/schema";
+import { db } from "@/shared/db/database";
+import { SupplierRepository } from "@/templates/egg-tasta/db/repositories/SupplierRepository";
+import { userRoles } from "@/platform/db/schema";
+
 import { eq } from "drizzle-orm";
 import { cookies } from "next/headers";
 

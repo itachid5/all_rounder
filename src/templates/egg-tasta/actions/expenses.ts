@@ -2,10 +2,12 @@
 
 import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
-import { db } from "@/db";
-import { expenseCategories, userRoles } from "@/db/schema";
+import { db } from "@/shared/db/database";
+import { userRoles } from "@/platform/db/schema";
+import { expenseCategories } from "@/templates/egg-tasta/db/schema";
+
 import { eq } from "drizzle-orm";
-import { ExpenseRepository } from "@/templates/egg-tasta/repositories/ExpenseRepository";
+import { ExpenseRepository } from "@/templates/egg-tasta/db/repositories/ExpenseRepository";
 
 async function getTenantId() {
   const cookieStore = await cookies();

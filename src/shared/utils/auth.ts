@@ -1,5 +1,6 @@
-import { db } from "@/db";
-import { userRoles } from "@/db/schema";
+import { db } from "@/shared/db/database";
+import { userRoles } from "@/platform/db/schema";
+
 import { eq } from "drizzle-orm";
 import { cookies } from "next/headers";
 

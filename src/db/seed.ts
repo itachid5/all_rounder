@@ -1,5 +1,7 @@
 import { db } from './index';
-import * as schema from './schema';
+import * as platformSchema from "@/platform/db/schema";
+import * as businessSchema from "@/templates/egg-tasta/db/schema";
+const schema = { ...platformSchema, ...businessSchema };
 import crypto from 'crypto';
 import { eq } from 'drizzle-orm';
 import * as argon2 from 'argon2';

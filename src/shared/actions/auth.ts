@@ -1,8 +1,9 @@
 'use server';
 
 import { cookies } from 'next/headers';
-import { db } from '@/db';
-import { users } from '@/db/schema';
+import { db } from '@/shared/db/database';
+import { users } from "@/platform/db/schema";
+
 import { eq } from 'drizzle-orm';
 import { redirect } from 'next/navigation';
 import * as argon2 from 'argon2';
