@@ -1,5 +1,6 @@
 import { getBusinessNavigation, getCurrentUser } from "@/shared/actions/navigation";
 import { getTemplateSlug } from "@/shared/actions/navigation";
+import { loadTemplateContract } from "@/platform/template-engine/loader";
 
 export default async function BusinessLayout({
   children,
@@ -9,9 +10,8 @@ export default async function BusinessLayout({
   const navigation = await getBusinessNavigation();
   const user = await getCurrentUser();
   const templateSlug = await getTemplateSlug();
-
-  // Dynamically load the correct layout based on the tenant's template
-  const Layout = (await import(`@/templates/${templateSlug}/components`)).BusinessLayout;
+  const contract = await loadTemplateContract(templateSlug);
+  const Layout = contract.Layout;
 
   return (
     <Layout navigation={navigation} user={user}>
