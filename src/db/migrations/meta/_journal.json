@@ -1,0 +1,20 @@
+{
+  "version": "7",
+  "dialect": "sqlite",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "6",
+      "when": 1785209892046,
+      "tag": "0000_gifted_matthew_murdock",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1785216742980,
+      "tag": "0001_stormy_maverick",
+      "breakpoints": true
+    }
+  ]
+}
