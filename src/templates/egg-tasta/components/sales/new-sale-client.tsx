@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useTransition } from "react";
+import React, { useState, useTransition, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { AlertCircle, CheckCircle2, ShoppingCart, Plus, Trash2, Printer } from "lucide-react";
 import { FormSection, FormGrid, Button, Table, Thead, Tbody, Tr, Th, Td } from "@/templates/egg-tasta/components";
@@ -25,6 +25,7 @@ export function NewSaleClient({ customers, products }: { customers: any[], produ
   const customerDue = selectedCustomer ? selectedCustomer.previousDue : 0;
 
   // New POS style state
+  const productSelectRef = useRef<HTMLSelectElement>(null);
   const [pendingProductId, setPendingProductId] = useState("");
   const [pendingVariantId, setPendingVariantId] = useState("");
 
@@ -40,30 +41,23 @@ export function NewSaleClient({ customers, products }: { customers: any[], produ
   const [referenceNo, setReferenceNo] = useState("");
   const [notes, setNotes] = useState("");
 
-  const handleAddPendingProduct = () => {
+  const addProductToTable = (prodId: string, varId: string = "") => {
     setError(null);
-    if (!pendingProductId) {
-      setError("Please select a product to add.");
-      return;
-    }
-    if (pendingHasVariants && !pendingVariantId) {
-      setError("Please select a variant.");
-      return;
-    }
-    
-    const prod = products.find(p => p.id === pendingProductId);
+    const prod = products.find(p => p.id === prodId);
     if (!prod) return;
 
+    const hasVariants = prod.hasVariants && prod.variants?.length > 0;
+    
     let availableStock = prod.variantInventoryMode === 'VARIANT_LEVEL' ? 0 : prod.currentStock;
-    if (pendingHasVariants && prod.variantInventoryMode === 'VARIANT_LEVEL') {
-      const variant = prod.variants?.find((v: any) => v.id === pendingVariantId);
+    if (hasVariants && prod.variantInventoryMode === 'VARIANT_LEVEL') {
+      const variant = prod.variants?.find((v: any) => v.id === varId);
       availableStock = variant ? variant.currentStock : 0;
     }
 
-    setItems([...items, {
+    setItems(prev => [...prev, {
       id: Date.now() + Math.random(),
-      productId: pendingProductId,
-      variantId: pendingVariantId || "",
+      productId: prodId,
+      variantId: varId,
       availableStock,
       sellingPrice: prod.sellingPrice || 0,
       quantity: 1,
@@ -73,6 +67,10 @@ export function NewSaleClient({ customers, products }: { customers: any[], produ
 
     setPendingProductId("");
     setPendingVariantId("");
+
+    setTimeout(() => {
+      productSelectRef.current?.focus();
+    }, 10);
   };
 
   const handleRemoveItem = (id: number) => {
@@ -212,10 +210,20 @@ export function NewSaleClient({ customers, products }: { customers: any[], produ
               <div className="flex flex-col">
                 <label className="text-xs font-medium text-slate-500 mb-1">Product Select *</label>
                 <select 
+                  ref={productSelectRef}
                   value={pendingProductId} 
                   onChange={e => {
-                    setPendingProductId(e.target.value);
+                    const selectedId = e.target.value;
+                    setPendingProductId(selectedId);
                     setPendingVariantId("");
+                    
+                    if (selectedId) {
+                      const prod = products.find(p => p.id === selectedId);
+                      const hasVars = prod?.hasVariants && prod?.variants?.length > 0;
+                      if (!hasVars) {
+                        addProductToTable(selectedId, "");
+                      }
+                    }
                   }} 
                   className="px-3 py-2 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-md text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 w-full md:w-1/2"
                 >
@@ -231,7 +239,13 @@ export function NewSaleClient({ customers, products }: { customers: any[], produ
                   <label className="text-xs font-medium text-slate-500 mb-1">Variant Select *</label>
                   <select 
                     value={pendingVariantId} 
-                    onChange={e => setPendingVariantId(e.target.value)} 
+                    onChange={e => {
+                      const selectedVarId = e.target.value;
+                      setPendingVariantId(selectedVarId);
+                      if (selectedVarId) {
+                        addProductToTable(pendingProductId, selectedVarId);
+                      }
+                    }} 
                     className="px-3 py-2 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-full md:w-1/2"
                   >
                     <option value="">Select Variant...</option>
@@ -241,11 +255,6 @@ export function NewSaleClient({ customers, products }: { customers: any[], produ
                   </select>
                 </div>
               )}
-
-              <Button variant="outline" size="sm" type="button" onClick={handleAddPendingProduct}>
-                <Plus className="h-4 w-4 mr-2" />
-                Add Product
-              </Button>
             </div>
           </div>
         </FormSection>
