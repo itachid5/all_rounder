@@ -30,7 +30,7 @@ export function NewPurchaseClient({ suppliers, products }: { suppliers: any[], p
   const [pendingVariantId, setPendingVariantId] = useState("");
 
   const pendingProduct = products.find(p => p.id === pendingProductId);
-  const pendingHasVariants = pendingProduct?.hasVariants && pendingProduct?.variants?.length > 0;
+  const pendingHasVariants = pendingProduct?.hasVariants && pendingProduct?.variants?.length > 0 && pendingProduct?.variantInventoryMode === 'VARIANT_LEVEL';
 
   const [items, setItems] = useState<any[]>([]);
 
@@ -46,6 +46,24 @@ export function NewPurchaseClient({ suppliers, products }: { suppliers: any[], p
     setError(null);
     const prod = products.find(p => p.id === prodId);
     if (!prod) return;
+
+    const isVariantLevel = prod.variantInventoryMode === 'VARIANT_LEVEL';
+    const exists = items.some((item: any) => {
+      if (isVariantLevel) {
+        return item.productId === prodId && item.variantId === varId;
+      }
+      return item.productId === prodId;
+    });
+
+    if (exists) {
+      setError("This product has already been added.");
+      setPendingProductId("");
+      setPendingVariantId("");
+      setTimeout(() => {
+        productSelectRef.current?.focus();
+      }, 10);
+      return;
+    }
 
     setItems(prev => [...prev, {
       id: Date.now() + Math.random(),
@@ -200,7 +218,7 @@ export function NewPurchaseClient({ suppliers, products }: { suppliers: any[], p
                     
                     if (selectedId) {
                       const prod = products.find(p => p.id === selectedId);
-                      const hasVars = prod?.hasVariants && prod?.variants?.length > 0;
+                      const hasVars = prod?.hasVariants && prod?.variants?.length > 0 && prod?.variantInventoryMode === 'VARIANT_LEVEL';
                       if (!hasVars) {
                         addProductToTable(selectedId, "");
                       }
