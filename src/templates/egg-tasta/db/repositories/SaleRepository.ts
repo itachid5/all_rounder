@@ -1,6 +1,6 @@
 import { db } from "@/shared/db/database";
 import { sequences, auditLogs } from "@/platform/db/schema";
-import { sales, saleItems, products, customers, customerLedgers, inventoryMovements } from "@/templates/egg-tasta/db/schema";
+import { sales, saleItems, products, productVariants, customers, customerLedgers, inventoryMovements } from "@/templates/egg-tasta/db/schema";
 
 import { eq, and, like, or, desc, asc, sql } from "drizzle-orm";
 import { randomUUID } from "crypto";
@@ -67,6 +67,7 @@ export class SaleRepository {
           tenantId,
           saleId,
           productId: item.productId,
+          variantId: item.variantId || null,
           sellingPrice: item.sellingPrice,
           quantity: item.quantity,
           itemDiscount: item.itemDiscount || 0,
@@ -76,13 +77,14 @@ export class SaleRepository {
         // Decrease Product Stock
         const product = tx.select().from(products).where(and(eq(products.tenantId, tenantId), eq(products.id, item.productId))).get();
         if (product) {
+          let previousStock = product.currentStock;
+          let newStock = previousStock - item.quantity;
           if (product.currentStock < item.quantity) {
             throw new Error(`Insufficient stock for product ${product.name}`);
           }
-          const newStock = product.currentStock - item.quantity;
           tx.update(products)
             .set({ 
-              currentStock: newStock,
+              currentStock: product.currentStock - item.quantity,
             })
             .where(eq(products.id, product.id))
             .run();
@@ -92,13 +94,14 @@ export class SaleRepository {
             id: randomUUID(),
             tenantId,
             productId: item.productId,
+            variantId: item.variantId || null,
             date,
             type: 'OUT',
             referenceType: 'SALE',
             referenceId: saleId,
             referenceNo: invoiceNo,
             quantity: item.quantity,
-            previousStock: product.currentStock,
+            previousStock: previousStock,
             newStock: newStock,
             unitCost: item.sellingPrice,
             totalValue: item.total

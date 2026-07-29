@@ -2,7 +2,7 @@ import { db } from "@/shared/db/database";
 import * as platformSchema from "@/platform/db/schema";
 import * as businessSchema from "@/templates/egg-tasta/db/schema";
 const schema = { ...platformSchema, ...businessSchema };
-const { sequences, purchases, purchaseItems, products, suppliers, supplierLedgers } = schema;
+const { sequences, purchases, purchaseItems, products, productVariants, suppliers, supplierLedgers } = schema;
 import { eq, and, like, or, desc, asc, sql } from "drizzle-orm";
 import { randomUUID } from "crypto";
 
@@ -69,6 +69,7 @@ export class PurchaseRepository {
           tenantId,
           purchaseId,
           productId: item.productId,
+          variantId: item.variantId || null,
           purchasePrice: item.purchasePrice,
           quantity: item.quantity,
           total: item.total
@@ -76,14 +77,13 @@ export class PurchaseRepository {
 
         const product = tx.select().from(products).where(and(eq(products.tenantId, tenantId), eq(products.id, item.productId))).get();
         if (product) {
-          const previousStock = product.currentStock;
-          const newStock = previousStock + item.quantity;
-          
-          // Increase Product Stock
+          let previousStock = product.currentStock;
+          let newStock = previousStock + item.quantity;
+          // Variant stock tracking removed per business rules
+          // Increase Product Stock (Total)
           tx.update(products)
             .set({ 
-              currentStock: newStock,
-              purchasePrice: item.purchasePrice // optionally update last purchase price
+              currentStock: product.currentStock + item.quantity
             })
             .where(eq(products.id, product.id))
             .run();
@@ -93,6 +93,7 @@ export class PurchaseRepository {
             id: randomUUID(),
             tenantId,
             productId: item.productId,
+            variantId: item.variantId || null,
             date,
             type: 'IN',
             referenceType: 'PURCHASE',

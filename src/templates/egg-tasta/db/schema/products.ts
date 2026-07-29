@@ -19,6 +19,7 @@ export const products = sqliteTable('products', {
   minimumStockAlert: integer('minimum_stock_alert').notNull().default(0),
   status: text('status').notNull().default('ACTIVE'), // ACTIVE, INACTIVE
   notes: text('notes'),
+  hasVariants: integer('has_variants', { mode: 'boolean' }).notNull().default(false),
   isDeleted: integer('is_deleted', { mode: 'boolean' }).notNull().default(false),
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull().defaultNow(),
   updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().defaultNow(),

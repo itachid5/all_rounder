@@ -194,9 +194,51 @@ export function AddProductForm() {
               name="barcode" 
               placeholder="Scan or enter barcode"
             />
+          </FormGrid>
 
+          {/* Variants Section */}
+          <div className="mt-8 border-t border-slate-200 dark:border-slate-800 pt-6">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="text-lg font-medium text-slate-900 dark:text-white">Product Variants (Optional)</h3>
+                <p className="text-sm text-slate-500 dark:text-slate-400">Add variations like White Egg, Red Egg, etc.</p>
+              </div>
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={() => {
+                  const form = formRef.current;
+                  if (!form) return;
+                  const container = document.getElementById('variants-container');
+                  if (!container) return;
+                  
+                  const idx = container.children.length;
+                  const row = document.createElement('div');
+                  row.className = 'grid grid-cols-12 gap-3 mb-3 items-end';
+                  row.innerHTML = `
+                    <div class="col-span-10">
+                      <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Variant Name</label>
+                      <input type="text" name="variant_name[]" required placeholder="e.g. White Egg" class="w-full h-10 px-3 rounded-md border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:border-slate-700 dark:bg-slate-950 dark:text-white" />
+                    </div>
+                    <div class="col-span-2 flex justify-end">
+                      <button type="button" onclick="this.parentElement.parentElement.remove()" class="h-10 px-3 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-md transition-colors dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-900/30">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>
+                      </button>
+                    </div>
+                  `;
+                  container.appendChild(row);
+                }}
+              >
+                <PlusCircle className="h-4 w-4 mr-2" />
+                Add Variant
+              </Button>
+            </div>
+            <div id="variants-container"></div>
+          </div>
+
+          <FormGrid>
             {/* Notes */}
-            <div className="space-y-2 md:col-span-2">
+            <div className="space-y-2 md:col-span-2 mt-4">
               <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Notes (Optional)</label>
               <textarea 
                 name="notes" 

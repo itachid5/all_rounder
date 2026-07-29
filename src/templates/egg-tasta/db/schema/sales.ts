@@ -29,6 +29,7 @@ export const saleItems = sqliteTable('sale_items', {
   tenantId: text('tenant_id').notNull().references(() => tenants.id),
   saleId: text('sale_id').notNull().references(() => sales.id, { onDelete: 'cascade' }),
   productId: text('product_id').notNull().references(() => products.id),
+  variantId: text('variant_id'),
   sellingPrice: real('selling_price').notNull().default(0),
   quantity: integer('quantity').notNull().default(0),
   itemDiscount: real('item_discount').notNull().default(0),

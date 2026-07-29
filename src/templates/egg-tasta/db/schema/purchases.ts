@@ -30,6 +30,7 @@ export const purchaseItems = sqliteTable('purchase_items', {
   tenantId: text('tenant_id').notNull().references(() => tenants.id),
   purchaseId: text('purchase_id').notNull().references(() => purchases.id, { onDelete: 'cascade' }),
   productId: text('product_id').notNull().references(() => products.id),
+  variantId: text('variant_id'),
   purchasePrice: real('purchase_price').notNull().default(0),
   quantity: integer('quantity').notNull().default(0),
   total: real('total').notNull().default(0),

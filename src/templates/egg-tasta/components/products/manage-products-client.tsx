@@ -182,7 +182,7 @@ export function ManageProductsClient({ initialData, initialTotal }: { initialDat
               <div className="flex items-center gap-1">Product {sortBy === 'name' && <ArrowUpDown className="h-3 w-3" />}</div>
             </Th>
             <Th className="cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 text-right" onClick={() => toggleSort('purchasePrice')}>
-              <div className="flex items-center justify-end gap-1">Purchase {sortBy === 'purchasePrice' && <ArrowUpDown className="h-3 w-3" />}</div>
+              <div className="flex items-center justify-end gap-1">Opening Purchase {sortBy === 'purchasePrice' && <ArrowUpDown className="h-3 w-3" />}</div>
             </Th>
             <Th className="cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 text-right" onClick={() => toggleSort('sellingPrice')}>
               <div className="flex items-center justify-end gap-1">Selling {sortBy === 'sellingPrice' && <ArrowUpDown className="h-3 w-3" />}</div>
@@ -212,7 +212,9 @@ export function ManageProductsClient({ initialData, initialTotal }: { initialDat
             </Tr>
           ) : (
             data.map((item) => {
-              const isLowStock = item.openingStock <= item.minimumStockAlert;
+              const stockToDisplay = item.currentStock ?? item.openingStock;
+              const isLowStock = stockToDisplay <= item.minimumStockAlert;
+              const hasVariants = item.hasVariants && item.variants?.length > 0;
               return (
                 <Tr key={item.id} className={selectedIds.has(item.productCode) ? 'bg-blue-50/50 dark:bg-blue-900/10' : ''}>
                   <Td>
@@ -224,12 +226,19 @@ export function ManageProductsClient({ initialData, initialTotal }: { initialDat
                     />
                   </Td>
                   <Td className="font-mono text-xs font-medium text-slate-500">{item.productCode}</Td>
-                  <Td className="font-medium">{item.name}</Td>
-                  <Td className="text-right text-slate-600 dark:text-slate-400">${item.purchasePrice?.toFixed(2)}</Td>
-                  <Td className="text-right font-medium">${item.sellingPrice?.toFixed(2)}</Td>
+                  <Td className="font-medium">
+                    {item.name}
+                    {hasVariants && (
+                      <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400">
+                        {item.variants.length} Variants
+                      </span>
+                    )}
+                  </Td>
+                  <Td className="text-right text-slate-600 dark:text-slate-400">৳{item.purchasePrice?.toFixed(2)}</Td>
+                  <Td className="text-right font-medium">৳{item.sellingPrice?.toFixed(2)}</Td>
                   <Td className="text-right">
                     <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${isLowStock ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400' : 'bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-300'}`}>
-                      {item.openingStock}
+                      {stockToDisplay}
                     </span>
                   </Td>
                   <Td>

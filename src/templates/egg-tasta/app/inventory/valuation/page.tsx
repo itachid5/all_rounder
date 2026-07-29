@@ -4,16 +4,14 @@ import React from "react";
 import { Calculator, FileDown, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { Button, Table, Thead, Tbody, Tr, Th, Td } from "@/templates/egg-tasta/components";
+import { getStockValuationAction } from "@/templates/egg-tasta/actions/inventory";
 
-export default function StockValuationPage() {
-  const valuations = [
-    { id: 1, product: "Premium Brown Eggs", quantity: 500, price: 12.50 },
-    { id: 2, product: "White Eggs (Large)", quantity: 1200, price: 11.00 },
-    { id: 3, product: "Organic Eggs", quantity: 150, price: 15.75 },
-  ];
+export default async function StockValuationPage() {
+  const res = await getStockValuationAction();
+  const valuations = res.success ? (res.data || []) : [];
 
-  const totalQuantity = valuations.reduce((acc, curr) => acc + curr.quantity, 0);
-  const totalValue = valuations.reduce((acc, curr) => acc + (curr.quantity * curr.price), 0);
+  const totalQuantity = valuations.reduce((acc: number, curr: any) => acc + curr.quantity, 0);
+  const totalValue = valuations.reduce((acc: number, curr: any) => acc + curr.totalValue, 0);
 
   return (
     <div className="space-y-6 max-w-6xl">
@@ -71,12 +69,12 @@ export default function StockValuationPage() {
             </Tr>
           </Thead>
           <Tbody>
-            {valuations.map((item) => (
+            {valuations.map((item: any) => (
               <Tr key={item.id}>
                 <Td className="font-medium text-slate-900 dark:text-white">{item.product}</Td>
                 <Td className="text-right font-medium">{item.quantity}</Td>
                 <Td className="text-right text-slate-500">৳ {item.price.toFixed(2)}</Td>
-                <Td className="text-right font-bold text-slate-900 dark:text-white">৳ {(item.quantity * item.price).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</Td>
+                <Td className="text-right font-bold text-slate-900 dark:text-white">৳ {item.totalValue.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</Td>
               </Tr>
             ))}
           </Tbody>

@@ -37,8 +37,20 @@ export async function createProductAction(formData: FormData) {
       minimumStockAlert: parseInt(formData.get("minimumStockAlert") as string, 10) || 0,
       status: formData.get("status") as string || 'ACTIVE',
       notes: formData.get("notes") as string,
-      // Barcode support if added to schema in future, for now append to notes or discard
+      variants: [] as any[]
     };
+
+    const variantNames = formData.getAll("variant_name[]");
+    
+    if (variantNames && variantNames.length > 0) {
+      for (let i = 0; i < variantNames.length; i++) {
+        if (variantNames[i]) {
+          data.variants.push({
+            name: variantNames[i] as string
+          });
+        }
+      }
+    }
 
     if (!data.name) return { error: "Product Name is required" };
     if (data.purchasePrice < 0) return { error: "Purchase Price cannot be negative" };

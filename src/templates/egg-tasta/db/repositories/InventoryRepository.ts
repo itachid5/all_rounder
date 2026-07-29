@@ -133,4 +133,44 @@ export class InventoryRepository {
       
     return { data, total: countResult?.count || 0 };
   }
+
+  static getStockValuation(tenantId: string) {
+    // Valuation based on purchase history
+    // We calculate Average Unit Cost = (Opening Stock Value + Purchase Value) / (Opening Qty + Purchase Qty)
+    // Then Inventory Value = Current Stock * Average Unit Cost
+    const allProducts = db.select().from(products).where(and(eq(products.tenantId, tenantId), eq(products.isDeleted, false))).all();
+    const allInMovements = db.select().from(inventoryMovements).where(and(eq(inventoryMovements.tenantId, tenantId), eq(inventoryMovements.type, 'IN'))).all();
+
+    const valuations = [];
+    
+    for (const p of allProducts) {
+      if (p.currentStock <= 0) continue;
+
+      let totalValueIn = (p.openingStock || 0) * (p.purchasePrice || 0); // purchasePrice here is Opening Purchase Price
+      let totalQtyIn = p.openingStock || 0;
+
+      const pMovements = allInMovements.filter(m => m.productId === p.id && m.referenceType === 'PURCHASE');
+      for (const m of pMovements) {
+        totalValueIn += (m.quantity * m.unitCost);
+        totalQtyIn += m.quantity;
+      }
+
+      let avgCost = 0;
+      if (totalQtyIn > 0) {
+        avgCost = totalValueIn / totalQtyIn;
+      } else {
+        avgCost = p.purchasePrice || 0;
+      }
+
+      valuations.push({
+        id: p.id,
+        product: p.name,
+        quantity: p.currentStock,
+        price: avgCost,
+        totalValue: p.currentStock * avgCost
+      });
+    }
+
+    return valuations;
+  }
 }

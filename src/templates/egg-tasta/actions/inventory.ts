@@ -41,3 +41,14 @@ export async function getStockAdjustmentsAction(options: any = {}) {
     return { success: false, error: error.message || "Failed to get stock adjustments" };
   }
 }
+
+export async function getStockValuationAction() {
+  try {
+    const tenantId = await getTenantId();
+    const valuations = InventoryRepository.getStockValuation(tenantId);
+    return { success: true, data: valuations };
+  } catch (error: any) {
+    console.error("Failed to get stock valuation:", error);
+    return { success: false, error: error.message || "Failed to calculate stock valuation" };
+  }
+}

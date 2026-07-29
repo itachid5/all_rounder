@@ -84,6 +84,8 @@ export function NewPurchaseClient({ suppliers, products }: { suppliers: any[], p
       return;
     }
 
+    // Variant selection removed for purchases per business rules
+
     startTransition(async () => {
       const data = {
         supplierId,
@@ -177,15 +179,15 @@ export function NewPurchaseClient({ suppliers, products }: { suppliers: any[], p
             <Table>
               <Thead>
                 <Tr>
-                  <Th className="w-[40%]">Product</Th>
-                  <Th className="w-[20%] text-right">Purchase Price</Th>
+                  <Th className="w-[30%]">Product</Th>
+                  <Th className="w-[15%] text-right">Purchase Price</Th>
                   <Th className="w-[15%] text-right">Quantity</Th>
-                  <Th className="w-[20%] text-right">Total</Th>
+                  <Th className="w-[15%] text-right">Total</Th>
                   <Th className="w-[5%]"></Th>
                 </Tr>
               </Thead>
               <Tbody>
-                {items.map((item, index) => (
+                {items.map((item) => (
                   <Tr key={item.id}>
                     <Td>
                       <select 

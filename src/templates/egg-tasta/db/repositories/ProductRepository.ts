@@ -1,8 +1,8 @@
 import { db } from "@/shared/db/database";
 import { sequences } from "@/platform/db/schema";
-import { products, productCategories, productUnits } from "@/templates/egg-tasta/db/schema";
+import { products, productVariants, productCategories, productUnits } from "@/templates/egg-tasta/db/schema";
 
-import { eq, and, like, or, desc, asc, sql } from "drizzle-orm";
+import { eq, and, like, or, desc, asc, sql, inArray } from "drizzle-orm";
 import { randomUUID } from "crypto";
 
 export class ProductRepository {
@@ -87,15 +87,29 @@ export class ProductRepository {
         openingStock: data.openingStock || 0,
         minimumStockAlert: data.minimumStockAlert || 0,
         status: data.status || 'ACTIVE',
-        notes: data.notes
+        notes: data.notes,
+        hasVariants: data.variants && data.variants.length > 0
       }).returning().get();
+
+      if (data.variants && data.variants.length > 0) {
+        for (let i = 0; i < data.variants.length; i++) {
+          const v = data.variants[i];
+          tx.insert(productVariants).values({
+            id: randomUUID(),
+            tenantId,
+            productId: id,
+            name: v.name,
+            sortOrder: i
+          }).run();
+        }
+      }
 
       return product;
     });
   }
 
   static getProductByCode(tenantId: string, productCode: string) {
-    return db.select()
+    const product = db.select()
       .from(products)
       .where(and(
         eq(products.tenantId, tenantId), 
@@ -103,6 +117,13 @@ export class ProductRepository {
         eq(products.isDeleted, false)
       ))
       .get();
+      
+    if (product) {
+      const variants = db.select().from(productVariants).where(eq(productVariants.productId, product.id)).all();
+      (product as any).variants = variants || [];
+    }
+    
+    return product;
   }
 
   static listProducts(tenantId: string, options: { 
@@ -161,6 +182,22 @@ export class ProductRepository {
       .limit(limit)
       .offset(offset)
       .all();
+
+    // Fetch variants for these products
+    if (data.length > 0) {
+      const productIds = data.map(p => p.id);
+      const variants = db.select().from(productVariants).where(inArray(productVariants.productId, productIds)).all();
+      
+      const variantsByProductId = variants.reduce((acc: any, v: any) => {
+        if (!acc[v.productId]) acc[v.productId] = [];
+        acc[v.productId].push(v);
+        return acc;
+      }, {});
+
+      data.forEach((p: any) => {
+        p.variants = variantsByProductId[p.id] || [];
+      });
+    }
 
     const countResult = db.select({ count: sql`count(*)`.mapWith(Number) })
       .from(products)

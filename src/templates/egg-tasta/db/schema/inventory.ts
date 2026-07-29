@@ -5,6 +5,7 @@ export const inventoryMovements = sqliteTable("inventory_movements", {
   id: text("id").primaryKey(),
   tenantId: text("tenant_id").notNull(),
   productId: text("product_id").notNull(),
+  variantId: text("variant_id"),
   date: integer("date", { mode: 'timestamp' }).notNull(),
   type: text("type").notNull(), // IN, OUT
   referenceType: text("reference_type").notNull(), // PURCHASE, SALE, ADJUSTMENT, RETURN
@@ -25,6 +26,7 @@ export const stockAdjustments = sqliteTable("stock_adjustments", {
   adjustmentNo: text("adjustment_no").notNull(),
   date: integer("date", { mode: 'timestamp' }).notNull(),
   productId: text("product_id").notNull(),
+  variantId: text("variant_id"),
   type: text("type").notNull(), // ADDITION, DEDUCTION
   systemStock: real("system_stock").notNull(),
   actualStock: real("actual_stock").notNull(),

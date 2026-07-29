@@ -89,6 +89,14 @@ export function NewSaleClient({ customers, products }: { customers: any[], produ
       return;
     }
 
+    for (const item of validItems) {
+      const p = products.find(prod => prod.id === item.productId);
+      if (p?.hasVariants && p?.variants?.length > 0 && !item.variantId) {
+        setError("Please select a variant for all products that require one.");
+        return;
+      }
+    }
+
     // Check stock again
     for (const item of validItems) {
       if (item.quantity > item.availableStock) {
@@ -188,8 +196,9 @@ export function NewSaleClient({ customers, products }: { customers: any[], produ
             <Table>
               <Thead>
                 <Tr>
-                  <Th className="w-[30%]">Product</Th>
-                  <Th className="w-[15%] text-right">Stock</Th>
+                  <Th className="w-[20%]">Product</Th>
+                  <Th className="w-[15%]">Variant</Th>
+                  <Th className="w-[10%] text-right">Stock</Th>
                   <Th className="w-[15%] text-right">Selling Price</Th>
                   <Th className="w-[15%] text-right">Quantity</Th>
                   <Th className="w-[10%] text-right">Disc.</Th>
@@ -198,12 +207,21 @@ export function NewSaleClient({ customers, products }: { customers: any[], produ
                 </Tr>
               </Thead>
               <Tbody>
-                {items.map((item, index) => (
+                {items.map((item) => {
+                  const selectedProduct = products.find(p => p.id === item.productId);
+                  const hasVariants = selectedProduct?.hasVariants && selectedProduct?.variants?.length > 0;
+                  
+                  let displayStock = selectedProduct?.currentStock || 0;
+                  
+                  return (
                   <Tr key={item.id}>
                     <Td>
                       <select 
                         value={item.productId} 
-                        onChange={e => handleItemChange(item.id, 'productId', e.target.value)}
+                        onChange={e => {
+                          handleItemChange(item.id, 'productId', e.target.value);
+                          handleItemChange(item.id, 'variantId', ''); // reset variant
+                        }}
                         className="w-full px-2 py-1.5 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-md text-sm"
                       >
                         <option value="">Select Product...</option>
@@ -213,10 +231,28 @@ export function NewSaleClient({ customers, products }: { customers: any[], produ
                       </select>
                     </Td>
                     <Td>
+                      {hasVariants ? (
+                        <select 
+                          value={item.variantId || ""} 
+                          onChange={e => {
+                            handleItemChange(item.id, 'variantId', e.target.value);
+                          }}
+                          className="w-full px-2 py-1.5 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-md text-sm"
+                        >
+                          <option value="">Select Variant...</option>
+                          {selectedProduct.variants.map((v: any) => (
+                            <option key={v.id} value={v.id}>{v.name}</option>
+                          ))}
+                        </select>
+                      ) : (
+                        <span className="text-xs text-slate-400 pl-2">No variants</span>
+                      )}
+                    </Td>
+                    <Td>
                       <input 
                         type="number" 
                         disabled
-                        value={item.availableStock} 
+                        value={displayStock} 
                         className="w-full px-2 py-1.5 text-right bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-md text-sm text-slate-500" 
                       />
                     </Td>
@@ -255,7 +291,7 @@ export function NewSaleClient({ customers, products }: { customers: any[], produ
                       </button>
                     </Td>
                   </Tr>
-                ))}
+                )})}
               </Tbody>
             </Table>
           </div>
