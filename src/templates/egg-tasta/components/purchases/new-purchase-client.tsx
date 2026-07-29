@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useState, useTransition, useMemo } from "react";
+import React, { useState, useTransition, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { AlertCircle, CheckCircle2, ShoppingCart, Plus, Trash2, Printer } from "lucide-react";
-import { FormSection, FormGrid, TextField, SelectField, Textarea, Button, Table, Thead, Tbody, Tr, Th, Td } from "@/templates/egg-tasta/components";
+import { AlertCircle, CheckCircle2, ShoppingCart, Trash2 } from "lucide-react";
+import { FormSection, FormGrid, Button, Table, Thead, Tbody, Tr, Th, Td } from "@/templates/egg-tasta/components";
 import { createPurchaseAction } from "@/templates/egg-tasta/actions/purchases";
 
 export function NewPurchaseClient({ suppliers, products }: { suppliers: any[], products: any[] }) {
@@ -24,9 +24,15 @@ export function NewPurchaseClient({ suppliers, products }: { suppliers: any[], p
   const selectedSupplier = suppliers.find(s => s.id === supplierId);
   const supplierDue = selectedSupplier ? selectedSupplier.previousDue : 0;
 
-  const [items, setItems] = useState<any[]>([
-    { id: 1, productId: "", variantId: "", purchasePrice: 0, quantity: 1, total: 0 }
-  ]);
+  // New POS style state
+  const productSelectRef = useRef<HTMLSelectElement>(null);
+  const [pendingProductId, setPendingProductId] = useState("");
+  const [pendingVariantId, setPendingVariantId] = useState("");
+
+  const pendingProduct = products.find(p => p.id === pendingProductId);
+  const pendingHasVariants = pendingProduct?.hasVariants && pendingProduct?.variants?.length > 0;
+
+  const [items, setItems] = useState<any[]>([]);
 
   const [discount, setDiscount] = useState(0);
   const [transportCost, setTransportCost] = useState(0);
@@ -36,30 +42,38 @@ export function NewPurchaseClient({ suppliers, products }: { suppliers: any[], p
   const [referenceNo, setReferenceNo] = useState("");
   const [notes, setNotes] = useState("");
 
-  const handleAddItem = () => {
-    setItems([...items, { id: Date.now() + Math.random(), productId: "", variantId: "", purchasePrice: 0, quantity: 1, total: 0 }]);
+  const addProductToTable = (prodId: string, varId: string = "") => {
+    setError(null);
+    const prod = products.find(p => p.id === prodId);
+    if (!prod) return;
+
+    setItems(prev => [...prev, {
+      id: Date.now() + Math.random(),
+      productId: prodId,
+      variantId: varId,
+      purchasePrice: prod.purchasePrice || 0,
+      quantity: 1,
+      itemDiscount: 0,
+      total: prod.purchasePrice || 0
+    }]);
+
+    setPendingProductId("");
+    setPendingVariantId("");
+
+    setTimeout(() => {
+      productSelectRef.current?.focus();
+    }, 10);
   };
 
   const handleRemoveItem = (id: number) => {
-    if (items.length > 1) {
-      setItems(items.filter(item => item.id !== id));
-    }
+    setItems(items.filter(item => item.id !== id));
   };
 
   const handleItemChange = (id: number, field: string, value: any) => {
     setItems(prevItems => prevItems.map(item => {
       if (item.id === id) {
         const updated = { ...item, [field]: value };
-        
-        if (field === 'productId') {
-          const prod = products.find(p => p.id === value);
-          if (prod) {
-            updated.purchasePrice = prod.purchasePrice;
-          }
-          updated.variantId = ""; // reset variant on product change
-        }
-        
-        updated.total = (parseFloat(updated.purchasePrice || 0) * parseFloat(updated.quantity || 0));
+        updated.total = (parseFloat(updated.purchasePrice || 0) * parseFloat(updated.quantity || 0)) - parseFloat(updated.itemDiscount || 0);
         return updated;
       }
       return item;
@@ -84,17 +98,6 @@ export function NewPurchaseClient({ suppliers, products }: { suppliers: any[], p
       setError("Please add at least one valid product.");
       return;
     }
-    
-    // Check variant requirements
-    for (const item of validItems) {
-      const prod = products.find(p => p.id === item.productId);
-      if (prod && prod.variantInventoryMode === 'VARIANT_LEVEL' && prod.hasVariants && !item.variantId) {
-        setError(`Please select a variant for product: ${prod.name}`);
-        return;
-      }
-    }
-
-    // Variant selection removed for purchases per business rules
 
     startTransition(async () => {
       const data = {
@@ -116,7 +119,7 @@ export function NewPurchaseClient({ suppliers, products }: { suppliers: any[], p
       if (res.success && res.purchase) {
         setSuccess(`Purchase Invoice ${res.purchase.invoiceNo} saved successfully!`);
         if (stay) {
-          setItems([{ id: Date.now() + Math.random(), productId: "", purchasePrice: 0, quantity: 1, total: 0 }]);
+          setItems([]);
           setSupplierId("");
           setDiscount(0);
           setTransportCost(0);
@@ -124,6 +127,8 @@ export function NewPurchaseClient({ suppliers, products }: { suppliers: any[], p
           setPaidAmount(0);
           setReferenceNo("");
           setNotes("");
+          setPendingProductId("");
+          setPendingVariantId("");
           window.scrollTo(0,0);
         } else {
           setTimeout(() => {
@@ -180,6 +185,59 @@ export function NewPurchaseClient({ suppliers, products }: { suppliers: any[], p
               <input type="text" disabled value={`$${supplierDue.toFixed(2)}`} className="px-3 py-2 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-md text-sm font-medium text-slate-700 dark:text-slate-300 w-full" />
             </div>
           </FormGrid>
+
+          <div className="mt-6 pt-6 border-t border-slate-200 dark:border-slate-800">
+            <div className="space-y-4">
+              <div className="flex flex-col">
+                <label className="text-xs font-medium text-slate-500 mb-1">Product Select *</label>
+                <select 
+                  ref={productSelectRef}
+                  value={pendingProductId} 
+                  onChange={e => {
+                    const selectedId = e.target.value;
+                    setPendingProductId(selectedId);
+                    setPendingVariantId("");
+                    
+                    if (selectedId) {
+                      const prod = products.find(p => p.id === selectedId);
+                      const hasVars = prod?.hasVariants && prod?.variants?.length > 0;
+                      if (!hasVars) {
+                        addProductToTable(selectedId, "");
+                      }
+                    }
+                  }} 
+                  className="px-3 py-2 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-md text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 w-full md:w-1/2"
+                >
+                  <option value="">Select Product...</option>
+                  {products.map(p => (
+                    <option key={p.id} value={p.id}>{p.name}</option>
+                  ))}
+                </select>
+              </div>
+              
+              {pendingHasVariants && (
+                <div className="flex flex-col">
+                  <label className="text-xs font-medium text-slate-500 mb-1">Variant Select *</label>
+                  <select 
+                    value={pendingVariantId} 
+                    onChange={e => {
+                      const selectedVarId = e.target.value;
+                      setPendingVariantId(selectedVarId);
+                      if (selectedVarId) {
+                        addProductToTable(pendingProductId, selectedVarId);
+                      }
+                    }} 
+                    className="px-3 py-2 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-full md:w-1/2"
+                  >
+                    <option value="">Select Variant...</option>
+                    {pendingProduct.variants.map((v: any) => (
+                      <option key={v.id} value={v.id}>{v.name}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+            </div>
+          </div>
         </FormSection>
 
         {/* Product Table */}
@@ -189,48 +247,32 @@ export function NewPurchaseClient({ suppliers, products }: { suppliers: any[], p
             <Table>
               <Thead>
                 <Tr>
-                  <Th className="w-[25%]">Product</Th>
-                  <Th className="w-[20%]">Variant</Th>
+                  <Th className="w-[20%]">Selected Product</Th>
+                  <Th className="w-[15%]">Selected Variant</Th>
                   <Th className="w-[15%] text-right">Purchase Price</Th>
                   <Th className="w-[15%] text-right">Quantity</Th>
+                  <Th className="w-[15%] text-right">Discount</Th>
                   <Th className="w-[15%] text-right">Total</Th>
-                  <Th className="w-[10%]"></Th>
+                  <Th className="w-[5%]">Delete</Th>
                 </Tr>
               </Thead>
               <Tbody>
-                {items.map((item) => (
+                {items.length === 0 && (
+                  <Tr>
+                    <Td colSpan={7} className="text-center py-6 text-slate-500 italic">No products added. Select a product above.</Td>
+                  </Tr>
+                )}
+                {items.map((item) => {
+                  const selectedProduct = products.find(p => p.id === item.productId);
+                  const selectedVariant = selectedProduct?.variants?.find((v:any) => v.id === item.variantId);
+                  
+                  return (
                   <Tr key={item.id}>
-                    <Td>
-                      <select 
-                        value={item.productId} 
-                        onChange={e => handleItemChange(item.id, 'productId', e.target.value)}
-                        className="w-full px-2 py-1.5 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-md text-sm"
-                      >
-                        <option value="">Select Product...</option>
-                        {products.map(p => (
-                          <option key={p.id} value={p.id}>{p.name} ({p.productCode})</option>
-                        ))}
-                      </select>
+                    <Td className="font-medium text-slate-900 dark:text-white">
+                      {selectedProduct?.name || "Unknown"}
                     </Td>
-                    <Td>
-                      {(() => {
-                        const prod = products.find(p => p.id === item.productId);
-                        if (prod && prod.variantInventoryMode === 'VARIANT_LEVEL' && prod.hasVariants) {
-                          return (
-                            <select 
-                              value={item.variantId} 
-                              onChange={e => handleItemChange(item.id, 'variantId', e.target.value)}
-                              className="w-full px-2 py-1.5 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-md text-sm"
-                            >
-                              <option value="">Select Variant...</option>
-                              {prod.variants?.map((v: any) => (
-                                <option key={v.id} value={v.id}>{v.name}</option>
-                              ))}
-                            </select>
-                          );
-                        }
-                        return <span className="text-sm text-slate-400">N/A</span>;
-                      })()}
+                    <Td className="text-slate-600 dark:text-slate-400">
+                      {selectedVariant ? selectedVariant.name : ""}
                     </Td>
                     <Td>
                       <input 
@@ -249,23 +291,28 @@ export function NewPurchaseClient({ suppliers, products }: { suppliers: any[], p
                         className="w-full px-2 py-1.5 text-right bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-md text-sm" 
                       />
                     </Td>
+                    <Td>
+                      <input 
+                        type="number" 
+                        step="0.01" 
+                        value={item.itemDiscount} 
+                        onChange={e => handleItemChange(item.id, 'itemDiscount', parseFloat(e.target.value) || 0)}
+                        className="w-full px-2 py-1.5 text-right bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-md text-sm" 
+                      />
+                    </Td>
                     <Td className="text-right font-medium">
                       ${item.total.toFixed(2)}
                     </Td>
                     <Td>
-                      <button onClick={() => handleRemoveItem(item.id)} className="p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded" disabled={items.length === 1}>
+                      <button onClick={() => handleRemoveItem(item.id)} className="p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded">
                         <Trash2 className="h-4 w-4" />
                       </button>
                     </Td>
                   </Tr>
-                ))}
+                )})}
               </Tbody>
             </Table>
           </div>
-          <Button variant="outline" size="sm" className="mt-3" onClick={handleAddItem}>
-            <Plus className="h-4 w-4 mr-2" />
-            Add Row
-          </Button>
         </div>
 
         {/* Calculations and Payment */}
@@ -290,7 +337,7 @@ export function NewPurchaseClient({ suppliers, products }: { suppliers: any[], p
               <span className="font-medium">${subTotal.toFixed(2)}</span>
             </div>
             <div className="flex justify-between items-center text-sm">
-              <span className="text-slate-500">Discount (-)</span>
+              <span className="text-slate-500">Global Discount (-)</span>
               <input type="number" value={discount} onChange={e => setDiscount(parseFloat(e.target.value) || 0)} className="w-24 px-2 py-1 text-right bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-md" />
             </div>
             <div className="flex justify-between items-center text-sm">
