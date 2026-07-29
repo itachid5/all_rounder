@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import { X, User, Phone, Mail, MapPin, Calendar, CreditCard, Activity, Clock, Download, ArrowRight, Printer, AlertCircle } from "lucide-react";
 import { getCustomerProfileAction } from "@/templates/egg-tasta/actions/customers";
 import { StatusBadge, Button } from "@/templates/egg-tasta/components";
+import { formatDate } from "@/shared/utils/date";
 
 export function CustomerProfileDrawer({ 
   customerCode, 
@@ -60,7 +61,7 @@ export function CustomerProfileDrawer({
   
   const formatDate = (date: any) => {
     if (!date) return 'N/A';
-    return new Date(date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+    return formatDate(date);
   };
 
   const daysSince = (date: any) => {
@@ -231,7 +232,7 @@ export function CustomerProfileDrawer({
                 </div>
                 <Button variant="ghost" className="text-xs h-8">View All <ArrowRight className="h-3 w-3 ml-1" /></Button>
               </div>
-              <div className="overflow-x-auto flex-1">
+              <div className="flex-1">
                 <table className="w-full text-sm text-left">
                   <thead className="text-xs text-slate-500 uppercase bg-slate-50/50 dark:bg-slate-800/20">
                     <tr>

@@ -18,27 +18,72 @@ async function getTenantId() {
   return userRoleInfo.tenantId;
 }
 
-export async function createCustomerCollectionAction(data: any) {
+export async function createCustomerCollectionAction(data: any): Promise<{ success: boolean; collection?: any; error?: string }> {
   try {
     const tenantId = await getTenantId();
     
     if (!data.customerId || !data.amount) {
-      return { success: false, error: "Customer and Amount are required." };
+      return { success: false, error: "Missing required fields" };
     }
-
-    const collection = CustomerCollectionRepository.createCollection(tenantId, data);
-    return { success: true, collection };
+    
+    const result = await CustomerCollectionRepository.createCollection(tenantId, data);
+    return { success: true, collection: result };
   } catch (error: any) {
-    return { success: false, error: error.message || "Failed to create collection" };
+    return { success: false, error: error.message };
   }
 }
 
-export async function listCustomerCollectionsAction(options: any = {}) {
+export async function listCustomerCollectionsAction(options: any = {}): Promise<{ success: boolean; data?: any; total?: number; error?: string }> {
   try {
     const tenantId = await getTenantId();
-    const result = CustomerCollectionRepository.listCollections(tenantId, options);
+    const result = await CustomerCollectionRepository.listCollections(tenantId, options);
     return { success: true, data: result.data, total: result.total };
   } catch (error: any) {
-    return { success: false, error: error.message || "Failed to list collections", data: [], total: 0 };
+    return { success: false, error: error.message };
+  }
+}
+
+export async function getCustomerCollectionByIdAction(id: string) {
+  try {
+    const tenantId = await getTenantId();
+    // Since we don't have a specific getById yet, we use list and filter
+    const result = await CustomerCollectionRepository.listCollections(tenantId, { limit: 1000 });
+    const item = result.data.find((i: any) => i.collection.id === id);
+    if (!item) return { success: false, error: "Not found" };
+    
+    // Formatting it nicely to match what view expects
+    return { success: true, data: { 
+      id: item.collection.id,
+      collectionNo: item.collection.collectionNo,
+      date: item.collection.date,
+      amount: item.collection.amount,
+      status: item.collection.status,
+      customerName: item.customerName 
+    }};
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+export async function updateCustomerCollectionAction(id: string, data: any): Promise<{ success: boolean, data?: any, error?: string }> {
+  try {
+    const tenantId = await getTenantId();
+    if (!data.customerId || !data.amount) {
+      return { success: false, error: "Missing required fields" };
+    }
+    const result = await CustomerCollectionRepository.updateCollection(tenantId, id, data);
+    return { success: true, data: result };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+export async function deleteCustomerCollectionAction(id: string) {
+  try {
+    const tenantId = await getTenantId();
+    await CustomerCollectionRepository.deleteCollection(tenantId, id);
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message };
   }
 }

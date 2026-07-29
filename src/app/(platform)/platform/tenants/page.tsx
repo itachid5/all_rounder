@@ -3,6 +3,7 @@ import Link from "next/link";
 import { db } from "@/shared/db/database";
 import { tenants, users, templates } from "@/platform/db/schema";
 import { eq } from "drizzle-orm";
+import { formatDate } from "@/shared/utils/date";
 
 export default async function BusinessesPage() {
   const allTenants = await db
@@ -80,7 +81,7 @@ export default async function BusinessesPage() {
                     <td className="p-4">{t.ownerName}</td>
                     <td className="p-4">{t.templateName}</td>
                     <td className="p-4">{t.status}</td>
-                    <td className="p-4">{new Date(t.createdAt).toLocaleDateString()}</td>
+                    <td className="p-4">{formatDate(t.createdAt)}</td>
                     <td className="p-4">
                       <Link href={`/platform/tenants/${t.id}`} className="text-blue-500 hover:underline">View</Link>
                     </td>

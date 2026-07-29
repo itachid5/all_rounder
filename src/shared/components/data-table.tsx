@@ -1,3 +1,5 @@
+"use client";
+
 import * as React from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/shared/components/table";
 import { Loader } from "./loader";

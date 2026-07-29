@@ -10,71 +10,71 @@ export class SupplierRepository {
    * Generates a sequential 6-digit Supplier Code for a given tenant.
    * Utilizes database transactions to guarantee uniqueness across concurrent requests.
    */
-  static generateSupplierCode(tenantId: string, tx: any = db): string {
+  static async generateSupplierCode(tenantId: string, tx: any = db): Promise<string> {
     const entityType = 'supplier';
-    let seq = tx.select().from(sequences).where(and(eq(sequences.tenantId, tenantId), eq(sequences.entityType, entityType))).get();
+    let seq = await tx.select().from(sequences).where(and(eq(sequences.tenantId, tenantId), eq(sequences.entityType, entityType))).get();
 
     let newValue = 1;
     if (!seq) {
-      tx.insert(sequences).values({
-        id: randomUUID(),
-        tenantId,
-        entityType,
-        currentValue: 1
-      }).run();
+      await tx.insert(sequences).values({
+                id: randomUUID(),
+                tenantId,
+                entityType,
+                currentValue: 1
+              }).run();
     } else {
-      const updated = tx.update(sequences)
-        .set({ currentValue: seq.currentValue + 1 })
-        .where(eq(sequences.id, seq.id))
-        .returning()
-        .get();
+      const updated = await tx.update(sequences)
+              .set({ currentValue: seq.currentValue + 1 })
+              .where(eq(sequences.id, seq.id))
+              .returning()
+              .get();
       newValue = updated.currentValue;
     }
 
     return `SUP-${String(newValue).padStart(6, '0')}`;
   }
 
-  static createSupplier(tenantId: string, data: any) {
-    return db.transaction((tx) => {
-      const mobileValue = data.mobile ? data.mobile : null;
+  static async createSupplier(tenantId: string, data: any) {
+    return await db.transaction(async (tx) => {
+          const mobileValue = data.mobile ? data.mobile : null;
 
-      if (mobileValue) {
-        // Check for duplicate mobile
-        const existing = tx.select().from(suppliers).where(
-          and(
-            eq(suppliers.tenantId, tenantId),
-            eq(suppliers.mobile, mobileValue)
-          )
-        ).get();
+          if (mobileValue) {
+            // Check for duplicate mobile
+            const existing = await tx.select().from(suppliers).where(
+                          and(
+                            eq(suppliers.tenantId, tenantId),
+                            eq(suppliers.mobile, mobileValue)
+                          )
+                        ).get();
 
-        if (existing) {
-          throw new Error("A supplier with this mobile number already exists.");
-        }
-      }
+            if (existing) {
+              throw new Error("A supplier with this mobile number already exists.");
+            }
+          }
 
-      const supplierCode = this.generateSupplierCode(tenantId, tx);
-      const id = randomUUID();
-      
-      const supplier = tx.insert(suppliers).values({
-        id,
-        tenantId,
-        supplierCode,
-        name: data.name,
-        mobile: mobileValue,
-        alternativeMobile: data.alternativeMobile || null,
-        whatsappNumber: data.whatsappNumber || null,
-        email: data.email || null,
-        address: data.address || null,
-        previousDue: data.previousDue || 0,
-        notes: data.notes || null,
-        status: data.status || 'ACTIVE'
-      }).returning().get();
+          const supplierCode = await this.generateSupplierCode(tenantId, tx);
+          const id = randomUUID();
+          
+          const supplier = await tx.insert(suppliers).values({
+                      id,
+                      tenantId,
+                      supplierCode,
+                      name: data.name,
+                      mobile: mobileValue,
+                      alternativeMobile: data.alternativeMobile || null,
+                      whatsappNumber: data.whatsappNumber || null,
+                      email: data.email || null,
+                      address: data.address || null,
+                      previousDue: data.previousDue || 0,
+                      notes: data.notes || null,
+                      status: data.status || 'ACTIVE'
+                    }).returning().get();
 
-      return supplier;
-    });
+          return supplier;
+        });
   }
 
-  static listSuppliers(tenantId: string, options: { 
+  static async listSuppliers(tenantId: string, options: { 
     search?: string, 
     status?: string, 
     sortBy?: string, 
@@ -116,30 +116,30 @@ export class SupplierRepository {
     
     const orderBy = sortDir === 'asc' ? asc(orderByColumn) : desc(orderByColumn);
 
-    const data = db.select()
-      .from(suppliers)
-      .where(whereClause)
-      .orderBy(orderBy)
-      .limit(limit)
-      .offset(offset)
-      .all();
+    const data = await db.select()
+          .from(suppliers)
+          .where(whereClause)
+          .orderBy(orderBy)
+          .limit(limit)
+          .offset(offset)
+          .all();
 
-    const countResult = db.select({ count: sql`count(*)`.mapWith(Number) })
-      .from(suppliers)
-      .where(whereClause)
-      .get();
+    const countResult = await db.select({ count: sql`count(*)`.mapWith(Number) })
+          .from(suppliers)
+          .where(whereClause)
+          .get();
       
     return { data, total: countResult?.count || 0 };
   }
 
-  static updateSupplierStatus(tenantId: string, supplierCodes: string[], status: 'ACTIVE' | 'INACTIVE' | 'ARCHIVED') {
-    return db.transaction((tx) => {
-      for (const code of supplierCodes) {
-        tx.update(suppliers)
-          .set({ status })
-          .where(and(eq(suppliers.tenantId, tenantId), eq(suppliers.supplierCode, code)))
-          .run();
-      }
-    });
+  static async updateSupplierStatus(tenantId: string, supplierCodes: string[], status: 'ACTIVE' | 'INACTIVE' | 'ARCHIVED') {
+    return await db.transaction(async (tx) => {
+          for (const code of supplierCodes) {
+            await tx.update(suppliers)
+                            .set({ status })
+                            .where(and(eq(suppliers.tenantId, tenantId), eq(suppliers.supplierCode, code)))
+                            .run();
+          }
+        });
   }
 }

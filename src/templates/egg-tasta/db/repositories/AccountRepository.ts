@@ -6,40 +6,40 @@ import { eq, and, desc, sql, like, or } from "drizzle-orm";
 import { randomUUID } from "crypto";
 
 export class AccountRepository {
-  static createAccount(tenantId: string, data: any, userId?: string) {
-    return db.transaction((tx) => {
-      const accountId = randomUUID();
-      const account = tx.insert(accounts).values({
-        id: accountId,
-        tenantId,
-        name: data.name,
-        type: data.type,
-        accountNumber: data.accountNumber || null,
-        bankName: data.bankName || null,
-        branch: data.branch || null,
-        openingBalance: data.openingBalance || 0,
-        currentBalance: data.openingBalance || 0,
-        status: data.status || 'ACTIVE'
-      }).returning().get();
+  static async createAccount(tenantId: string, data: any, userId?: string) {
+    return await db.transaction(async (tx) => {
+          const accountId = randomUUID();
+          const account = await tx.insert(accounts).values({
+                      id: accountId,
+                      tenantId,
+                      name: data.name,
+                      type: data.type,
+                      accountNumber: data.accountNumber || null,
+                      bankName: data.bankName || null,
+                      branch: data.branch || null,
+                      openingBalance: data.openingBalance || 0,
+                      currentBalance: data.openingBalance || 0,
+                      status: data.status || 'ACTIVE'
+                    }).returning().get();
 
-      if (userId) {
-        tx.insert(auditLogs).values({
-          id: randomUUID(),
-          tenantId,
-          userId,
-          action: 'CREATE',
-          category: 'ACCOUNT',
-          resource: 'accounts',
-          resourceId: accountId,
-          details: `Created account ${data.name}`
-        }).run();
-      }
+          if (userId) {
+            await tx.insert(auditLogs).values({
+                            id: randomUUID(),
+                            tenantId,
+                            userId,
+                            action: 'CREATE',
+                            category: 'ACCOUNT',
+                            resource: 'accounts',
+                            resourceId: accountId,
+                            details: `Created account ${data.name}`
+                          }).run();
+          }
 
-      return account;
-    });
+          return account;
+        });
   }
 
-  static listAccounts(tenantId: string, options: { search?: string, type?: string, status?: string, page?: number, limit?: number } = {}) {
+  static async listAccounts(tenantId: string, options: { search?: string, type?: string, status?: string, page?: number, limit?: number } = {}) {
     const { search = "", type, status, page = 1, limit = 50 } = options;
     const offset = (page - 1) * limit;
 
@@ -50,27 +50,27 @@ export class AccountRepository {
 
     const whereClause = and(...conditions);
 
-    const data = db.select()
-      .from(accounts)
-      .where(whereClause)
-      .orderBy(desc(accounts.createdAt))
-      .limit(limit)
-      .offset(offset)
-      .all();
+    const data = await db.select()
+          .from(accounts)
+          .where(whereClause)
+          .orderBy(desc(accounts.createdAt))
+          .limit(limit)
+          .offset(offset)
+          .all();
 
-    const countResult = db.select({ count: sql`count(*)`.mapWith(Number) })
-      .from(accounts)
-      .where(whereClause)
-      .get();
+    const countResult = await db.select({ count: sql`count(*)`.mapWith(Number) })
+          .from(accounts)
+          .where(whereClause)
+          .get();
       
     return { data, total: countResult?.count || 0 };
   }
 
-  static getAccount(tenantId: string, accountId: string) {
-    return db.select().from(accounts).where(and(eq(accounts.tenantId, tenantId), eq(accounts.id, accountId))).get();
+  static async getAccount(tenantId: string, accountId: string) {
+    return await db.select().from(accounts).where(and(eq(accounts.tenantId, tenantId), eq(accounts.id, accountId))).get();
   }
 
-  static listTransactions(tenantId: string, options: { accountId?: string, search?: string, type?: string, accountType?: string, page?: number, limit?: number } = {}) {
+  static async listTransactions(tenantId: string, options: { accountId?: string, search?: string, type?: string, accountType?: string, page?: number, limit?: number } = {}) {
     const { accountId, search = "", type, accountType, page = 1, limit = 50 } = options;
     const offset = (page - 1) * limit;
 
@@ -82,24 +82,24 @@ export class AccountRepository {
 
     const whereClause = and(...conditions);
 
-    const data = db.select({
-      transaction: transactions,
-      accountName: accounts.name,
-      accountType: accounts.type
-    })
-      .from(transactions)
-      .leftJoin(accounts, eq(transactions.accountId, accounts.id))
-      .where(whereClause)
-      .orderBy(desc(transactions.date))
-      .limit(limit)
-      .offset(offset)
-      .all();
+    const data = await db.select({
+          transaction: transactions,
+          accountName: accounts.name,
+          accountType: accounts.type
+        })
+          .from(transactions)
+          .leftJoin(accounts, eq(transactions.accountId, accounts.id))
+          .where(whereClause)
+          .orderBy(desc(transactions.date))
+          .limit(limit)
+          .offset(offset)
+          .all();
 
-    const countResult = db.select({ count: sql`count(*)`.mapWith(Number) })
-      .from(transactions)
-      .leftJoin(accounts, eq(transactions.accountId, accounts.id))
-      .where(whereClause)
-      .get();
+    const countResult = await db.select({ count: sql`count(*)`.mapWith(Number) })
+          .from(transactions)
+          .leftJoin(accounts, eq(transactions.accountId, accounts.id))
+          .where(whereClause)
+          .get();
       
     return { data, total: countResult?.count || 0 };
   }

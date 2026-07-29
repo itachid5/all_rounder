@@ -11,24 +11,24 @@ export class ProductRepository {
    * Utilizes database transactions to guarantee uniqueness across concurrent requests.
    * Note: With better-sqlite3, this is completely synchronous.
    */
-  static generateProductCode(tenantId: string, tx: any = db): string {
+  static async generateProductCode(tenantId: string, tx: any = db): Promise<string> {
     const entityType = 'product';
-    let seq = tx.select().from(sequences).where(and(eq(sequences.tenantId, tenantId), eq(sequences.entityType, entityType))).get();
+    let seq = await tx.select().from(sequences).where(and(eq(sequences.tenantId, tenantId), eq(sequences.entityType, entityType))).get();
 
     let newValue = 1;
     if (!seq) {
-      tx.insert(sequences).values({
-        id: randomUUID(),
-        tenantId,
-        entityType,
-        currentValue: 1
-      }).run();
+      await tx.insert(sequences).values({
+                id: randomUUID(),
+                tenantId,
+                entityType,
+                currentValue: 1
+              }).run();
     } else {
-      const updated = tx.update(sequences)
-        .set({ currentValue: seq.currentValue + 1 })
-        .where(eq(sequences.id, seq.id))
-        .returning()
-        .get();
+      const updated = await tx.update(sequences)
+              .set({ currentValue: seq.currentValue + 1 })
+              .where(eq(sequences.id, seq.id))
+              .returning()
+              .get();
       newValue = updated.currentValue;
     }
 
@@ -38,99 +38,99 @@ export class ProductRepository {
   /**
    * Syncs the sequence to the maximum imported product code to prevent future collisions
    */
-  static syncSequence(tenantId: string, maxCode: number, tx: any = db) {
+  static async syncSequence(tenantId: string, maxCode: number, tx: any = db) {
     const entityType = 'product';
-    let seq = tx.select().from(sequences).where(and(eq(sequences.tenantId, tenantId), eq(sequences.entityType, entityType))).get();
+    let seq = await tx.select().from(sequences).where(and(eq(sequences.tenantId, tenantId), eq(sequences.entityType, entityType))).get();
 
     if (!seq) {
-      tx.insert(sequences).values({
-        id: randomUUID(),
-        tenantId,
-        entityType,
-        currentValue: maxCode
-      }).run();
+      await tx.insert(sequences).values({
+                id: randomUUID(),
+                tenantId,
+                entityType,
+                currentValue: maxCode
+              }).run();
     } else if (seq.currentValue < maxCode) {
-      tx.update(sequences)
-        .set({ currentValue: maxCode })
-        .where(eq(sequences.id, seq.id))
-        .run();
+      await tx.update(sequences)
+                .set({ currentValue: maxCode })
+                .where(eq(sequences.id, seq.id))
+                .run();
     }
   }
 
-  static createProduct(tenantId: string, data: any) {
+  static async createProduct(tenantId: string, data: any) {
     // better-sqlite3 transactions MUST be synchronous
-    return db.transaction((tx) => {
-      let productCode = data.productCode;
-      
-      if (!productCode) {
-        productCode = this.generateProductCode(tenantId, tx);
-      } else {
-        // If a code was provided (e.g., from an import), we should ensure our sequence stays ahead of it
-        const numericCode = parseInt(productCode, 10);
-        if (!isNaN(numericCode)) {
-          this.syncSequence(tenantId, numericCode, tx);
-        }
-      }
+    return await db.transaction(async (tx) => {
+          let productCode = data.productCode;
+          
+          if (!productCode) {
+            productCode = await this.generateProductCode(tenantId, tx);
+          } else {
+            // If a code was provided (e.g., from an import), we should ensure our sequence stays ahead of it
+            const numericCode = parseInt(productCode, 10);
+            if (!isNaN(numericCode)) {
+              this.syncSequence(tenantId, numericCode, tx);
+            }
+          }
 
-      const id = randomUUID();
-      const product = tx.insert(products).values({
-        id,
-        tenantId,
-        productCode,
-        name: data.name,
-        categoryId: data.categoryId,
-        unitId: data.unitId,
-        purchasePrice: data.purchasePrice || 0,
-        sellingPrice: data.sellingPrice || 0,
-        wholesalePrice: data.wholesalePrice || 0,
-        minimumSellingPrice: data.minimumSellingPrice || 0,
-        openingStock: data.openingStock || 0,
-        minimumStockAlert: data.minimumStockAlert || 0,
-        status: data.status || 'ACTIVE',
-        notes: data.notes,
-        variantInventoryMode: data.variantInventoryMode || 'PRODUCT_LEVEL',
-        hasVariants: data.variants && data.variants.length > 0
-      }).returning().get();
+          const id = randomUUID();
+          const product = await tx.insert(products).values({
+                      id,
+                      tenantId,
+                      productCode,
+                      name: data.name,
+                      categoryId: data.categoryId,
+                      unitId: data.unitId,
+                      purchasePrice: data.purchasePrice || 0,
+                      sellingPrice: data.sellingPrice || 0,
+                      wholesalePrice: data.wholesalePrice || 0,
+                      minimumSellingPrice: data.minimumSellingPrice || 0,
+                      openingStock: data.openingStock || 0,
+                      minimumStockAlert: data.minimumStockAlert || 0,
+                      status: data.status || 'ACTIVE',
+                      notes: data.notes,
+                      variantInventoryMode: data.variantInventoryMode || 'PRODUCT_LEVEL',
+                      hasVariants: data.variants && data.variants.length > 0
+                    }).returning().get();
 
-      if (data.variants && data.variants.length > 0) {
-        for (let i = 0; i < data.variants.length; i++) {
-          const v = data.variants[i];
-          tx.insert(productVariants).values({
-            id: randomUUID(),
-            tenantId,
-            productId: id,
-            name: v.name,
-            sku: v.sku || null,
-            openingStock: v.openingStock || 0,
-            currentStock: v.openingStock || 0,
-            sortOrder: i
-          }).run();
-        }
-      }
+          if (data.variants && data.variants.length > 0) {
+            for (let i = 0; i < data.variants.length; i++) {
+              const v = data.variants[i];
+              await tx.insert(productVariants).values({
+                                id: randomUUID(),
+                                tenantId,
+                                productId: id,
+                                name: v.name,
+                                sku: v.sku || null,
+                                openingStock: v.openingStock || 0,
+                                currentStock: v.openingStock || 0,
+                                sortOrder: i
+                              }).run();
+            }
+          }
 
-      return product;
-    });
+          return product;
+        });
   }
 
-  static getProductByCode(tenantId: string, productCode: string) {
-    const product = db.select()
-      .from(products)
-      .where(and(
-        eq(products.tenantId, tenantId), 
-        eq(products.productCode, productCode),
-        eq(products.isDeleted, false)
-      ))
-      .get();
+  static async getProductByCode(tenantId: string, productCode: string) {
+    const product = await db.select()
+          .from(products)
+          .where(and(
+            eq(products.tenantId, tenantId), 
+            eq(products.productCode, productCode),
+            eq(products.isDeleted, false)
+          ))
+          .get();
       
     if (product) {
-      const variants = db.select().from(productVariants).where(eq(productVariants.productId, product.id)).all();
+      const variants = await db.select().from(productVariants).where(eq(productVariants.productId, product.id)).all();
       (product as any).variants = variants || [];
     }
     
     return product;
   }
 
-  static listProducts(tenantId: string, options: { 
+  static async listProducts(tenantId: string, options: { 
     search?: string, 
     status?: string, 
     lowStock?: boolean, 
@@ -179,18 +179,18 @@ export class ProductRepository {
     
     const orderBy = sortDir === 'asc' ? asc(orderByColumn) : desc(orderByColumn);
 
-    const data = db.select()
-      .from(products)
-      .where(whereClause)
-      .orderBy(orderBy)
-      .limit(limit)
-      .offset(offset)
-      .all();
+    const data = await db.select()
+          .from(products)
+          .where(whereClause)
+          .orderBy(orderBy)
+          .limit(limit)
+          .offset(offset)
+          .all();
 
     // Fetch variants for these products
     if (data.length > 0) {
       const productIds = data.map(p => p.id);
-      const variants = db.select().from(productVariants).where(inArray(productVariants.productId, productIds)).all();
+      const variants = await db.select().from(productVariants).where(inArray(productVariants.productId, productIds)).all();
       
       const variantsByProductId = variants.reduce((acc: any, v: any) => {
         if (!acc[v.productId]) acc[v.productId] = [];
@@ -203,39 +203,39 @@ export class ProductRepository {
       });
     }
 
-    const countResult = db.select({ count: sql`count(*)`.mapWith(Number) })
-      .from(products)
-      .where(whereClause)
-      .get();
+    const countResult = await db.select({ count: sql`count(*)`.mapWith(Number) })
+          .from(products)
+          .where(whereClause)
+          .get();
       
     return { data, total: countResult?.count || 0 };
   }
 
-  static softDeleteProduct(tenantId: string, productCode: string) {
-    return db.update(products)
-      .set({ isDeleted: true })
-      .where(and(
-        eq(products.tenantId, tenantId),
-        eq(products.productCode, productCode)
-      ))
-      .run(); // use .run() for better-sqlite3 sync update without returning
+  static async softDeleteProduct(tenantId: string, productCode: string) {
+    return await db.update(products)
+          .set({ isDeleted: true })
+          .where(and(
+            eq(products.tenantId, tenantId),
+            eq(products.productCode, productCode)
+          ))
+          .run(); // use .run() for better-sqlite3 sync update without returning
   }
 
-  static bulkUpdateStatus(tenantId: string, productCodes: string[], status: 'ACTIVE' | 'INACTIVE' | 'ARCHIVED') {
-    return db.transaction((tx) => {
-      for (const code of productCodes) {
-        if (status === 'ARCHIVED') {
-          tx.update(products)
-            .set({ isDeleted: true })
-            .where(and(eq(products.tenantId, tenantId), eq(products.productCode, code)))
-            .run();
-        } else {
-          tx.update(products)
-            .set({ status })
-            .where(and(eq(products.tenantId, tenantId), eq(products.productCode, code)))
-            .run();
-        }
-      }
-    });
+  static async bulkUpdateStatus(tenantId: string, productCodes: string[], status: 'ACTIVE' | 'INACTIVE' | 'ARCHIVED') {
+    return await db.transaction(async (tx) => {
+          for (const code of productCodes) {
+            if (status === 'ARCHIVED') {
+              await tx.update(products)
+                                .set({ isDeleted: true })
+                                .where(and(eq(products.tenantId, tenantId), eq(products.productCode, code)))
+                                .run();
+            } else {
+              await tx.update(products)
+                                .set({ status })
+                                .where(and(eq(products.tenantId, tenantId), eq(products.productCode, code)))
+                                .run();
+            }
+          }
+        });
   }
 }

@@ -11,19 +11,25 @@ export function AddSupplierForm() {
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError(null);
     setSuccess(null);
+    setFormErrors({});
 
     const form = e.currentTarget;
     const formData = new FormData(form);
     const name = formData.get('name')?.toString();
-    const mobile = formData.get('mobile')?.toString();
+    const errors: Record<string, string> = {};
 
     if (!name) {
-      setError("Supplier Name is required.");
+      errors.name = "Supplier Name is required.";
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
       return;
     }
 
@@ -64,6 +70,7 @@ export function AddSupplierForm() {
             name="name" 
             placeholder="e.g. Acme Farms" 
             required 
+            error={formErrors.name}
           />
           <TextField 
             label="Mobile Number (Optional)" 

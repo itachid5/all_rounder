@@ -8,6 +8,7 @@ import { Button, Table, Thead, Tbody, Tr, Th, Td, EmptyState, StatusBadge } from
 import { EditCustomerDialog } from "./edit-customer-dialog";
 import { BalanceAdjustmentDialog } from "./balance-adjustment-dialog";
 import { CustomerProfileDrawer } from "./CustomerProfileDrawer";
+import { formatDate } from "@/shared/utils/date";
 
 export interface CustomerPermissions {
   view: boolean;
@@ -325,7 +326,7 @@ export function ManageCustomersClient({ initialData, initialTotal, permissions =
                     <StatusBadge status={item.status} />
                   </Td>
                   <Td className="text-right text-slate-500 text-sm">
-                    <span suppressHydrationWarning>{new Date(item.createdAt).toLocaleDateString()}</span>
+                    {formatDate(item.createdAt)}
                   </Td>
                   <Td className="text-right">
                     <div className="flex items-center justify-end gap-1">

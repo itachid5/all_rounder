@@ -2,6 +2,7 @@ import { ChevronRight, Search, Printer, FileDown, Plus } from "lucide-react";
 import Link from "next/link";
 import { Table, Thead, Tbody, Tr, Th, Td, EmptyState, Button } from "@/templates/egg-tasta/components";
 import { getTransactionsAction } from "@/templates/egg-tasta/actions/accounts";
+import { formatDate } from "@/shared/utils/date";
 
 export default async function CashBookPage() {
   const result = await getTransactionsAction({ accountType: "CASH" });
@@ -80,7 +81,7 @@ export default async function CashBookPage() {
 
               return (
                 <Tr key={item.transaction.id}>
-                  <Td>{new Date(item.transaction.date).toLocaleDateString()}</Td>
+                  <Td>{formatDate(item.transaction.date)}</Td>
                   <Td className="font-mono text-xs">{item.transaction.referenceNo}</Td>
                   <Td>{item.transaction.referenceType}</Td>
                   <Td>{item.transaction.description}</Td>

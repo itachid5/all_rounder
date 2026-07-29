@@ -1,9 +1,11 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
-import { Search, Plus, FileDown, ArrowUpDown, Edit, Eye, Printer, XCircle } from "lucide-react";
+import { Search, Plus, FileDown, ArrowUpDown, Edit, Eye, Printer, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { Button, Table, Thead, Tbody, Tr, Th, Td, EmptyState, StatusBadge } from "@/templates/egg-tasta/components";
+import { deleteSupplierPaymentAction } from "@/templates/egg-tasta/actions/supplierPayments";
+import { formatDate } from "@/shared/utils/date";
 
 export function ManagePaymentsClient({ initialData = [] }: { initialData?: any[] }) {
   const [search, setSearch] = useState("");
@@ -17,6 +19,15 @@ export function ManagePaymentsClient({ initialData = [] }: { initialData?: any[]
       return matchSearch && matchMethod;
     });
   }, [initialData, search, methodFilter]);
+
+  const handleDelete = async (id: string, paymentNo: string) => {
+    if (!confirm(`Are you sure you want to permanently delete Payment ${paymentNo}? This will reverse the supplier ledger, due, and cash account.`)) return;
+    
+    const res = await deleteSupplierPaymentAction(id);
+    if (!res.success) {
+      alert(res.error);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -107,7 +118,7 @@ export function ManagePaymentsClient({ initialData = [] }: { initialData?: any[]
                   {row.payment.paymentNo}
                 </Td>
                 <Td>
-                  {new Date(row.payment.date).toLocaleDateString()}
+                  {formatDate(row.payment.date)}
                 </Td>
                 <Td>
                   {row.supplierName}
@@ -122,11 +133,12 @@ export function ManagePaymentsClient({ initialData = [] }: { initialData?: any[]
                   <StatusBadge status={row.payment.status} />
                 </Td>
                 <Td className="text-right text-slate-500">
-                  {new Date(row.payment.createdAt).toLocaleDateString()}
+                  {formatDate(row.payment.createdAt)}
                 </Td>
                 <Td className="text-right">
                   <div className="flex items-center justify-end gap-1">
-                    <button title="View"><Eye className="h-4 w-4 text-slate-400 hover:text-blue-500" /></button>
+                    <button title="View" className="p-1.5 text-slate-400 hover:text-blue-500 rounded"><Eye className="h-4 w-4" /></button>
+                    <button onClick={() => handleDelete(row.payment.id, row.payment.paymentNo)} title="Delete" className="p-1.5 text-slate-400 hover:text-red-500 rounded"><Trash2 className="h-4 w-4" /></button>
                   </div>
                 </Td>
               </Tr>

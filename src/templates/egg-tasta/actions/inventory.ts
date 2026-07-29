@@ -22,7 +22,7 @@ async function getTenantId() {
 export async function createStockAdjustmentAction(data: any) {
   try {
     const tenantId = await getTenantId();
-    const adjustment = InventoryRepository.createStockAdjustment(tenantId, data, "system");
+    const adjustment = await InventoryRepository.createStockAdjustment(tenantId, data, "system");
     revalidatePath("/app/inventory");
     return { success: true, data: adjustment };
   } catch (error: any) {
@@ -34,7 +34,7 @@ export async function createStockAdjustmentAction(data: any) {
 export async function getStockAdjustmentsAction(options: any = {}) {
   try {
     const tenantId = await getTenantId();
-    const result = InventoryRepository.listStockAdjustments(tenantId, options);
+    const result = await InventoryRepository.listStockAdjustments(tenantId, options);
     return { success: true, data: result.data, total: result.total };
   } catch (error: any) {
     console.error("Failed to get stock adjustments:", error);
@@ -45,7 +45,7 @@ export async function getStockAdjustmentsAction(options: any = {}) {
 export async function getStockValuationAction() {
   try {
     const tenantId = await getTenantId();
-    const valuations = InventoryRepository.getStockValuation(tenantId);
+    const valuations = await InventoryRepository.getStockValuation(tenantId);
     return { success: true, data: valuations };
   } catch (error: any) {
     console.error("Failed to get stock valuation:", error);

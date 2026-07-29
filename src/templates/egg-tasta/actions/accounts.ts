@@ -22,7 +22,7 @@ async function getTenantId() {
 export async function createAccountAction(data: any) {
   try {
     const tenantId = await getTenantId();
-    const account = AccountRepository.createAccount(tenantId, data, "system");
+    const account = await AccountRepository.createAccount(tenantId, data, "system");
     revalidatePath("/app/accounts");
     return { success: true, data: account };
   } catch (error: any) {
@@ -34,7 +34,7 @@ export async function createAccountAction(data: any) {
 export async function getAccountsAction(options: any = {}) {
   try {
     const tenantId = await getTenantId();
-    const result = AccountRepository.listAccounts(tenantId, options);
+    const result = await AccountRepository.listAccounts(tenantId, options);
     return { success: true, data: result.data, total: result.total };
   } catch (error: any) {
     console.error("Failed to get accounts:", error);
@@ -45,7 +45,7 @@ export async function getAccountsAction(options: any = {}) {
 export async function getTransactionsAction(options: any = {}) {
   try {
     const tenantId = await getTenantId();
-    const result = AccountRepository.listTransactions(tenantId, options);
+    const result = await AccountRepository.listTransactions(tenantId, options);
     return { success: true, data: result.data, total: result.total };
   } catch (error: any) {
     console.error("Failed to get transactions:", error);

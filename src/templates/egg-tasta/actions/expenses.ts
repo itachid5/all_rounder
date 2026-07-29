@@ -23,7 +23,7 @@ async function getTenantId() {
 export async function createExpenseAction(data: any) {
   try {
     const tenantId = await getTenantId();
-    const expense = ExpenseRepository.createExpense(tenantId, data, "system");
+    const expense = await ExpenseRepository.createExpense(tenantId, data, "system");
     revalidatePath("/app/expenses");
     return { success: true, data: expense };
   } catch (error: any) {
@@ -35,7 +35,7 @@ export async function createExpenseAction(data: any) {
 export async function getExpensesAction(options: any = {}) {
   try {
     const tenantId = await getTenantId();
-    const result = ExpenseRepository.listExpenses(tenantId, options);
+    const result = await ExpenseRepository.listExpenses(tenantId, options);
     return { success: true, data: result.data, total: result.total };
   } catch (error: any) {
     console.error("Failed to get expenses:", error);
@@ -46,7 +46,7 @@ export async function getExpensesAction(options: any = {}) {
 export async function getExpenseCategoriesAction() {
   try {
     const tenantId = await getTenantId();
-    const data = db.select().from(expenseCategories).where(eq(expenseCategories.tenantId, tenantId)).all();
+    const data = await db.select().from(expenseCategories).where(eq(expenseCategories.tenantId, tenantId)).all();
     return { success: true, data };
   } catch (error: any) {
     console.error("Failed to get expense categories:", error);

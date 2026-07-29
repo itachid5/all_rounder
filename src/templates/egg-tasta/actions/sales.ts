@@ -26,7 +26,7 @@ export async function createSaleAction(data: any) {
       return { success: false, error: "Customer and at least one item are required." };
     }
 
-    const sale = SaleRepository.createSale(tenantId, data);
+    const sale = await SaleRepository.createSale(tenantId, data);
     return { success: true, sale };
   } catch (error: any) {
     return { success: false, error: error.message || "Failed to create sale" };
@@ -36,19 +36,19 @@ export async function createSaleAction(data: any) {
 export async function listSalesAction(options: any = {}) {
   try {
     const tenantId = await getTenantId();
-    const result = SaleRepository.listSales(tenantId, options);
+    const result = await SaleRepository.listSales(tenantId, options);
     return { success: true, data: result.data, total: result.total };
   } catch (error: any) {
     return { success: false, error: error.message || "Failed to list sales", data: [], total: 0 };
   }
 }
 
-export async function cancelSaleAction(saleId: string) {
+export async function deleteSaleAction(saleId: string) {
   try {
     const tenantId = await getTenantId();
-    SaleRepository.cancelSale(tenantId, saleId);
+    await SaleRepository.deleteSale(tenantId, saleId);
     return { success: true };
   } catch (error: any) {
-    return { success: false, error: error.message || "Failed to cancel sale" };
+    return { success: false, error: error.message || "Failed to delete sale" };
   }
 }

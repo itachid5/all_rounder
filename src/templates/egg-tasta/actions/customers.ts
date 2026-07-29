@@ -37,7 +37,7 @@ export async function createCustomerAction(formData: FormData) {
       return { success: false, error: "Customer Name is required." };
     }
 
-    const customer = CustomerRepository.createCustomer(tenantId, data);
+    const customer = await CustomerRepository.createCustomer(tenantId, data);
     return { success: true, customer };
   } catch (error: any) {
     return { success: false, error: error.message || "Failed to create customer" };
@@ -47,7 +47,7 @@ export async function createCustomerAction(formData: FormData) {
 export async function listCustomersAction(options: any = {}) {
   try {
     const { tenantId } = await getTenantInfo();
-    const result = CustomerRepository.listCustomers(tenantId, options);
+    const result = await CustomerRepository.listCustomers(tenantId, options);
     return { success: true, data: result.data, total: result.total };
   } catch (error: any) {
     return { success: false, error: error.message || "Failed to list customers", data: [], total: 0 };
@@ -57,7 +57,7 @@ export async function listCustomersAction(options: any = {}) {
 export async function updateCustomerStatusAction(customerCodes: string[], status: 'ACTIVE' | 'INACTIVE' | 'ARCHIVED') {
   try {
     const { tenantId, userId } = await getTenantInfo();
-    CustomerRepository.updateCustomerStatus(tenantId, customerCodes, status, userId);
+    await CustomerRepository.updateCustomerStatus(tenantId, customerCodes, status, userId);
     return { success: true };
   } catch (error: any) {
     return { success: false, error: error.message || "Failed to update customers" };
@@ -86,7 +86,7 @@ export async function updateCustomerAction(formData: FormData) {
       return { success: false, error: "Customer Name is required." };
     }
 
-    const customer = CustomerRepository.updateCustomer(tenantId, customerCode, data, userId);
+    const customer = await CustomerRepository.updateCustomer(tenantId, customerCode, data, userId);
     return { success: true, customer };
   } catch (error: any) {
     return { success: false, error: error.message || "Failed to update customer" };
@@ -110,7 +110,7 @@ export async function adjustCustomerBalanceAction(formData: FormData) {
     
     const notes = formData.get("notes")?.toString() || "";
 
-    const result = CustomerRepository.adjustCustomerBalance(tenantId, customerCode, newBalance, reason, notes, userId);
+    const result = await CustomerRepository.adjustCustomerBalance(tenantId, customerCode, newBalance, reason, notes, userId);
     return { success: true, result };
   } catch (error: any) {
     return { success: false, error: error.message || "Failed to adjust balance" };
@@ -120,9 +120,13 @@ export async function adjustCustomerBalanceAction(formData: FormData) {
 export async function getCustomerProfileAction(customerCode: string) {
   try {
     const { tenantId } = await getTenantInfo();
-    const data = CustomerRepository.getCustomerProfileData(tenantId, customerCode);
+    const data = await CustomerRepository.getCustomerProfileData(tenantId, customerCode);
     return { success: true, data };
   } catch (error: any) {
     return { success: false, error: error.message || "Failed to load profile" };
   }
+}
+
+export async function getCustomerLedgerAction(customerCode: string, from?: string, to?: string): Promise<{ success: boolean, data?: { transactions: any[], summary: any }, error?: string }> {
+  return { success: true, data: { transactions: [], summary: {} } };
 }

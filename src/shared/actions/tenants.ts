@@ -83,8 +83,8 @@ export async function provisionBusiness(formData: FormData) {
     });
 
     // Run inserts in a transaction for atomicity
-    db.transaction((tx) => {
-      tx.insert(users).values({
+    await db.transaction(async (tx) => {
+      await tx.insert(users).values({
         id: userId,
         username,
         passwordHash,
@@ -93,9 +93,9 @@ export async function provisionBusiness(formData: FormData) {
         userType: 'BUSINESS',
         status: 'ACTIVE',
         mustChangePassword: true,
-      }).run();
+      });
 
-      tx.insert(tenants).values({
+      await tx.insert(tenants).values({
         id: tenantId,
         name: businessName,
         slug: slug,
@@ -103,12 +103,12 @@ export async function provisionBusiness(formData: FormData) {
         ownerId: userId,
         settings: settings,
         status: 'ACTIVE',
-      }).run();
+      });
 
-      let role = tx.select().from(roles).where(and(eq(roles.slug, 'business_owner'), eq(roles.tenantId, tenantId))).get();
+      let role = await tx.select().from(roles).where(and(eq(roles.slug, 'business_owner'), eq(roles.tenantId, tenantId))).get();
       
       if (!role) {
-        tx.insert(roles).values({
+        await tx.insert(roles).values({
           id: roleId,
           name: 'Business Owner',
           slug: 'business_owner',
@@ -116,16 +116,16 @@ export async function provisionBusiness(formData: FormData) {
           scope: 'BUSINESS',
           tenantId: tenantId,
           isSystem: true,
-        }).run();
+        });
       } else {
         roleId = role.id;
       }
 
-      tx.insert(userRoles).values({
+      await tx.insert(userRoles).values({
         userId: userId,
         roleId: roleId,
         tenantId: tenantId,
-      }).run();
+      });
     });
 
     // In a real app we'd construct the URL from the request or env vars

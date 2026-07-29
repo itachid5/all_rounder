@@ -3,7 +3,7 @@
 import React, { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { CreditCard, AlertCircle, CheckCircle2 } from "lucide-react";
-import { FormSection, FormGrid, Button } from "@/templates/egg-tasta/components";
+import { FormSection, FormGrid, Button, Combobox } from "@/templates/egg-tasta/components";
 import { createCustomerCollectionAction } from "@/templates/egg-tasta/actions/customerCollections";
 
 export function NewCollectionClient({ customers }: { customers: any[] }) {
@@ -11,6 +11,7 @@ export function NewCollectionClient({ customers }: { customers: any[] }) {
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [customerId, setCustomerId] = useState("");
@@ -22,16 +23,18 @@ export function NewCollectionClient({ customers }: { customers: any[] }) {
   const selectedCustomer = customers.find(c => c.id === customerId);
   const currentDue = selectedCustomer ? selectedCustomer.previousDue : 0;
 
-  const handleSave = (stay: boolean) => {
+  const handleSave = () => {
     setError(null);
     setSuccess(null);
+    setFormErrors({});
 
-    if (!customerId) {
-      setError("Please select a customer.");
-      return;
-    }
-    if (amount <= 0) {
-      setError("Amount must be greater than 0.");
+    const errors: Record<string, string> = {};
+    if (!customerId) errors.customerId = "Customer is required.";
+    if (amount <= 0) errors.amount = "Amount must be greater than 0.";
+    if (amount > currentDue) errors.amount = "Amount cannot exceed current due.";
+
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
       return;
     }
 
@@ -48,19 +51,13 @@ export function NewCollectionClient({ customers }: { customers: any[] }) {
       const res = await createCustomerCollectionAction(data);
       if (res.success && res.collection) {
         setSuccess(`Collection ${res.collection.collectionNo} recorded successfully!`);
-        if (stay) {
-          setCustomerId("");
-          setAmount(0);
-          setReferenceNo("");
-          setNotes("");
-          window.scrollTo(0, 0);
-        } else {
-          setTimeout(() => {
-            router.push('/app/customer-collection/manage');
-          }, 1000);
-        }
+        setCustomerId("");
+        setAmount(0);
+        setReferenceNo("");
+        setNotes("");
+        window.scrollTo(0, 0);
       } else {
-        setError(res.error || "Failed to record collection.");
+        setError("Something went wrong. Please try again.");
       }
     });
   };
@@ -96,12 +93,14 @@ export function NewCollectionClient({ customers }: { customers: any[] }) {
 
             <div className="flex flex-col">
               <label className="text-xs font-medium text-slate-500 mb-1">Customer *</label>
-              <select value={customerId} onChange={e => setCustomerId(e.target.value)} className="px-3 py-2 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-full">
-                <option value="">Select Customer</option>
-                {customers.map(c => (
-                  <option key={c.id} value={c.id}>{c.name} ({c.customerCode})</option>
-                ))}
-              </select>
+              <Combobox 
+                options={customers.map(c => ({ value: c.id, label: `${c.name} (${c.customerCode})` }))}
+                value={customerId}
+                onChange={(val) => setCustomerId(val)}
+                placeholder="Select Customer"
+                error={!!formErrors.customerId}
+              />
+              {formErrors.customerId && <span className="text-red-500 text-xs mt-1">{formErrors.customerId}</span>}
             </div>
 
             <div className="flex flex-col">
@@ -111,16 +110,21 @@ export function NewCollectionClient({ customers }: { customers: any[] }) {
 
             <div className="flex flex-col">
               <label className="text-xs font-medium text-slate-500 mb-1">Received Amount *</label>
-              <input type="number" step="0.01" value={amount} onChange={e => setAmount(parseFloat(e.target.value) || 0)} placeholder="e.g. 500.00" className="px-3 py-2 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-full" />
+              <input type="number" step="0.01" value={amount} onChange={e => setAmount(parseFloat(e.target.value) || 0)} placeholder="e.g. 500.00" className={`px-3 py-2 bg-white dark:bg-slate-950 border ${formErrors.amount ? 'border-red-500' : 'border-slate-200 dark:border-slate-800'} rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-full`} />
+              {formErrors.amount && <span className="text-red-500 text-xs mt-1">{formErrors.amount}</span>}
             </div>
 
             <div className="flex flex-col">
               <label className="text-xs font-medium text-slate-500 mb-1">Payment Method *</label>
-              <select value={paymentMethod} onChange={e => setPaymentMethod(e.target.value)} className="px-3 py-2 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-full">
-                <option value="CASH">Cash</option>
-                <option value="BANK">Bank Transfer</option>
-                <option value="MOBILE_BANKING">Mobile Banking</option>
-              </select>
+              <Combobox 
+                options={[
+                  { value: "CASH", label: "Cash" },
+                  { value: "BANK", label: "Bank Transfer" },
+                  { value: "MOBILE_BANKING", label: "Mobile Banking" }
+                ]}
+                value={paymentMethod}
+                onChange={(val) => setPaymentMethod(val)}
+              />
             </div>
 
             <div className="flex flex-col">
@@ -139,10 +143,7 @@ export function NewCollectionClient({ customers }: { customers: any[] }) {
           <Button variant="ghost" type="button" onClick={() => router.push('/app/customer-collection/manage')} disabled={isPending}>
             Cancel
           </Button>
-          <Button variant="outline" type="button" onClick={() => handleSave(true)} disabled={isPending}>
-            {isPending ? "Saving..." : "Save & New"}
-          </Button>
-          <Button variant="primary" type="button" onClick={() => handleSave(false)} disabled={isPending}>
+          <Button variant="primary" type="button" onClick={handleSave} disabled={isPending}>
             {isPending ? "Saving..." : "Save Collection"}
           </Button>
         </div>

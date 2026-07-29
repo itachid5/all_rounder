@@ -11,17 +11,24 @@ export function AddCustomerForm() {
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError(null);
     setSuccess(null);
-
+    setFormErrors({});
+    
     const formData = new FormData(e.currentTarget);
     const name = formData.get('name')?.toString();
+    const errors: Record<string, string> = {};
 
     if (!name) {
-      setError("Customer Name is required.");
+      errors.name = "Customer Name is required.";
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
       return;
     }
 
@@ -60,6 +67,7 @@ export function AddCustomerForm() {
             name="name" 
             placeholder="e.g. John Doe" 
             required 
+            error={formErrors.name}
           />
           <TextField 
             label="Mobile Number (Optional)" 

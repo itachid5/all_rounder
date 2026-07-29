@@ -97,7 +97,7 @@ export async function getCategoriesAndUnits() {
 export async function listProductsAction(options: any = {}) {
   try {
     const tenantId = await getTenantId();
-    const result = ProductRepository.listProducts(tenantId, options);
+    const result = await ProductRepository.listProducts(tenantId, options);
     return { success: true, data: result.data, total: result.total };
   } catch (error: any) {
     return { success: false, error: error.message || "Failed to list products", data: [], total: 0 };
@@ -107,7 +107,7 @@ export async function listProductsAction(options: any = {}) {
 export async function softDeleteProductAction(productCode: string) {
   try {
     const tenantId = await getTenantId();
-    ProductRepository.softDeleteProduct(tenantId, productCode);
+    await ProductRepository.softDeleteProduct(tenantId, productCode);
     return { success: true };
   } catch (error: any) {
     return { success: false, error: error.message || "Failed to delete product" };
@@ -117,7 +117,7 @@ export async function softDeleteProductAction(productCode: string) {
 export async function bulkUpdateStatusAction(productCodes: string[], status: 'ACTIVE' | 'INACTIVE' | 'ARCHIVED') {
   try {
     const tenantId = await getTenantId();
-    ProductRepository.bulkUpdateStatus(tenantId, productCodes, status);
+    await ProductRepository.bulkUpdateStatus(tenantId, productCodes, status);
     return { success: true };
   } catch (error: any) {
     return { success: false, error: error.message || "Failed to update products" };

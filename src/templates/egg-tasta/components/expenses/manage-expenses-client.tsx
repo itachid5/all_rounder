@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { Search, Plus, Printer, XCircle } from "lucide-react";
 import Link from "next/link";
 import { Button, Table, Thead, Tbody, Tr, Th, Td, EmptyState, StatusBadge } from "@/templates/egg-tasta/components";
+import { formatDate } from "@/shared/utils/date";
 
 export function ManageExpensesClient({ initialData }: { initialData: any[] }) {
   const [search, setSearch] = useState("");
@@ -68,7 +69,7 @@ export function ManageExpensesClient({ initialData }: { initialData: any[] }) {
             data.map((item: any) => (
               <Tr key={item.expense.id}>
                 <Td className="font-mono text-xs font-medium text-slate-500">{item.expense.expenseNo}</Td>
-                <Td className="text-slate-600 dark:text-slate-400">{new Date(item.expense.expenseDate).toLocaleDateString()}</Td>
+                <Td className="text-slate-600 dark:text-slate-400">{formatDate(item.expense.expenseDate)}</Td>
                 <Td className="font-medium text-slate-900 dark:text-slate-200">{item.categoryName || '-'}</Td>
                 <Td className="text-right font-medium">${item.expense.amount.toFixed(2)}</Td>
                 <Td>{item.expense.paymentMethod}</Td>

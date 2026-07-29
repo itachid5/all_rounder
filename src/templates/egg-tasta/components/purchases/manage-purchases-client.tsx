@@ -1,10 +1,11 @@
 "use client";
 
 import React, { useState, useEffect, useTransition } from "react";
-import { Search, Plus, FileDown, ArrowUpDown, Edit, Eye, Printer, XCircle } from "lucide-react";
+import { Search, Plus, FileDown, ArrowUpDown, Edit, Eye, Printer, Trash2 } from "lucide-react";
 import Link from "next/link";
-import { listPurchasesAction, cancelPurchaseAction } from "@/templates/egg-tasta/actions/purchases";
+import { listPurchasesAction, deletePurchaseAction } from "@/templates/egg-tasta/actions/purchases";
 import { Button, Table, Thead, Tbody, Tr, Th, Td, EmptyState, Badge } from "@/templates/egg-tasta/components";
+import { formatDate } from "@/shared/utils/date";
 
 export function ManagePurchasesClient({ initialData, initialTotal }: { initialData: any[], initialTotal: number }) {
   const [isPending, startTransition] = useTransition();
@@ -43,10 +44,10 @@ export function ManagePurchasesClient({ initialData, initialTotal }: { initialDa
     }
   };
 
-  const handleCancel = async (id: string, invoiceNo: string) => {
-    if (!confirm(`Are you sure you want to cancel Invoice ${invoiceNo}? This action should ideally reverse stock and supplier ledger.`)) return;
+  const handleDelete = async (id: string, invoiceNo: string) => {
+    if (!confirm(`Are you sure you want to permanently delete Invoice ${invoiceNo}? This will reverse stock, supplier ledger, and due.`)) return;
     
-    await cancelPurchaseAction(id);
+    await deletePurchaseAction(id);
     const res = await listPurchasesAction({ search, status: statusFilter, sortBy, sortDir, page, limit });
     if (res.success) {
       setData(res.data);
@@ -138,7 +139,7 @@ export function ManagePurchasesClient({ initialData, initialTotal }: { initialDa
                 <Tr key={item.id}>
                   <Td className="font-mono text-xs font-medium text-slate-500">{item.invoiceNo}</Td>
                   <Td className="text-slate-600 dark:text-slate-400">
-                    {new Date(item.date).toLocaleDateString()}
+                    {formatDate(item.date)}
                   </Td>
                   <Td className="font-medium">{row.supplierName}</Td>
                   <Td className="text-right font-medium">${item.grandTotal.toFixed(2)}</Td>
@@ -155,11 +156,9 @@ export function ManagePurchasesClient({ initialData, initialTotal }: { initialDa
                       <button className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded dark:hover:text-blue-400 dark:hover:bg-blue-900/30 transition-colors" title="Print">
                         <Printer className="h-4 w-4" />
                       </button>
-                      {item.status !== 'CANCELLED' && (
-                        <button onClick={() => handleCancel(item.id, item.invoiceNo)} className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded dark:hover:text-red-400 dark:hover:bg-red-900/30 transition-colors" title="Cancel">
-                          <XCircle className="h-4 w-4" />
-                        </button>
-                      )}
+                      <button onClick={() => handleDelete(item.id, item.invoiceNo)} className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded dark:hover:text-red-400 dark:hover:bg-red-900/30 transition-colors" title="Delete">
+                        <Trash2 className="h-4 w-4" />
+                      </button>
                     </div>
                   </Td>
                 </Tr>

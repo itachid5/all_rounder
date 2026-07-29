@@ -66,12 +66,11 @@ export function AddProductForm() {
       setSuccess(`Product created successfully! Product Code: ${result.productCode}`);
       
       if (submitAction === 'save') {
-        setTimeout(() => {
-          router.push("/app/products");
-        }, 1500);
+        window.scrollTo(0, 0);
       } else {
         formRef.current?.reset();
         productNameRef.current?.focus();
+        window.scrollTo(0, 0);
       }
     }
   }

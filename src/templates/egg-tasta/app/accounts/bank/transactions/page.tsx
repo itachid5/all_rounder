@@ -3,6 +3,7 @@ import { ChevronRight, Search, Plus, Printer } from "lucide-react";
 import Link from "next/link";
 import { Table, Thead, Tbody, Tr, Th, Td, EmptyState, Button } from "@/templates/egg-tasta/components";
 import { getTransactionsAction } from "@/templates/egg-tasta/actions/accounts";
+import { formatDate } from "@/shared/utils/date";
 
 export default async function BankTransactionsPage() {
   const result = await getTransactionsAction({ accountType: "BANK" });
@@ -69,7 +70,7 @@ export default async function BankTransactionsPage() {
           ) : (
             data.map((item: any) => (
               <Tr key={item.transaction.id}>
-                <Td>{new Date(item.transaction.date).toLocaleDateString()}</Td>
+                <Td>{formatDate(item.transaction.date)}</Td>
                 <Td className="font-mono text-xs">{item.transaction.referenceNo}</Td>
                 <Td className="font-medium text-slate-900 dark:text-slate-200">{item.accountName}</Td>
                 <Td>

@@ -37,7 +37,7 @@ export async function createSupplierPaymentAction(data: any) {
       }
     }
 
-    const payment = SupplierPaymentRepository.createPayment(tenantId, userId, data);
+    const payment = await SupplierPaymentRepository.createPayment(tenantId, userId, data);
     
     revalidatePath("/app/supplier-payments/manage");
     revalidatePath("/app/suppliers/due");
@@ -52,9 +52,24 @@ export async function createSupplierPaymentAction(data: any) {
 export async function listSupplierPaymentsAction(options: any = {}) {
   try {
     const { tenantId } = await getTenantId();
-    const result = SupplierPaymentRepository.listPayments(tenantId, options);
+    const result = await SupplierPaymentRepository.listPayments(tenantId, options);
     return { success: true, data: result.data, total: result.total };
   } catch (error: any) {
     return { success: false, error: error.message || "Failed to list payments" };
+  }
+}
+
+export async function deleteSupplierPaymentAction(paymentId: string) {
+  try {
+    const { tenantId } = await getTenantId();
+    await SupplierPaymentRepository.deletePayment(tenantId, paymentId);
+    
+    revalidatePath("/app/supplier-payments/manage");
+    revalidatePath("/app/suppliers/due");
+    revalidatePath("/app/suppliers/ledger");
+    
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message || "Failed to delete payment" };
   }
 }

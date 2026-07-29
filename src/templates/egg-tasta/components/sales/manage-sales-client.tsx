@@ -1,10 +1,11 @@
 "use client";
 
 import React, { useState, useEffect, useTransition } from "react";
-import { Search, Plus, FileDown, ArrowUpDown, Eye, Printer, XCircle, ArrowRightLeft } from "lucide-react";
+import { Search, Plus, FileDown, ArrowUpDown, Eye, Printer, Trash2, ArrowRightLeft } from "lucide-react";
 import Link from "next/link";
-import { listSalesAction, cancelSaleAction } from "@/templates/egg-tasta/actions/sales";
+import { listSalesAction, deleteSaleAction } from "@/templates/egg-tasta/actions/sales";
 import { Button, Table, Thead, Tbody, Tr, Th, Td, EmptyState, Badge } from "@/templates/egg-tasta/components";
+import { formatDate } from "@/shared/utils/date";
 
 export function ManageSalesClient({ initialData, initialTotal }: { initialData: any[], initialTotal: number }) {
   const [isPending, startTransition] = useTransition();
@@ -43,10 +44,10 @@ export function ManageSalesClient({ initialData, initialTotal }: { initialData: 
     }
   };
 
-  const handleCancel = async (id: string, invoiceNo: string) => {
-    if (!confirm(`Are you sure you want to cancel Invoice ${invoiceNo}? This action should ideally reverse stock and customer ledger.`)) return;
+  const handleDelete = async (id: string, invoiceNo: string) => {
+    if (!confirm(`Are you sure you want to permanently delete Invoice ${invoiceNo}? This will reverse stock, customer ledger, and due.`)) return;
     
-    await cancelSaleAction(id);
+    await deleteSaleAction(id);
     const res = await listSalesAction({ search, status: statusFilter, sortBy, sortDir, page, limit });
     if (res.success) {
       setData(res.data);
@@ -138,7 +139,7 @@ export function ManageSalesClient({ initialData, initialTotal }: { initialData: 
                 <Tr key={item.id}>
                   <Td className="font-mono text-xs font-medium text-slate-500">{item.invoiceNo}</Td>
                   <Td className="text-slate-600 dark:text-slate-400">
-                    {new Date(item.date).toLocaleDateString()}
+                    {formatDate(item.date)}
                   </Td>
                   <Td className="font-medium">{row.customerName}</Td>
                   <Td className="text-right font-medium">${item.grandTotal.toFixed(2)}</Td>
@@ -160,11 +161,9 @@ export function ManageSalesClient({ initialData, initialTotal }: { initialData: 
                           <ArrowRightLeft className="h-4 w-4" />
                         </button>
                       </Link>
-                      {item.status !== 'CANCELLED' && (
-                        <button onClick={() => handleCancel(item.id, item.invoiceNo)} className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded dark:hover:text-red-400 dark:hover:bg-red-900/30 transition-colors" title="Cancel">
-                          <XCircle className="h-4 w-4" />
+                        <button onClick={() => handleDelete(item.id, item.invoiceNo)} className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded dark:hover:text-red-400 dark:hover:bg-red-900/30 transition-colors" title="Delete">
+                          <Trash2 className="h-4 w-4" />
                         </button>
-                      )}
                     </div>
                   </Td>
                 </Tr>

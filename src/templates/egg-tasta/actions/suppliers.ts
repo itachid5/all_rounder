@@ -37,7 +37,7 @@ export async function createSupplierAction(formData: FormData) {
       return { success: false, error: "Supplier Name is required." };
     }
 
-    const supplier = SupplierRepository.createSupplier(tenantId, data);
+    const supplier = await SupplierRepository.createSupplier(tenantId, data);
     return { success: true, supplier };
   } catch (error: any) {
     return { success: false, error: error.message || "Failed to create supplier" };
@@ -47,7 +47,7 @@ export async function createSupplierAction(formData: FormData) {
 export async function listSuppliersAction(options: any = {}) {
   try {
     const tenantId = await getTenantId();
-    const result = SupplierRepository.listSuppliers(tenantId, options);
+    const result = await SupplierRepository.listSuppliers(tenantId, options);
     return { success: true, data: result.data, total: result.total };
   } catch (error: any) {
     return { success: false, error: error.message || "Failed to list suppliers", data: [], total: 0 };
@@ -57,7 +57,7 @@ export async function listSuppliersAction(options: any = {}) {
 export async function updateSupplierStatusAction(supplierCodes: string[], status: 'ACTIVE' | 'INACTIVE' | 'ARCHIVED') {
   try {
     const tenantId = await getTenantId();
-    SupplierRepository.updateSupplierStatus(tenantId, supplierCodes, status);
+    await SupplierRepository.updateSupplierStatus(tenantId, supplierCodes, status);
     return { success: true };
   } catch (error: any) {
     return { success: false, error: error.message || "Failed to update suppliers" };

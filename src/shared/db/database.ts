@@ -1,19 +1,14 @@
-import Database from 'better-sqlite3';
-import { drizzle } from 'drizzle-orm/better-sqlite3';
+import { drizzle } from 'drizzle-orm/libsql';
+import { createClient } from '@libsql/client';
 
-import fs from 'fs';
-import path from 'path';
-
-const dbUrl = process.env.DATABASE_URL?.replace('file:', '') || './data/erp.db';
-const dbDir = path.dirname(dbUrl);
-
-if (!fs.existsSync(dbDir)) {
-  fs.mkdirSync(dbDir, { recursive: true });
+if (!process.env.TURSO_DATABASE_URL || !process.env.TURSO_AUTH_TOKEN) {
+  throw new Error("TURSO_DATABASE_URL and TURSO_AUTH_TOKEN must be set in environment variables");
 }
 
-const sqlite = new Database(dbUrl);
-sqlite.pragma('journal_mode = WAL');
-sqlite.pragma('foreign_keys = ON');
+const client = createClient({
+  url: process.env.TURSO_DATABASE_URL as string,
+  authToken: process.env.TURSO_AUTH_TOKEN as string,
+});
 
-export const db = drizzle(sqlite);
-export type DatabaseType = typeof db; // Rename to avoid conflict with better-sqlite3 Database
+export const db = drizzle(client);
+export type DatabaseType = typeof db;

@@ -2,8 +2,8 @@
 
 import React, { useState, useTransition, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { AlertCircle, CheckCircle2, ShoppingCart, Trash2 } from "lucide-react";
-import { FormSection, FormGrid, Button, Table, Thead, Tbody, Tr, Th, Td } from "@/templates/egg-tasta/components";
+import { AlertCircle, CheckCircle2, ShoppingCart, Trash2, Printer } from "lucide-react";
+import { FormSection, FormGrid, Button, Table, Thead, Tbody, Tr, Th, Td, Combobox } from "@/templates/egg-tasta/components";
 import { createPurchaseAction } from "@/templates/egg-tasta/actions/purchases";
 
 export function NewPurchaseClient({ suppliers, products }: { suppliers: any[], products: any[] }) {
@@ -11,6 +11,7 @@ export function NewPurchaseClient({ suppliers, products }: { suppliers: any[], p
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
   const [date, setDate] = useState("");
 
@@ -25,7 +26,7 @@ export function NewPurchaseClient({ suppliers, products }: { suppliers: any[], p
   const supplierDue = selectedSupplier ? selectedSupplier.previousDue : 0;
 
   // New POS style state
-  const productSelectRef = useRef<HTMLSelectElement>(null);
+  const productSelectRef = useRef<HTMLDivElement>(null);
   const [pendingProductId, setPendingProductId] = useState("");
   const [pendingVariantId, setPendingVariantId] = useState("");
 
@@ -102,18 +103,20 @@ export function NewPurchaseClient({ suppliers, products }: { suppliers: any[], p
   const grandTotal = subTotal - discount + transportCost + otherCharges;
   const remainingDue = grandTotal - paidAmount;
 
-  const handleSave = (stay: boolean) => {
+  const handleSave = () => {
     setError(null);
     setSuccess(null);
+    setFormErrors({});
 
-    if (!supplierId) {
-      setError("Please select a supplier.");
-      return;
-    }
+    const errors: Record<string, string> = {};
+
+    if (!supplierId) errors.supplierId = "Supplier is required.";
 
     const validItems = items.filter(i => i.productId && i.quantity > 0);
-    if (validItems.length === 0) {
-      setError("Please add at least one valid product.");
+    if (validItems.length === 0) errors.items = "Please add at least one valid product.";
+
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
       return;
     }
 
@@ -136,25 +139,19 @@ export function NewPurchaseClient({ suppliers, products }: { suppliers: any[], p
       const res = await createPurchaseAction(data);
       if (res.success && res.purchase) {
         setSuccess(`Purchase Invoice ${res.purchase.invoiceNo} saved successfully!`);
-        if (stay) {
-          setItems([]);
-          setSupplierId("");
-          setDiscount(0);
-          setTransportCost(0);
-          setOtherCharges(0);
-          setPaidAmount(0);
-          setReferenceNo("");
-          setNotes("");
-          setPendingProductId("");
-          setPendingVariantId("");
-          window.scrollTo(0,0);
-        } else {
-          setTimeout(() => {
-            router.push('/app/purchases/manage');
-          }, 1000);
-        }
+        setItems([]);
+        setSupplierId("");
+        setDiscount(0);
+        setTransportCost(0);
+        setOtherCharges(0);
+        setPaidAmount(0);
+        setReferenceNo("");
+        setNotes("");
+        setPendingProductId("");
+        setPendingVariantId("");
+        window.scrollTo(0,0);
       } else {
-        setError(res.error || "Failed to save purchase.");
+        setError("Something went wrong. Please try again.");
       }
     });
   };
@@ -165,6 +162,13 @@ export function NewPurchaseClient({ suppliers, products }: { suppliers: any[], p
         <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 p-4 rounded-md flex items-start gap-3">
           <AlertCircle className="h-5 w-5 mt-0.5" />
           <p>{error}</p>
+        </div>
+      )}
+
+      {formErrors.items && (
+        <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 p-4 rounded-md flex items-start gap-3">
+          <AlertCircle className="h-5 w-5 mt-0.5" />
+          <p>{formErrors.items}</p>
         </div>
       )}
 
@@ -190,12 +194,14 @@ export function NewPurchaseClient({ suppliers, products }: { suppliers: any[], p
             
             <div className="flex flex-col">
               <label className="text-xs font-medium text-slate-500 mb-1">Supplier *</label>
-              <select value={supplierId} onChange={e => setSupplierId(e.target.value)} className="px-3 py-2 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-full">
-                <option value="">Select Supplier</option>
-                {suppliers.map(s => (
-                  <option key={s.id} value={s.id}>{s.name} ({s.supplierCode})</option>
-                ))}
-              </select>
+              <Combobox 
+                options={suppliers.map(s => ({ value: s.id, label: `${s.name} (${s.supplierCode})` }))}
+                value={supplierId}
+                onChange={(val) => setSupplierId(val)}
+                placeholder="Select Supplier"
+                error={!!formErrors.supplierId}
+              />
+              {formErrors.supplierId && <span className="text-red-500 text-xs mt-1">{formErrors.supplierId}</span>}
             </div>
             
             <div className="flex flex-col">
@@ -206,52 +212,43 @@ export function NewPurchaseClient({ suppliers, products }: { suppliers: any[], p
 
           <div className="mt-6 pt-6 border-t border-slate-200 dark:border-slate-800">
             <div className="space-y-4">
-              <div className="flex flex-col">
+              <div className="flex flex-col md:w-1/2">
                 <label className="text-xs font-medium text-slate-500 mb-1">Product Select *</label>
-                <select 
-                  ref={productSelectRef}
-                  value={pendingProductId} 
-                  onChange={e => {
-                    const selectedId = e.target.value;
-                    setPendingProductId(selectedId);
-                    setPendingVariantId("");
-                    
-                    if (selectedId) {
-                      const prod = products.find(p => p.id === selectedId);
-                      const hasVars = prod?.hasVariants && prod?.variants?.length > 0 && prod?.variantInventoryMode === 'VARIANT_LEVEL';
-                      if (!hasVars) {
-                        addProductToTable(selectedId, "");
+                <div ref={productSelectRef}>
+                  <Combobox 
+                    options={products.map(p => ({ value: p.id, label: `${p.name} (${p.productCode})` }))}
+                    value={pendingProductId}
+                    onChange={(selectedId) => {
+                      setPendingProductId(selectedId);
+                      setPendingVariantId("");
+                      
+                      if (selectedId) {
+                        const prod = products.find(p => p.id === selectedId);
+                        const hasVars = prod?.hasVariants && prod?.variants?.length > 0 && prod?.variantInventoryMode === 'VARIANT_LEVEL';
+                        if (!hasVars) {
+                          addProductToTable(selectedId, "");
+                        }
                       }
-                    }
-                  }} 
-                  className="px-3 py-2 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-md text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 w-full md:w-1/2"
-                >
-                  <option value="">Select Product...</option>
-                  {products.map(p => (
-                    <option key={p.id} value={p.id}>{p.name}</option>
-                  ))}
-                </select>
+                    }}
+                    placeholder="Search Products..."
+                  />
+                </div>
               </div>
               
               {pendingHasVariants && (
-                <div className="flex flex-col">
+                <div className="flex flex-col md:w-1/2">
                   <label className="text-xs font-medium text-slate-500 mb-1">Variant Select *</label>
-                  <select 
-                    value={pendingVariantId} 
-                    onChange={e => {
-                      const selectedVarId = e.target.value;
+                  <Combobox 
+                    options={pendingProduct.variants.map((v: any) => ({ value: v.id, label: v.name }))}
+                    value={pendingVariantId}
+                    onChange={(selectedVarId) => {
                       setPendingVariantId(selectedVarId);
                       if (selectedVarId) {
                         addProductToTable(pendingProductId, selectedVarId);
                       }
-                    }} 
-                    className="px-3 py-2 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-full md:w-1/2"
-                  >
-                    <option value="">Select Variant...</option>
-                    {pendingProduct.variants.map((v: any) => (
-                      <option key={v.id} value={v.id}>{v.name}</option>
-                    ))}
-                  </select>
+                    }}
+                    placeholder="Select Variant..."
+                  />
                 </div>
               )}
             </div>
@@ -261,7 +258,7 @@ export function NewPurchaseClient({ suppliers, products }: { suppliers: any[], p
         {/* Product Table */}
         <div className="mt-8 border-t border-slate-200 dark:border-slate-800 pt-6">
           <h3 className="text-sm font-medium text-slate-900 dark:text-white mb-4">Products</h3>
-          <div className="overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-800">
+          <div>
             <Table>
               <Thead>
                 <Tr>
@@ -384,11 +381,16 @@ export function NewPurchaseClient({ suppliers, products }: { suppliers: any[], p
             {paidAmount > 0 && (
               <div className="flex justify-between items-center text-sm mt-2">
                 <span className="text-slate-500">Payment Method</span>
-                <select value={paymentMethod} onChange={e => setPaymentMethod(e.target.value)} className="w-28 px-2 py-1 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-md">
-                  <option value="CASH">Cash</option>
-                  <option value="BANK">Bank</option>
-                  <option value="MOBILE_BANKING">Mobile Banking</option>
-                </select>
+                <Combobox 
+                  options={[
+                    { value: "CASH", label: "Cash" },
+                    { value: "BANK", label: "Bank" },
+                    { value: "MOBILE_BANKING", label: "Mobile Banking" }
+                  ]}
+                  value={paymentMethod}
+                  onChange={(val) => setPaymentMethod(val)}
+                  className="w-40"
+                />
               </div>
             )}
 
@@ -405,10 +407,11 @@ export function NewPurchaseClient({ suppliers, products }: { suppliers: any[], p
           <Button variant="ghost" type="button" onClick={() => router.push('/app/purchases/manage')} disabled={isPending}>
             Cancel
           </Button>
-          <Button variant="outline" type="button" onClick={() => handleSave(true)} disabled={isPending}>
-            {isPending ? "Saving..." : "Save & New"}
+          <Button variant="outline" type="button" onClick={() => alert("Print feature pending PDF generation integration.")} disabled={isPending}>
+            <Printer className="h-4 w-4 mr-2" />
+            Print Invoice
           </Button>
-          <Button variant="primary" type="button" onClick={() => handleSave(false)} disabled={isPending}>
+          <Button variant="primary" type="button" onClick={handleSave} disabled={isPending}>
             {isPending ? "Saving..." : "Save Purchase"}
           </Button>
         </div>

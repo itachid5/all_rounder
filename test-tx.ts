@@ -8,8 +8,8 @@ async function test() {
   const passwordHash = await argon2.hash('test');
 
   try {
-    db.transaction((tx) => {
-      tx.insert(users).values({
+    await db.transaction(async (tx) => {
+      await tx.insert(users).values({
         id: userId,
         username: `test-${Date.now()}`,
         passwordHash,
@@ -18,7 +18,7 @@ async function test() {
         userType: 'BUSINESS',
         status: 'ACTIVE',
         mustChangePassword: true,
-      }).run();
+      });
     });
     console.log('Transaction succeeded!');
   } catch (e) {

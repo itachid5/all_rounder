@@ -1,4 +1,3 @@
-"use client";
 
 import React from "react";
 import { Calculator, FileDown, ChevronRight } from "lucide-react";

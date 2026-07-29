@@ -38,7 +38,7 @@ export async function createPurchaseAction(data: any) {
       }
     }
 
-    const purchase = PurchaseRepository.createPurchase(tenantId, userId, data);
+    const purchase = await PurchaseRepository.createPurchase(tenantId, userId, data);
     return { success: true, purchase };
   } catch (error: any) {
     return { success: false, error: error.message || "Failed to create purchase" };
@@ -48,19 +48,19 @@ export async function createPurchaseAction(data: any) {
 export async function listPurchasesAction(options: any = {}) {
   try {
     const { tenantId } = await getTenantId();
-    const result = PurchaseRepository.listPurchases(tenantId, options);
+    const result = await PurchaseRepository.listPurchases(tenantId, options);
     return { success: true, data: result.data, total: result.total };
   } catch (error: any) {
     return { success: false, error: error.message || "Failed to list purchases", data: [], total: 0 };
   }
 }
 
-export async function cancelPurchaseAction(purchaseId: string) {
+export async function deletePurchaseAction(purchaseId: string) {
   try {
     const { tenantId } = await getTenantId();
-    PurchaseRepository.cancelPurchase(tenantId, purchaseId);
+    await PurchaseRepository.deletePurchase(tenantId, purchaseId);
     return { success: true };
   } catch (error: any) {
-    return { success: false, error: error.message || "Failed to cancel purchase" };
+    return { success: false, error: error.message || "Failed to delete purchase" };
   }
 }

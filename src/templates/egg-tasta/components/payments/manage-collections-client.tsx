@@ -1,10 +1,11 @@
 "use client";
 
 import React, { useState, useEffect, useTransition } from "react";
-import { Search, Plus, FileDown, ArrowUpDown, Edit, Eye, Printer, XCircle } from "lucide-react";
+import { Search, Plus, FileDown, ArrowUpDown, Edit, Eye, Printer, Trash2, Copy, Archive } from "lucide-react";
 import Link from "next/link";
-import { Button, Table, Thead, Tbody, Tr, Th, Td, EmptyState, Badge } from "@/templates/egg-tasta/components";
-import { listCustomerCollectionsAction } from "@/templates/egg-tasta/actions/customerCollections";
+import { Button, Table, Thead, Tbody, Tr, Th, Td, EmptyState, Badge, ActionMenu } from "@/templates/egg-tasta/components";
+import { listCustomerCollectionsAction, deleteCustomerCollectionAction } from "@/templates/egg-tasta/actions/customerCollections";
+import { formatDate } from "@/shared/utils/date";
 
 export function ManageCollectionsClient({ initialData, initialTotal }: { initialData: any[], initialTotal: number }) {
   const [isPending, startTransition] = useTransition();
@@ -22,9 +23,12 @@ export function ManageCollectionsClient({ initialData, initialTotal }: { initial
     const fetch = async () => {
       startTransition(() => {});
       const res = await listCustomerCollectionsAction({ search, status: statusFilter, sortBy, sortDir, page, limit });
-      if (res.success) {
+      if (res.success && res.data) {
         setData(res.data);
-        setTotal(res.total);
+        setTotal(res.total || 0);
+      } else {
+        setData([]);
+        setTotal(0);
       }
     };
     
@@ -38,6 +42,17 @@ export function ManageCollectionsClient({ initialData, initialTotal }: { initial
     } else {
       setSortBy(column);
       setSortDir('asc');
+    }
+  };
+
+  const handleDelete = async (id: string, collectionNo: string) => {
+    if (!confirm(`Are you sure you want to permanently delete Collection ${collectionNo}? This will reverse the customer ledger, due, and cash account.`)) return;
+    
+    await deleteCustomerCollectionAction(id);
+    const res = await listCustomerCollectionsAction({ search, status: statusFilter, sortBy, sortDir, page, limit });
+    if (res.success && res.data) {
+      setData(res.data);
+      setTotal(res.total || 0);
     }
   };
 
@@ -118,7 +133,7 @@ export function ManageCollectionsClient({ initialData, initialTotal }: { initial
                 <Tr key={item.id}>
                   <Td className="font-mono text-xs font-medium text-slate-500">{item.collectionNo}</Td>
                   <Td className="text-slate-600 dark:text-slate-400">
-                    {new Date(item.date).toLocaleDateString()}
+                    {formatDate(item.date)}
                   </Td>
                   <Td className="font-medium">{row.customerName}</Td>
                   <Td className="text-slate-500">{row.accountName}</Td>
@@ -128,14 +143,16 @@ export function ManageCollectionsClient({ initialData, initialTotal }: { initial
                     <Badge variant={item.status === 'COMPLETED' ? 'success' : 'danger'}>{item.status}</Badge>
                   </Td>
                   <Td className="text-right">
-                    <div className="flex items-center justify-end gap-1">
-                      <button className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors" title="Print">
-                        <Printer className="h-4 w-4" />
-                      </button>
-                      <button className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors" title="Cancel">
-                        <XCircle className="h-4 w-4" />
-                      </button>
-                    </div>
+                    <ActionMenu 
+                      items={[
+                        { label: 'View Details', icon: <Eye />, href: `/app/customer-collection/view/${item.id}` },
+                        { label: 'Edit Collection', icon: <Edit />, href: `/app/customer-collection/edit/${item.id}` },
+                        { label: 'Print Receipt', icon: <Printer />, onClick: () => window.print() },
+                        { label: 'Download PDF', icon: <FileDown />, onClick: () => alert('Download PDF functionality coming soon.') },
+                        { label: 'Archive', icon: <Archive />, onClick: () => alert('Archive functionality coming soon.') },
+                        { label: 'Delete Permanently', icon: <Trash2 />, variant: 'danger', onClick: () => handleDelete(item.id, item.collectionNo) },
+                      ]}
+                    />
                   </Td>
                 </Tr>
               );
