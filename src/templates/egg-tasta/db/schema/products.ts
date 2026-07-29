@@ -20,6 +20,7 @@ export const products = sqliteTable('products', {
   status: text('status').notNull().default('ACTIVE'), // ACTIVE, INACTIVE
   notes: text('notes'),
   hasVariants: integer('has_variants', { mode: 'boolean' }).notNull().default(false),
+  variantInventoryMode: text('variant_inventory_mode').notNull().default('PRODUCT_LEVEL'),
   isDeleted: integer('is_deleted', { mode: 'boolean' }).notNull().default(false),
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull().defaultNow(),
   updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().defaultNow(),

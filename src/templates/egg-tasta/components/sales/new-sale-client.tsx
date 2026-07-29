@@ -54,7 +54,15 @@ export function NewSaleClient({ customers, products }: { customers: any[], produ
           const prod = products.find(p => p.id === value);
           if (prod) {
             updated.sellingPrice = prod.sellingPrice;
-            updated.availableStock = prod.currentStock;
+            updated.availableStock = prod.variantInventoryMode === 'VARIANT_LEVEL' ? 0 : prod.currentStock;
+          }
+        }
+        
+        if (field === 'variantId') {
+          const prod = products.find(p => p.id === item.productId);
+          if (prod && prod.variantInventoryMode === 'VARIANT_LEVEL') {
+            const variant = prod.variants?.find((v: any) => v.id === value);
+            updated.availableStock = variant ? variant.currentStock : 0;
           }
         }
         
@@ -211,7 +219,7 @@ export function NewSaleClient({ customers, products }: { customers: any[], produ
                   const selectedProduct = products.find(p => p.id === item.productId);
                   const hasVariants = selectedProduct?.hasVariants && selectedProduct?.variants?.length > 0;
                   
-                  let displayStock = selectedProduct?.currentStock || 0;
+                  let displayStock = item.availableStock;
                   
                   return (
                   <Tr key={item.id}>

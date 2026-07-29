@@ -8,6 +8,7 @@ export const productVariants = sqliteTable('product_variants', {
   productId: text('product_id').notNull().references(() => products.id, { onDelete: 'cascade' }),
   name: text('name').notNull(),
   sku: text('sku'),
+  openingStock: integer('opening_stock').notNull().default(0),
   currentStock: integer('current_stock').notNull().default(0),
   sortOrder: integer('sort_order').notNull().default(0),
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull().defaultNow(),

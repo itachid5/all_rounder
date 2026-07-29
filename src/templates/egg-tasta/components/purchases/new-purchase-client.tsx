@@ -25,7 +25,7 @@ export function NewPurchaseClient({ suppliers, products }: { suppliers: any[], p
   const supplierDue = selectedSupplier ? selectedSupplier.previousDue : 0;
 
   const [items, setItems] = useState<any[]>([
-    { id: 1, productId: "", purchasePrice: 0, quantity: 1, total: 0 }
+    { id: 1, productId: "", variantId: "", purchasePrice: 0, quantity: 1, total: 0 }
   ]);
 
   const [discount, setDiscount] = useState(0);
@@ -37,7 +37,7 @@ export function NewPurchaseClient({ suppliers, products }: { suppliers: any[], p
   const [notes, setNotes] = useState("");
 
   const handleAddItem = () => {
-    setItems([...items, { id: Date.now() + Math.random(), productId: "", purchasePrice: 0, quantity: 1, total: 0 }]);
+    setItems([...items, { id: Date.now() + Math.random(), productId: "", variantId: "", purchasePrice: 0, quantity: 1, total: 0 }]);
   };
 
   const handleRemoveItem = (id: number) => {
@@ -56,6 +56,7 @@ export function NewPurchaseClient({ suppliers, products }: { suppliers: any[], p
           if (prod) {
             updated.purchasePrice = prod.purchasePrice;
           }
+          updated.variantId = ""; // reset variant on product change
         }
         
         updated.total = (parseFloat(updated.purchasePrice || 0) * parseFloat(updated.quantity || 0));
@@ -82,6 +83,15 @@ export function NewPurchaseClient({ suppliers, products }: { suppliers: any[], p
     if (validItems.length === 0) {
       setError("Please add at least one valid product.");
       return;
+    }
+    
+    // Check variant requirements
+    for (const item of validItems) {
+      const prod = products.find(p => p.id === item.productId);
+      if (prod && prod.variantInventoryMode === 'VARIANT_LEVEL' && prod.hasVariants && !item.variantId) {
+        setError(`Please select a variant for product: ${prod.name}`);
+        return;
+      }
     }
 
     // Variant selection removed for purchases per business rules
@@ -179,11 +189,12 @@ export function NewPurchaseClient({ suppliers, products }: { suppliers: any[], p
             <Table>
               <Thead>
                 <Tr>
-                  <Th className="w-[30%]">Product</Th>
+                  <Th className="w-[25%]">Product</Th>
+                  <Th className="w-[20%]">Variant</Th>
                   <Th className="w-[15%] text-right">Purchase Price</Th>
                   <Th className="w-[15%] text-right">Quantity</Th>
                   <Th className="w-[15%] text-right">Total</Th>
-                  <Th className="w-[5%]"></Th>
+                  <Th className="w-[10%]"></Th>
                 </Tr>
               </Thead>
               <Tbody>
@@ -200,6 +211,26 @@ export function NewPurchaseClient({ suppliers, products }: { suppliers: any[], p
                           <option key={p.id} value={p.id}>{p.name} ({p.productCode})</option>
                         ))}
                       </select>
+                    </Td>
+                    <Td>
+                      {(() => {
+                        const prod = products.find(p => p.id === item.productId);
+                        if (prod && prod.variantInventoryMode === 'VARIANT_LEVEL' && prod.hasVariants) {
+                          return (
+                            <select 
+                              value={item.variantId} 
+                              onChange={e => handleItemChange(item.id, 'variantId', e.target.value)}
+                              className="w-full px-2 py-1.5 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-md text-sm"
+                            >
+                              <option value="">Select Variant...</option>
+                              {prod.variants?.map((v: any) => (
+                                <option key={v.id} value={v.id}>{v.name}</option>
+                              ))}
+                            </select>
+                          );
+                        }
+                        return <span className="text-sm text-slate-400">N/A</span>;
+                      })()}
                     </Td>
                     <Td>
                       <input 

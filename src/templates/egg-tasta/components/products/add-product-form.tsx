@@ -11,6 +11,7 @@ export function AddProductForm() {
   const [success, setSuccess] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitAction, setSubmitAction] = useState<'save' | 'save_add'>('save');
+  const [variantMode, setVariantMode] = useState<'PRODUCT_LEVEL' | 'VARIANT_LEVEL'>('PRODUCT_LEVEL');
   const formRef = useRef<HTMLFormElement>(null);
   const productNameRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
@@ -194,6 +195,20 @@ export function AddProductForm() {
               name="barcode" 
               placeholder="Scan or enter barcode"
             />
+            
+            {/* Variant Inventory Mode */}
+            <div className="md:col-span-2">
+              <SelectField 
+                label="Variant Inventory Mode"
+                name="variantInventoryMode" 
+                options={[
+                  { value: "PRODUCT_LEVEL", label: "Product-Level Inventory (Variants only used in sales)" },
+                  { value: "VARIANT_LEVEL", label: "Variant-Level Inventory (Each variant has stock/SKU)" }
+                ]}
+                value={variantMode}
+                onChange={(e: any) => setVariantMode(e.target.value as any)}
+              />
+            </div>
           </FormGrid>
 
           {/* Variants Section */}
@@ -207,25 +222,47 @@ export function AddProductForm() {
                 type="button" 
                 variant="outline" 
                 onClick={() => {
-                  const form = formRef.current;
-                  if (!form) return;
                   const container = document.getElementById('variants-container');
                   if (!container) return;
                   
-                  const idx = container.children.length;
                   const row = document.createElement('div');
-                  row.className = 'grid grid-cols-12 gap-3 mb-3 items-end';
-                  row.innerHTML = `
-                    <div class="col-span-10">
-                      <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Variant Name</label>
-                      <input type="text" name="variant_name[]" required placeholder="e.g. White Egg" class="w-full h-10 px-3 rounded-md border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:border-slate-700 dark:bg-slate-950 dark:text-white" />
-                    </div>
-                    <div class="col-span-2 flex justify-end">
-                      <button type="button" onclick="this.parentElement.parentElement.remove()" class="h-10 px-3 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-md transition-colors dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-900/30">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>
-                      </button>
-                    </div>
-                  `;
+                  row.className = variantMode === 'VARIANT_LEVEL' 
+                    ? 'grid grid-cols-12 gap-3 mb-3 items-end'
+                    : 'grid grid-cols-12 gap-3 mb-3 items-end';
+                  
+                  if (variantMode === 'VARIANT_LEVEL') {
+                    row.innerHTML = `
+                      <div class="col-span-4">
+                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Variant Name</label>
+                        <input type="text" name="variant_name[]" required placeholder="e.g. White Egg" class="w-full h-10 px-3 rounded-md border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:border-slate-700 dark:bg-slate-950 dark:text-white" />
+                      </div>
+                      <div class="col-span-3">
+                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">SKU (Optional)</label>
+                        <input type="text" name="variant_sku[]" placeholder="e.g. WH-01" class="w-full h-10 px-3 rounded-md border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:border-slate-700 dark:bg-slate-950 dark:text-white" />
+                      </div>
+                      <div class="col-span-3">
+                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Opening Stock</label>
+                        <input type="number" name="variant_stock[]" min="0" placeholder="0" class="w-full h-10 px-3 rounded-md border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:border-slate-700 dark:bg-slate-950 dark:text-white" />
+                      </div>
+                      <div class="col-span-2 flex justify-end">
+                        <button type="button" onclick="this.parentElement.parentElement.remove()" class="h-10 px-3 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-md transition-colors dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-900/30">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>
+                        </button>
+                      </div>
+                    `;
+                  } else {
+                    row.innerHTML = `
+                      <div class="col-span-10">
+                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Variant Name</label>
+                        <input type="text" name="variant_name[]" required placeholder="e.g. White Egg" class="w-full h-10 px-3 rounded-md border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:border-slate-700 dark:bg-slate-950 dark:text-white" />
+                      </div>
+                      <div class="col-span-2 flex justify-end">
+                        <button type="button" onclick="this.parentElement.parentElement.remove()" class="h-10 px-3 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-md transition-colors dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-900/30">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>
+                        </button>
+                      </div>
+                    `;
+                  }
                   container.appendChild(row);
                 }}
               >
@@ -234,6 +271,11 @@ export function AddProductForm() {
               </Button>
             </div>
             <div id="variants-container"></div>
+            {variantMode === 'VARIANT_LEVEL' && (
+              <p className="text-xs text-amber-600 dark:text-amber-400 mt-2">
+                Note: In Variant-Level Inventory mode, the main Product&apos;s Opening Quantity will be ignored and stock will be managed per variant.
+              </p>
+            )}
           </div>
 
           <FormGrid>

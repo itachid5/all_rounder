@@ -88,6 +88,7 @@ export class ProductRepository {
         minimumStockAlert: data.minimumStockAlert || 0,
         status: data.status || 'ACTIVE',
         notes: data.notes,
+        variantInventoryMode: data.variantInventoryMode || 'PRODUCT_LEVEL',
         hasVariants: data.variants && data.variants.length > 0
       }).returning().get();
 
@@ -99,6 +100,9 @@ export class ProductRepository {
             tenantId,
             productId: id,
             name: v.name,
+            sku: v.sku || null,
+            openingStock: v.openingStock || 0,
+            currentStock: v.openingStock || 0,
             sortOrder: i
           }).run();
         }

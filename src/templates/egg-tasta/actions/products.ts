@@ -36,17 +36,22 @@ export async function createProductAction(formData: FormData) {
       openingStock: parseInt(formData.get("openingStock") as string, 10) || 0,
       minimumStockAlert: parseInt(formData.get("minimumStockAlert") as string, 10) || 0,
       status: formData.get("status") as string || 'ACTIVE',
+      variantInventoryMode: formData.get("variantInventoryMode") as string || 'PRODUCT_LEVEL',
       notes: formData.get("notes") as string,
       variants: [] as any[]
     };
 
     const variantNames = formData.getAll("variant_name[]");
+    const variantSkus = formData.getAll("variant_sku[]");
+    const variantStocks = formData.getAll("variant_stock[]");
     
     if (variantNames && variantNames.length > 0) {
       for (let i = 0; i < variantNames.length; i++) {
         if (variantNames[i]) {
           data.variants.push({
-            name: variantNames[i] as string
+            name: variantNames[i] as string,
+            sku: variantSkus[i] ? variantSkus[i] as string : null,
+            openingStock: variantStocks[i] ? parseInt(variantStocks[i] as string, 10) || 0 : 0
           });
         }
       }

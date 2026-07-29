@@ -79,9 +79,28 @@ export class SaleRepository {
         if (product) {
           let previousStock = product.currentStock;
           let newStock = previousStock - item.quantity;
-          if (product.currentStock < item.quantity) {
-            throw new Error(`Insufficient stock for product ${product.name}`);
+          
+          if (product.variantInventoryMode === 'VARIANT_LEVEL' && item.variantId) {
+            const variant = tx.select().from(productVariants).where(and(eq(productVariants.tenantId, tenantId), eq(productVariants.id, item.variantId))).get();
+            if (variant) {
+              previousStock = variant.currentStock;
+              newStock = previousStock - item.quantity;
+              
+              if (newStock < 0) {
+                throw new Error(`Insufficient stock for variant ${variant.name} of product ${product.name}`);
+              }
+              
+              tx.update(productVariants)
+                .set({ currentStock: newStock })
+                .where(eq(productVariants.id, variant.id))
+                .run();
+            }
+          } else {
+            if (product.currentStock < item.quantity) {
+              throw new Error(`Insufficient stock for product ${product.name}`);
+            }
           }
+
           tx.update(products)
             .set({ 
               currentStock: product.currentStock - item.quantity,

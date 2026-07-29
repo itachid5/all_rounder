@@ -79,7 +79,20 @@ export class PurchaseRepository {
         if (product) {
           let previousStock = product.currentStock;
           let newStock = previousStock + item.quantity;
-          // Variant stock tracking removed per business rules
+          
+          if (product.variantInventoryMode === 'VARIANT_LEVEL' && item.variantId) {
+            const variant = tx.select().from(productVariants).where(and(eq(productVariants.tenantId, tenantId), eq(productVariants.id, item.variantId))).get();
+            if (variant) {
+              previousStock = variant.currentStock;
+              newStock = previousStock + item.quantity;
+              
+              tx.update(productVariants)
+                .set({ currentStock: newStock })
+                .where(eq(productVariants.id, variant.id))
+                .run();
+            }
+          }
+
           // Increase Product Stock (Total)
           tx.update(products)
             .set({ 
