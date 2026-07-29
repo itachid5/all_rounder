@@ -3,7 +3,7 @@
 import { db } from "@/shared/db/database";
 import { users, tenants, roles, userRoles, templates } from "@/platform/db/schema";
 
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import crypto from "crypto";
 import * as argon2 from "argon2";
 import { headers } from "next/headers";
@@ -55,58 +55,78 @@ export async function provisionBusiness(formData: FormData) {
     // Generate IDs
     const userId = crypto.randomUUID();
     const tenantId = crypto.randomUUID();
-    const roleId = crypto.randomUUID();
+    let roleId: string = crypto.randomUUID();
 
     // 1. Create Business Admin User
     const passwordHash = await argon2.hash(password);
     const [firstName, ...lastNameParts] = ownerName.split(' ');
     
-    await db.insert(users).values({
-      id: userId,
-      username,
-      passwordHash,
-      firstName: firstName || '',
-      lastName: lastNameParts.join(' ') || '',
-      userType: 'BUSINESS',
-      status: 'ACTIVE',
-      mustChangePassword: true,
-    }).execute();
+    // Generate base slug and check availability
+    let slug = businessName.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+    if (slug.endsWith('-')) slug = slug.slice(0, -1);
+    if (slug.startsWith('-')) slug = slug.slice(1);
+    if (!slug) slug = 'business';
 
-    // 2. Create Tenant (Business)
-    const slug = businessName.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+    let existingTenant = await db.select().from(tenants).where(eq(tenants.slug, slug)).get();
+    let counter = 2;
+    const baseSlug = slug;
+    while (existingTenant) {
+      slug = `${baseSlug}-${counter}`;
+      existingTenant = await db.select().from(tenants).where(eq(tenants.slug, slug)).get();
+      counter++;
+    }
+
     const settings = JSON.stringify({
       timezone,
       currency,
       language,
     });
 
-    await db.insert(tenants).values({
-      id: tenantId,
-      name: businessName,
-      slug: slug,
-      templateId: template.id,
-      ownerId: userId,
-      settings: settings,
-      status: 'ACTIVE',
-    }).execute();
+    // Run inserts in a transaction for atomicity
+    await db.transaction(async (tx) => {
+      await tx.insert(users).values({
+        id: userId,
+        username,
+        passwordHash,
+        firstName: firstName || '',
+        lastName: lastNameParts.join(' ') || '',
+        userType: 'BUSINESS',
+        status: 'ACTIVE',
+        mustChangePassword: true,
+      }).execute();
 
-    // 3. Create Default Business Owner Role for this tenant
-    await db.insert(roles).values({
-      id: roleId,
-      name: 'Business Owner',
-      slug: 'business_owner',
-      description: 'Full access to the business',
-      scope: 'BUSINESS',
-      tenantId: tenantId,
-      isSystem: true,
-    }).execute();
+      await tx.insert(tenants).values({
+        id: tenantId,
+        name: businessName,
+        slug: slug,
+        templateId: template!.id,
+        ownerId: userId,
+        settings: settings,
+        status: 'ACTIVE',
+      }).execute();
 
-    // 4. Assign user to role
-    await db.insert(userRoles).values({
-      userId: userId,
-      roleId: roleId,
-      tenantId: tenantId,
-    }).execute();
+      let role = await tx.select().from(roles).where(and(eq(roles.slug, 'business_owner'), eq(roles.tenantId, tenantId))).get();
+      
+      if (!role) {
+        await tx.insert(roles).values({
+          id: roleId,
+          name: 'Business Owner',
+          slug: 'business_owner',
+          description: 'Full access to the business',
+          scope: 'BUSINESS',
+          tenantId: tenantId,
+          isSystem: true,
+        }).execute();
+      } else {
+        roleId = role.id;
+      }
+
+      await tx.insert(userRoles).values({
+        userId: userId,
+        roleId: roleId,
+        tenantId: tenantId,
+      }).execute();
+    });
 
     // In a real app we'd construct the URL from the request or env vars
     const headersList = await headers();

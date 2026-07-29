@@ -22,6 +22,13 @@
       "when": 1785263083342,
       "tag": "0002_fearless_yellow_claw",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1785293298371,
+      "tag": "0003_red_veda",
+      "breakpoints": true
     }
   ]
 }

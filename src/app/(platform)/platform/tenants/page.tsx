@@ -1,7 +1,24 @@
 import { Building2, Search, Plus } from "lucide-react";
 import Link from "next/link";
+import { db } from "@/shared/db/database";
+import { tenants, users, templates } from "@/platform/db/schema";
+import { eq } from "drizzle-orm";
 
-export default function BusinessesPage() {
+export default async function BusinessesPage() {
+  const allTenants = await db
+    .select({
+      id: tenants.id,
+      name: tenants.name,
+      slug: tenants.slug,
+      status: tenants.status,
+      createdAt: tenants.createdAt,
+      ownerName: users.username,
+      templateName: templates.name,
+    })
+    .from(tenants)
+    .leftJoin(users, eq(tenants.ownerId, users.id))
+    .leftJoin(templates, eq(tenants.templateId, templates.id));
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -46,15 +63,30 @@ export default function BusinessesPage() {
               </tr>
             </thead>
             <tbody className="[&_tr:last-child]:border-0">
-              <tr>
-                <td colSpan={6} className="h-32 text-center align-middle">
-                  <div className="flex flex-col items-center justify-center text-muted-foreground">
-                    <Building2 className="h-8 w-8 mb-2 opacity-20" />
-                    <p className="font-medium text-foreground">No businesses yet</p>
-                    <p className="text-sm">Create your first business to get started</p>
-                  </div>
-                </td>
-              </tr>
+              {allTenants.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="h-32 text-center align-middle">
+                    <div className="flex flex-col items-center justify-center text-muted-foreground">
+                      <Building2 className="h-8 w-8 mb-2 opacity-20" />
+                      <p className="font-medium text-foreground">No businesses yet</p>
+                      <p className="text-sm">Create your first business to get started</p>
+                    </div>
+                  </td>
+                </tr>
+              ) : (
+                allTenants.map((t) => (
+                  <tr key={t.id} className="border-b transition-colors hover:bg-muted/50">
+                    <td className="p-4">{t.name}</td>
+                    <td className="p-4">{t.ownerName}</td>
+                    <td className="p-4">{t.templateName}</td>
+                    <td className="p-4">{t.status}</td>
+                    <td className="p-4">{new Date(t.createdAt).toLocaleDateString()}</td>
+                    <td className="p-4">
+                      <Link href={`/platform/tenants/${t.id}`} className="text-blue-500 hover:underline">View</Link>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>

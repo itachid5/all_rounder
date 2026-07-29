@@ -3,7 +3,7 @@ import * as platformSchema from "@/platform/db/schema";
 import * as businessSchema from "@/templates/egg-tasta/db/schema";
 const schema = { ...platformSchema, ...businessSchema };
 import crypto from 'crypto';
-import { eq } from 'drizzle-orm';
+import { eq, isNull, and } from 'drizzle-orm';
 import * as argon2 from 'argon2';
 
 async function seed() {
@@ -42,7 +42,7 @@ async function seed() {
   ];
 
   for (const r of roles) {
-    const existing = await db.select().from(schema.roles).where(eq(schema.roles.slug, r.slug)).get();
+    const existing = await db.select().from(schema.roles).where(and(eq(schema.roles.slug, r.slug), isNull(schema.roles.tenantId))).get();
     if (!existing) {
       const id = crypto.randomUUID();
       await db.insert(schema.roles).values({ ...r, id, createdAt: new Date(), updatedAt: new Date() }).execute();
