@@ -47,7 +47,7 @@ export function NewPurchaseClient({ suppliers, products }: { suppliers: any[], p
   };
 
   const handleItemChange = (id: number, field: string, value: any) => {
-    setItems(items.map(item => {
+    setItems(prevItems => prevItems.map(item => {
       if (item.id === id) {
         const updated = { ...item, [field]: value };
         

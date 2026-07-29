@@ -46,7 +46,7 @@ export function NewSaleClient({ customers, products }: { customers: any[], produ
   };
 
   const handleItemChange = (id: number, field: string, value: any) => {
-    setItems(items.map(item => {
+    setItems(prevItems => prevItems.map(item => {
       if (item.id === id) {
         const updated = { ...item, [field]: value };
         
@@ -56,6 +56,7 @@ export function NewSaleClient({ customers, products }: { customers: any[], produ
             updated.sellingPrice = prod.sellingPrice;
             updated.availableStock = prod.variantInventoryMode === 'VARIANT_LEVEL' ? 0 : prod.currentStock;
           }
+          updated.variantId = ""; // Reset variant immediately in the same cycle
         }
         
         if (field === 'variantId') {
@@ -204,12 +205,11 @@ export function NewSaleClient({ customers, products }: { customers: any[], produ
             <Table>
               <Thead>
                 <Tr>
-                  <Th className="w-[20%]">Product</Th>
-                  <Th className="w-[15%]">Variant</Th>
+                  <Th className="w-[30%]">Product / Variant</Th>
                   <Th className="w-[10%] text-right">Stock</Th>
-                  <Th className="w-[15%] text-right">Selling Price</Th>
-                  <Th className="w-[15%] text-right">Quantity</Th>
-                  <Th className="w-[10%] text-right">Disc.</Th>
+                  <Th className="w-[15%] text-right">Price</Th>
+                  <Th className="w-[15%] text-right">Qty</Th>
+                  <Th className="w-[15%] text-right">Disc.</Th>
                   <Th className="w-[10%] text-right">Total</Th>
                   <Th className="w-[5%]"></Th>
                 </Tr>
@@ -224,37 +224,35 @@ export function NewSaleClient({ customers, products }: { customers: any[], produ
                   return (
                   <Tr key={item.id}>
                     <Td>
-                      <select 
-                        value={item.productId} 
-                        onChange={e => {
-                          handleItemChange(item.id, 'productId', e.target.value);
-                          handleItemChange(item.id, 'variantId', ''); // reset variant
-                        }}
-                        className="w-full px-2 py-1.5 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-md text-sm"
-                      >
-                        <option value="">Select Product...</option>
-                        {products.map(p => (
-                          <option key={p.id} value={p.id}>{p.name} ({p.productCode})</option>
-                        ))}
-                      </select>
-                    </Td>
-                    <Td>
-                      {hasVariants ? (
+                      <div className="flex flex-col gap-2">
                         <select 
-                          value={item.variantId || ""} 
+                          value={item.productId} 
                           onChange={e => {
-                            handleItemChange(item.id, 'variantId', e.target.value);
+                            handleItemChange(item.id, 'productId', e.target.value);
                           }}
-                          className="w-full px-2 py-1.5 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-md text-sm"
+                          className="w-full px-2 py-1.5 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-md text-sm font-medium"
                         >
-                          <option value="">Select Variant...</option>
-                          {selectedProduct.variants.map((v: any) => (
-                            <option key={v.id} value={v.id}>{v.name}</option>
+                          <option value="">Select Product...</option>
+                          {products.map(p => (
+                            <option key={p.id} value={p.id}>{p.name}</option>
                           ))}
                         </select>
-                      ) : (
-                        <span className="text-xs text-slate-400 pl-2">No variants</span>
-                      )}
+                        
+                        {hasVariants && (
+                          <select 
+                            value={item.variantId || ""} 
+                            onChange={e => {
+                              handleItemChange(item.id, 'variantId', e.target.value);
+                            }}
+                            className="w-full px-2 py-1.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-md text-sm text-slate-600 dark:text-slate-400"
+                          >
+                            <option value="">Select Variant...</option>
+                            {selectedProduct.variants.map((v: any) => (
+                              <option key={v.id} value={v.id}>{v.name}</option>
+                            ))}
+                          </select>
+                        )}
+                      </div>
                     </Td>
                     <Td>
                       <input 
