@@ -1,0 +1,68 @@
+src/templates/egg-tasta
+├── actions
+│   ├── accounts.ts
+│   ├── customerCollections.ts
+│   ├── customers.ts
+│   ├── dashboard.ts
+│   ├── expenses.ts
+│   ├── inventory.ts
+│   ├── products.ts
+│   ├── purchases.ts
+│   ├── sales.ts
+│   ├── supplierPayments.ts
+│   └── suppliers.ts
+├── app
+│   ├── accounts
+│   ├── activity
+│   ├── customer-collection
+│   ├── customers
+│   ├── dashboard
+│   ├── data
+│   ├── expenses
+│   ├── inventory
+│   ├── modules
+│   ├── notifications
+│   ├── permissions
+│   ├── products
+│   ├── profile
+│   ├── purchases
+│   ├── reports
+│   ├── roles
+│   ├── sales
+│   ├── settings
+│   ├── supplier-payments
+│   ├── suppliers
+│   └── users
+├── components
+│   ├── Buttons.tsx
+│   ├── Cards.tsx
+│   ├── Forms.tsx
+│   ├── Layout.tsx
+│   ├── Status.tsx
+│   ├── Tables.tsx
+│   ├── accounts
+│   ├── customer-collection
+│   ├── customers
+│   ├── expenses
+│   ├── index.ts
+│   ├── inventory
+│   ├── layout-client.tsx
+│   ├── notifications
+│   ├── payments
+│   ├── products
+│   ├── purchases
+│   ├── reports
+│   ├── sales
+│   ├── settings
+│   ├── sidebar.tsx
+│   ├── supplier-payments
+│   ├── suppliers
+│   └── users
+├── db
+│   ├── repositories
+│   └── schema
+├── index.ts
+└── styles
+    └── theme.css
+
+44 directories, 22 files

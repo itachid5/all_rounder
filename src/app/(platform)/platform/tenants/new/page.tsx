@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { provisionBusiness } from "@/shared/actions/tenants";
 import { Copy, Check, ArrowRight } from "lucide-react";
@@ -11,6 +11,13 @@ export default function NewBusinessPage() {
   const [error, setError] = useState("");
   const [credentials, setCredentials] = useState<{ username: string; password: string; url: string } | null>(null);
   const [copied, setCopied] = useState(false);
+  const [defaultLang, setDefaultLang] = useState("en");
+
+  useEffect(() => {
+    if (typeof navigator !== 'undefined' && navigator.language && navigator.language.startsWith('bn')) {
+      setDefaultLang('bn');
+    }
+  }, []);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -135,7 +142,8 @@ export default function NewBusinessPage() {
 
             <div className="space-y-2">
               <label htmlFor="timezone" className="text-sm font-medium">Timezone</label>
-              <select id="timezone" name="timezone" defaultValue="UTC" className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50">
+              <select id="timezone" name="timezone" defaultValue="Asia/Dhaka" className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50">
+                <option value="Asia/Dhaka">Bangladesh (Asia/Dhaka, UTC+06:00)</option>
                 <option value="UTC">UTC</option>
                 <option value="America/New_York">Eastern Time (US & Canada)</option>
                 <option value="Europe/London">London</option>
@@ -145,7 +153,8 @@ export default function NewBusinessPage() {
 
             <div className="space-y-2">
               <label htmlFor="currency" className="text-sm font-medium">Currency</label>
-              <select id="currency" name="currency" defaultValue="USD" className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50">
+              <select id="currency" name="currency" defaultValue="BDT" className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50">
+                <option value="BDT">BDT (৳)</option>
                 <option value="USD">USD ($)</option>
                 <option value="EUR">EUR (€)</option>
                 <option value="GBP">GBP (£)</option>
@@ -155,8 +164,9 @@ export default function NewBusinessPage() {
 
             <div className="space-y-2">
               <label htmlFor="language" className="text-sm font-medium">Language</label>
-              <select id="language" name="language" defaultValue="en" className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50">
+              <select id="language" name="language" value={defaultLang} onChange={(e) => setDefaultLang(e.target.value)} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50">
                 <option value="en">English</option>
+                <option value="bn">বাংলা (Bangla)</option>
                 <option value="es">Spanish</option>
                 <option value="fr">French</option>
               </select>
