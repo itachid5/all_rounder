@@ -17,7 +17,8 @@ export function AddSupplierForm() {
     setError(null);
     setSuccess(null);
 
-    const formData = new FormData(e.currentTarget);
+    const form = e.currentTarget;
+    const formData = new FormData(form);
     const name = formData.get('name')?.toString();
     const mobile = formData.get('mobile')?.toString();
 
@@ -30,7 +31,7 @@ export function AddSupplierForm() {
       const res = await createSupplierAction(formData);
       if (res.success && res.supplier) {
         setSuccess(`Supplier ${res.supplier.supplierCode} created successfully!`);
-        e.currentTarget.reset(); // Clear form
+        form.reset(); // Clear form
         // We could redirect to manage suppliers, but requirement says:
         // "Redirect to Manage Suppliers or stay for 'Save & Add Another'."
         // We'll stay and show success message so they can add another.
