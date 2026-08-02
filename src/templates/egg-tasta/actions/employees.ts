@@ -9,13 +9,15 @@ import { users, userRoles } from "@/platform/db/schema";
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 
-async function getTenantIdFromSession(): Promise<string | null> {
-  const cookieStore = await cookies();
-  const token = cookieStore.get("auth-token")?.value;
-  if (!token) return null;
+import { getTenantId as getSharedTenantId } from "@/shared/utils/auth";
 
-  const userRoleInfo = await db.select().from(userRoles).where(eq(userRoles.userId, token)).get();
-  return userRoleInfo?.tenantId || null;
+async function getTenantIdFromSession(): Promise<string | null> {
+  try {
+    const { tenantId } = await getSharedTenantId();
+    return tenantId;
+  } catch {
+    return null;
+  }
 }
 
 export async function getNextEmpIdAction() {

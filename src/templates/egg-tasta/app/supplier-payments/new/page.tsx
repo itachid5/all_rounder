@@ -8,12 +8,15 @@ import { eq, and } from "drizzle-orm";
 import { cookies } from "next/headers";
 import NewPaymentClient from "@/templates/egg-tasta/components/supplier-payments/new-payment-client";
 
+import { getTenantId as getSharedTenantId } from "@/shared/utils/auth";
+
 async function getTenantId() {
-  const cookieStore = await cookies();
-  const token = cookieStore.get('auth-token')?.value;
-  if (!token) return null;
-  const userRoleInfo = await db.select().from(userRoles).where(eq(userRoles.userId, token)).get();
-  return userRoleInfo?.tenantId;
+  try {
+    const { tenantId } = await getSharedTenantId();
+    return tenantId;
+  } catch {
+    return null;
+  }
 }
 
 export default async function SupplierPaymentPage() {

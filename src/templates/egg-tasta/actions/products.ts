@@ -12,15 +12,11 @@ import { userRoles } from "@/platform/db/schema";
 
 import { randomUUID } from "crypto";
 
+import { getTenantId as getSharedTenantId } from "@/shared/utils/auth";
+
 async function getTenantId() {
-  const cookieStore = await cookies();
-  const token = cookieStore.get('auth-token')?.value;
-  if (!token) throw new Error("Not authenticated");
-  
-  const userRoleInfo = await db.select().from(userRoles).where(eq(userRoles.userId, token)).get();
-  if (!userRoleInfo?.tenantId) throw new Error("No tenant found");
-  
-  return userRoleInfo.tenantId;
+  const { tenantId } = await getSharedTenantId();
+  return tenantId;
 }
 
 export async function createProductAction(formData: FormData) {

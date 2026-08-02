@@ -2,6 +2,7 @@
 
 import { db } from "@/shared/db/database";
 import { roles, permissions, rolePermissions, userRoles, users, tenants } from "@/platform/db/schema";
+import { employees } from "@/templates/egg-tasta/db/schema/employees";
 import { eq, and, inArray } from "drizzle-orm";
 import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
@@ -20,10 +21,25 @@ async function getSessionContext(): Promise<{ userId: string; tenantId: string }
   const user = await db.select().from(users).where(eq(users.id, token)).get();
   if (!user || user.status !== 'ACTIVE') return null;
 
-  const userRoleInfo = await db.select().from(userRoles).where(eq(userRoles.userId, token)).get();
-  if (!userRoleInfo?.tenantId) return null;
+  // 1. Check if user is owner of a tenant
+  const ownedTenant = await db.select().from(tenants).where(eq(tenants.ownerId, token)).get();
+  if (ownedTenant) {
+    return { userId: token, tenantId: ownedTenant.id };
+  }
 
-  return { userId: token, tenantId: userRoleInfo.tenantId };
+  // 2. Check userRoles
+  const userRoleInfo = await db.select().from(userRoles).where(eq(userRoles.userId, token)).get();
+  if (userRoleInfo?.tenantId) {
+    return { userId: token, tenantId: userRoleInfo.tenantId };
+  }
+
+  // 3. Check employees
+  const emp = await db.select().from(employees).where(eq(employees.userId, token)).get();
+  if (emp?.tenantId) {
+    return { userId: token, tenantId: emp.tenantId };
+  }
+
+  return null;
 }
 
 export async function getCurrentUserPermissionsAction(): Promise<{
@@ -35,27 +51,29 @@ export async function getCurrentUserPermissionsAction(): Promise<{
     const ctx = await getSessionContext();
     if (!ctx) return { success: false, permissions: [], isOwner: false };
 
-    // Get user roles
-    const uRoles = await db.select().from(userRoles).where(eq(userRoles.userId, ctx.userId)).all();
-    if (uRoles.length === 0) return { success: true, permissions: [], isOwner: false };
-
-    const roleIds = uRoles.map((ur) => ur.roleId);
-    const dbRoles = await db.select().from(roles).where(inArray(roles.id, roleIds)).all();
-
     const tenant = await db.select().from(tenants).where(eq(tenants.id, ctx.tenantId)).get();
     const isTenantOwner = tenant?.ownerId === ctx.userId;
 
+    const user = await db.select().from(users).where(eq(users.id, ctx.userId)).get();
+    const isPlatformAdmin = user?.userType === 'PLATFORM';
+
+    // Get user roles
+    const uRoles = await db.select().from(userRoles).where(eq(userRoles.userId, ctx.userId)).all();
+    const roleIds = uRoles.map((ur) => ur.roleId);
+    const dbRoles = roleIds.length > 0 ? await db.select().from(roles).where(inArray(roles.id, roleIds)).all() : [];
+
     // Check if Business Owner, Internal Admin, or Super Admin
-    const isOwner = isTenantOwner || dbRoles.some(
+    const isOwner = isTenantOwner || isPlatformAdmin || Boolean(user?.isInternal) || dbRoles.some(
       (r) =>
         r.slug === "business_owner" ||
         r.slug === "internal_business_admin" ||
         r.slug === "super_admin" ||
-        r.slug === "platform_admin"
+        r.slug === "platform_admin" ||
+        r.isInternal
     );
 
     if (isOwner) {
-      // Owners and Internal Business Admins have ALL business permissions
+      // Business Owners, Internal Admins, and Super Admins receive ALL permissions automatically
       const allPerms = await db.select().from(permissions).all();
       return {
         success: true,
@@ -64,7 +82,11 @@ export async function getCurrentUserPermissionsAction(): Promise<{
       };
     }
 
-    // Otherwise load assigned permissions for user's roles
+    if (roleIds.length === 0) {
+      return { success: true, permissions: [], isOwner: false };
+    }
+
+    // Otherwise load assigned permissions for employee's assigned roles
     const rPerms = await db
       .select({ slug: permissions.slug })
       .from(rolePermissions)

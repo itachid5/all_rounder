@@ -16,18 +16,8 @@ async function verifySuperAdmin(): Promise<{ userId: string } | null> {
 
   const u = await db.select().from(users).where(eq(users.id, token)).get();
   if (!u) return null;
-
-  const uRoles = await db.select().from(userRoles).where(eq(userRoles.userId, token)).all();
-  if (uRoles.length === 0) return null;
-
-  const roleIds = uRoles.map((r) => r.roleId);
-  const dbRoles = await db.select().from(roles).all();
-  const isSuper = dbRoles.some(
-    (r) => roleIds.includes(r.id) && (r.slug === "super_admin" || r.slug === "platform_admin")
-  );
-
-  if (!isSuper) return null;
-  return { userId: token };
+  if (u.userType === 'PLATFORM') return { userId: token };
+  return null;
 }
 
 export async function getInternalAdminsAction(tenantId: string) {

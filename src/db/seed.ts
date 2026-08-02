@@ -9,26 +9,65 @@ import * as argon2 from 'argon2';
 async function seed() {
   console.log('Seeding database...');
 
-  // 1. Create permissions
-  const groups = ['businesses', 'users', 'roles', 'permissions', 'templates', 'settings', 'logs'];
-  const actions = ['create', 'read', 'update', 'delete'];
-  
-  const permissionData = groups.flatMap(group => 
-    actions.map(action => ({
-      id: crypto.randomUUID(),
-      name: `${action.charAt(0).toUpperCase() + action.slice(1)} ${group}`,
-      slug: `${action}:${group}`,
-      description: `Can ${action} ${group}`,
-      group,
-      scope: 'PLATFORM',
-      createdAt: new Date(),
-    }))
-  );
+  const businessModulePerms = [
+    { slug: 'view:dashboard', name: 'View Dashboard', group: 'dashboard' },
+    { slug: 'view:products', name: 'View Products', group: 'products' },
+    { slug: 'create:products', name: 'Create Products', group: 'products' },
+    { slug: 'edit:products', name: 'Edit Products', group: 'products' },
+    { slug: 'delete:products', name: 'Delete Products', group: 'products' },
+    { slug: 'view:suppliers', name: 'View Suppliers', group: 'suppliers' },
+    { slug: 'create:suppliers', name: 'Create Suppliers', group: 'suppliers' },
+    { slug: 'edit:suppliers', name: 'Edit Suppliers', group: 'suppliers' },
+    { slug: 'delete:suppliers', name: 'Delete Suppliers', group: 'suppliers' },
+    { slug: 'view:supplier_payments', name: 'View Supplier Payments', group: 'supplier_payments' },
+    { slug: 'create:supplier_payments', name: 'Create Supplier Payments', group: 'supplier_payments' },
+    { slug: 'delete:supplier_payments', name: 'Delete Supplier Payments', group: 'supplier_payments' },
+    { slug: 'view:customers', name: 'View Customers', group: 'customers' },
+    { slug: 'create:customers', name: 'Create Customers', group: 'customers' },
+    { slug: 'edit:customers', name: 'Edit Customers', group: 'customers' },
+    { slug: 'delete:customers', name: 'Delete Customers', group: 'customers' },
+    { slug: 'view:customer_collections', name: 'View Customer Collections', group: 'customer_collections' },
+    { slug: 'create:customer_collections', name: 'Create Customer Collections', group: 'customer_collections' },
+    { slug: 'delete:customer_collections', name: 'Delete Customer Collections', group: 'customer_collections' },
+    { slug: 'view:purchases', name: 'View Purchases', group: 'purchases' },
+    { slug: 'create:purchases', name: 'Create Purchases', group: 'purchases' },
+    { slug: 'delete:purchases', name: 'Delete Purchases', group: 'purchases' },
+    { slug: 'view:sales', name: 'View Sales', group: 'sales' },
+    { slug: 'create:sales', name: 'Create Sales', group: 'sales' },
+    { slug: 'delete:sales', name: 'Delete Sales', group: 'sales' },
+    { slug: 'view:sales_returns', name: 'View Sales Returns', group: 'sales_returns' },
+    { slug: 'create:sales_returns', name: 'Create Sales Returns', group: 'sales_returns' },
+    { slug: 'view:inventory', name: 'View Inventory', group: 'inventory' },
+    { slug: 'adjust:inventory', name: 'Adjust Inventory', group: 'inventory' },
+    { slug: 'view:expenses', name: 'View Expenses', group: 'expenses' },
+    { slug: 'create:expenses', name: 'Create Expenses', group: 'expenses' },
+    { slug: 'delete:expenses', name: 'Delete Expenses', group: 'expenses' },
+    { slug: 'view:cashbook', name: 'View Cashbook', group: 'cashbook' },
+    { slug: 'create:cashbook', name: 'Create Cashbook Account', group: 'cashbook' },
+    { slug: 'view:reports', name: 'View Reports', group: 'reports' },
+    { slug: 'view:users', name: 'View Users', group: 'users' },
+    { slug: 'create:users', name: 'Create Users', group: 'users' },
+    { slug: 'edit:users', name: 'Edit Users', group: 'users' },
+    { slug: 'delete:users', name: 'Delete Users', group: 'users' },
+    { slug: 'view:data_management', name: 'View Data Management', group: 'data_management' },
+    { slug: 'view:settings', name: 'View Settings', group: 'settings' },
+    { slug: 'edit:settings', name: 'Edit Settings', group: 'settings' },
+    { slug: 'view:branding', name: 'View Branding', group: 'branding' },
+    { slug: 'edit:branding', name: 'Edit Branding', group: 'branding' },
+  ];
 
-  for (const p of permissionData) {
+  for (const p of businessModulePerms) {
     const existing = await db.select().from(schema.permissions).where(eq(schema.permissions.slug, p.slug)).get();
     if (!existing) {
-      await db.insert(schema.permissions).values(p).execute();
+      await db.insert(schema.permissions).values({
+        id: crypto.randomUUID(),
+        name: p.name,
+        slug: p.slug,
+        description: `Can ${p.name}`,
+        group: p.group,
+        scope: 'BUSINESS',
+        createdAt: new Date(),
+      }).execute();
     }
   }
 
@@ -128,9 +167,51 @@ async function seed() {
   ];
 
   for (const t of templates) {
-    const existing = await db.select().from(schema.templates).where(eq(schema.templates.slug, t.slug)).get();
-    if (!existing) {
-      await db.insert(schema.templates).values({ ...t, id: crypto.randomUUID(), createdAt: new Date(), updatedAt: new Date() }).execute();
+    let tRecord = await db.select().from(schema.templates).where(eq(schema.templates.slug, t.slug)).get();
+    if (!tRecord) {
+      const templateId = crypto.randomUUID();
+      await db.insert(schema.templates).values({ ...t, id: templateId, createdAt: new Date(), updatedAt: new Date() }).execute();
+      tRecord = await db.select().from(schema.templates).where(eq(schema.templates.id, templateId)).get();
+    }
+
+    if (tRecord) {
+      const existingNavs = await db.select().from(schema.templateNavigations).where(eq(schema.templateNavigations.templateId, tRecord.id)).all();
+      if (existingNavs.length === 0) {
+        const navItems = [
+          { name: "Dashboard", route: "/app/dashboard", icon: "dashboard", sortOrder: 1 },
+          { name: "Products", route: "/app/products/manage", icon: "layers", sortOrder: 2 },
+          { name: "Suppliers", route: "/app/suppliers/manage", icon: "users", sortOrder: 3 },
+          { name: "Supplier Payments", route: "/app/supplier-payments/manage", icon: "DollarSign", sortOrder: 4 },
+          { name: "Customers", route: "/app/customers/manage", icon: "users", sortOrder: 5 },
+          { name: "Customer Collection", route: "/app/customer-collection/manage", icon: "HandCoins", sortOrder: 6 },
+          { name: "Purchases", route: "/app/purchases/manage", icon: "WalletCards", sortOrder: 7 },
+          { name: "Sales", route: "/app/sales/manage", icon: "DollarSign", sortOrder: 8 },
+          { name: "Sales Return", route: "/app/sales-return/manage", icon: "MoveRight", sortOrder: 9 },
+          { name: "Inventory", route: "/app/inventory/adjustment", icon: "Database", sortOrder: 10 },
+          { name: "Expenses", route: "/app/expenses/manage", icon: "DollarSign", sortOrder: 11 },
+          { name: "Cashbook", route: "/app/cashbook", icon: "WalletCards", sortOrder: 12 },
+          { name: "Reports", route: "/app/reports/dashboard", icon: "activity", sortOrder: 13 },
+          { name: "User Management", route: "/app/users/manage", icon: "users", sortOrder: 14 },
+          { name: "Data Management", route: "/app/data/backup", icon: "Database", sortOrder: 15 },
+          { name: "Settings", route: "/app/settings", icon: "settings", sortOrder: 16 },
+        ];
+        for (const item of navItems) {
+          const slug = item.name.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+          await db.insert(schema.templateNavigations).values({
+            id: crypto.randomUUID(),
+            templateId: tRecord.id,
+            name: item.name,
+            slug: slug,
+            route: item.route,
+            icon: item.icon,
+            parentId: null,
+            sortOrder: item.sortOrder,
+            isActive: true,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          }).execute();
+        }
+      }
     }
   }
 

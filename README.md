@@ -103,9 +103,9 @@ npm start
 
 ## Authentication & RBAC
 The application uses a custom, secure session-based authentication flow backed by HttpOnly and SameSite cookies. It implements granular Role-Based Access Control (RBAC):
-- **Super Admins**: Global platform control, capable of managing all businesses.
-- **Business Owners & Internal Admins**: Full access to a specific tenant's data.
-- **Employees**: Custom roles with specific module access (e.g. `view:sales`, `edit:products`). If an employee lacks permission, the UI gracefully hides restricted elements and backend middleware actively rejects forbidden requests.
+- **Super Admins**: Global platform control, capable of managing all businesses and hidden internal admins.
+- **Business Owners & Internal Admins**: Complete access to their business portal. Permissions are permanent and automatically granted.
+- **Employees**: Fully RBAC-driven. Assigned roles dictate access to specific modules (e.g. `view:products`, `create:sales`). Lacking permissions hides sidebar menus, shortcuts, buttons, dashboard widgets, and blocks direct route/action access with 403.
 
 ## Multi-Tenant Architecture
 The platform utilizes a robust Row-Level Tenant Isolation approach. Every tenant (business) is assigned a unique UUID. Shared platform tables (like users, roles, products) explicitly include a `tenantId` column. Core server actions dynamically inject the active session's `tenantId` into database queries, securely preventing data leakage between businesses.

@@ -9,24 +9,50 @@ import { NavItem } from "@/templates/egg-tasta/components/sidebar";
 
 import { getCurrentUserPermissionsAction } from "./rbac";
 
+import { getTenantId } from "@/shared/utils/auth";
+
+const DEFAULT_BUSINESS_NAV: NavItem[] = [
+  { label: "Dashboard", href: "/app/dashboard", icon: "dashboard" },
+  { label: "Products", href: "/app/products/manage", icon: "layers" },
+  { label: "Suppliers", href: "/app/suppliers/manage", icon: "users" },
+  { label: "Supplier Payments", href: "/app/supplier-payments/manage", icon: "DollarSign" },
+  { label: "Customers", href: "/app/customers/manage", icon: "users" },
+  { label: "Customer Collection", href: "/app/customer-collection/manage", icon: "HandCoins" },
+  { label: "Purchases", href: "/app/purchases/manage", icon: "WalletCards" },
+  { label: "Sales", href: "/app/sales/manage", icon: "DollarSign" },
+  { label: "Sales Return", href: "/app/sales-return/manage", icon: "MoveRight" },
+  { label: "Inventory", href: "/app/inventory/adjustment", icon: "Database" },
+  { label: "Expenses", href: "/app/expenses/manage", icon: "DollarSign" },
+  { label: "Cashbook", href: "/app/cashbook", icon: "WalletCards" },
+  { label: "Reports", href: "/app/reports/dashboard", icon: "activity" },
+  { label: "User Management", href: "/app/users/manage", icon: "users" },
+  { label: "Data Management", href: "/app/data/backup", icon: "Database" },
+  { label: "Settings", href: "/app/settings", icon: "settings" },
+];
+
 export async function getBusinessNavigation(): Promise<NavItem[]> {
   const cookieStore = await cookies();
   const token = cookieStore.get('auth-token')?.value;
   const sessionToken = cookieStore.get('session-token')?.value;
 
-  if (!token || !sessionToken) return [];
+  if (!token || !sessionToken) return DEFAULT_BUSINESS_NAV;
 
   const session = await db.select().from(sessions).where(eq(sessions.id, sessionToken)).get();
-  if (!session || session.userId !== token || session.expiresAt < new Date()) return [];
+  if (!session || session.userId !== token || session.expiresAt < new Date()) return DEFAULT_BUSINESS_NAV;
 
   const user = await db.select().from(users).where(eq(users.id, token)).get();
-  if (!user || user.status !== 'ACTIVE') return [];
+  if (!user || user.status !== 'ACTIVE') return DEFAULT_BUSINESS_NAV;
 
-  const userRoleInfo = await db.select().from(userRoles).where(eq(userRoles.userId, user.id)).get();
-  if (!userRoleInfo?.tenantId) return [];
+  let tenantId: string;
+  try {
+    const res = await getTenantId();
+    tenantId = res.tenantId;
+  } catch {
+    return DEFAULT_BUSINESS_NAV;
+  }
   
-  const tenant = await db.select().from(tenants).where(eq(tenants.id, userRoleInfo.tenantId)).get();
-  if (!tenant?.templateId) return [];
+  const tenant = await db.select().from(tenants).where(eq(tenants.id, tenantId)).get();
+  if (!tenant?.templateId) return DEFAULT_BUSINESS_NAV;
 
   const userPermsRes = await getCurrentUserPermissionsAction();
   const userPerms = userPermsRes.permissions || [];
@@ -43,7 +69,19 @@ export async function getBusinessNavigation(): Promise<NavItem[]> {
     )
     .orderBy(asc(templateNavigations.sortOrder));
 
-  // Route to Permission Mapping
+  const itemsToBuild = navItems.length > 0 ? navItems : DEFAULT_BUSINESS_NAV.map((d, i) => ({
+    id: `default-${i}`,
+    templateId: tenant.templateId,
+    name: d.label,
+    slug: d.label.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
+    icon: d.icon,
+    route: d.href,
+    sortOrder: i + 1,
+    parentId: null,
+    isActive: true,
+  }));
+
+  // Route to Permission Mapping for Employee Role Filtering
   const routePermMap: Record<string, string> = {
     '/app/dashboard': 'view:dashboard',
     '/app/products': 'view:products',
@@ -60,9 +98,7 @@ export async function getBusinessNavigation(): Promise<NavItem[]> {
     '/app/reports': 'view:reports',
     '/app/users': 'view:users',
     '/app/data': 'view:data_management',
-    '/app/settings/branding': 'view:branding',
     '/app/settings': 'view:settings',
-    '/app/profile': 'view:profile',
   };
 
   const hasAccessToRoute = (route?: string | null) => {
@@ -80,7 +116,7 @@ export async function getBusinessNavigation(): Promise<NavItem[]> {
 
   // Build the tree
   const itemsMap = new Map<string, any>();
-  navItems.forEach(item => {
+  itemsToBuild.forEach((item: any) => {
     if (hasAccessToRoute(item.route)) {
       itemsMap.set(item.id, {
         label: item.name,
@@ -105,8 +141,8 @@ export async function getBusinessNavigation(): Promise<NavItem[]> {
     }
   });
 
-  // Filter out empty parent categories if no subItems remain accessible
-  return rootItems.filter(item => item.href !== '#' || (item.subItems && item.subItems.length > 0));
+  const filtered = rootItems.filter(item => item.href !== '#' || (item.subItems && item.subItems.length > 0));
+  return filtered.length > 0 ? filtered : DEFAULT_BUSINESS_NAV;
 }
 
 export async function getCurrentUser() {
@@ -124,19 +160,15 @@ export async function getCurrentUser() {
 }
 
 export async function getTemplateSlug(): Promise<string> {
-  const cookieStore = await cookies();
-  const token = cookieStore.get('auth-token')?.value;
-  const sessionToken = cookieStore.get('session-token')?.value;
+  let tenantId: string;
+  try {
+    const res = await getTenantId();
+    tenantId = res.tenantId;
+  } catch {
+    return 'egg-shop';
+  }
 
-  if (!token || !sessionToken) return 'egg-shop';
-
-  const session = await db.select().from(sessions).where(eq(sessions.id, sessionToken)).get();
-  if (!session || session.userId !== token || session.expiresAt < new Date()) return 'egg-shop';
-
-  const userRoleInfo = await db.select().from(userRoles).where(eq(userRoles.userId, token)).get();
-  if (!userRoleInfo?.tenantId) return 'egg-shop';
-
-  const tenant = await db.select().from(tenants).where(eq(tenants.id, userRoleInfo.tenantId)).get();
+  const tenant = await db.select().from(tenants).where(eq(tenants.id, tenantId)).get();
   if (!tenant?.templateId) return 'egg-shop';
 
   const template = await db.select().from(templates).where(eq(templates.id, tenant.templateId)).get();

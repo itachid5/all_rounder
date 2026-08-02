@@ -2,7 +2,7 @@
 
 import { cookies } from 'next/headers';
 import { db } from '@/shared/db/database';
-import { users } from "@/platform/db/schema";
+import { users, tenants } from "@/platform/db/schema";
 import { sessions } from "@/platform/db/schema/sessions";
 
 import { eq } from 'drizzle-orm';

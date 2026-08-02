@@ -1,10 +1,10 @@
 "use server";
 
 import { db } from "@/shared/db/database";
-import { tenants, users, userRoles } from "@/platform/db/schema";
+import { tenants } from "@/platform/db/schema";
 import { eq } from "drizzle-orm";
-import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
+import { getTenantId } from "@/shared/utils/auth";
 
 export interface TenantBrandingData {
   logoUrl?: string | null;
@@ -20,18 +20,9 @@ export async function getTenantBrandingAction(): Promise<{
   error?: string;
 }> {
   try {
-    const cookieStore = await cookies();
-    const token = cookieStore.get("auth-token")?.value;
-    if (!token) {
-      return { success: false, error: "Unauthorized" };
-    }
+    const { tenantId } = await getTenantId();
 
-    const userRoleInfo = await db.select().from(userRoles).where(eq(userRoles.userId, token)).get();
-    if (!userRoleInfo?.tenantId) {
-      return { success: false, error: "Tenant not found" };
-    }
-
-    const tenant = await db.select().from(tenants).where(eq(tenants.id, userRoleInfo.tenantId)).get();
+    const tenant = await db.select().from(tenants).where(eq(tenants.id, tenantId)).get();
     if (!tenant) {
       return { success: false, error: "Tenant not found" };
     }
@@ -59,22 +50,7 @@ export async function updateTenantBrandingAction(branding: {
   bannerUrl?: string | null;
 }): Promise<{ success: boolean; error?: string }> {
   try {
-    const cookieStore = await cookies();
-    const token = cookieStore.get("auth-token")?.value;
-    if (!token) {
-      return { success: false, error: "Unauthorized" };
-    }
-
-    const userRoleInfo = await db.select().from(userRoles).where(eq(userRoles.userId, token)).get();
-    if (!userRoleInfo?.tenantId) {
-      return { success: false, error: "Tenant not found" };
-    }
-
-    // Verify role permissions (Owner or Admin)
-    const currentUser = await db.select().from(users).where(eq(users.id, token)).get();
-    if (!currentUser) {
-      return { success: false, error: "User not found" };
-    }
+    const { tenantId } = await getTenantId();
 
     await db.update(tenants)
       .set({
@@ -84,7 +60,7 @@ export async function updateTenantBrandingAction(branding: {
         bannerUrl: branding.bannerUrl !== undefined ? branding.bannerUrl : undefined,
         updatedAt: new Date()
       })
-      .where(eq(tenants.id, userRoleInfo.tenantId));
+      .where(eq(tenants.id, tenantId));
 
     revalidatePath("/app", "layout");
     return { success: true };
@@ -96,16 +72,7 @@ export async function updateTenantBrandingAction(branding: {
 
 export async function resetTenantBrandingAction(): Promise<{ success: boolean; error?: string }> {
   try {
-    const cookieStore = await cookies();
-    const token = cookieStore.get("auth-token")?.value;
-    if (!token) {
-      return { success: false, error: "Unauthorized" };
-    }
-
-    const userRoleInfo = await db.select().from(userRoles).where(eq(userRoles.userId, token)).get();
-    if (!userRoleInfo?.tenantId) {
-      return { success: false, error: "Tenant not found" };
-    }
+    const { tenantId } = await getTenantId();
 
     await db.update(tenants)
       .set({
@@ -115,7 +82,7 @@ export async function resetTenantBrandingAction(): Promise<{ success: boolean; e
         bannerUrl: null,
         updatedAt: new Date()
       })
-      .where(eq(tenants.id, userRoleInfo.tenantId));
+      .where(eq(tenants.id, tenantId));
 
     revalidatePath("/app", "layout");
     return { success: true };
