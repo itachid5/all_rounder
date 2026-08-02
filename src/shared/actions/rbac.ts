@@ -1,7 +1,7 @@
 "use server";
 
 import { db } from "@/shared/db/database";
-import { roles, permissions, rolePermissions, userRoles, users } from "@/platform/db/schema";
+import { roles, permissions, rolePermissions, userRoles, users, tenants } from "@/platform/db/schema";
 import { eq, and, inArray } from "drizzle-orm";
 import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
@@ -42,8 +42,11 @@ export async function getCurrentUserPermissionsAction(): Promise<{
     const roleIds = uRoles.map((ur) => ur.roleId);
     const dbRoles = await db.select().from(roles).where(inArray(roles.id, roleIds)).all();
 
+    const tenant = await db.select().from(tenants).where(eq(tenants.id, ctx.tenantId)).get();
+    const isTenantOwner = tenant?.ownerId === ctx.userId;
+
     // Check if Business Owner, Internal Admin, or Super Admin
-    const isOwner = dbRoles.some(
+    const isOwner = isTenantOwner || dbRoles.some(
       (r) =>
         r.slug === "business_owner" ||
         r.slug === "internal_business_admin" ||
