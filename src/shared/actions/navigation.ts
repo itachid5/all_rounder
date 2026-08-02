@@ -3,6 +3,8 @@ import { users, userRoles, tenants, templateNavigations, templates } from "@/pla
 
 import { eq, and, asc, isNull } from "drizzle-orm";
 import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
+import { sessions } from "@/platform/db/schema/sessions";
 import { NavItem } from "@/templates/egg-tasta/components/sidebar";
 
 import { getCurrentUserPermissionsAction } from "./rbac";
@@ -10,11 +12,15 @@ import { getCurrentUserPermissionsAction } from "./rbac";
 export async function getBusinessNavigation(): Promise<NavItem[]> {
   const cookieStore = await cookies();
   const token = cookieStore.get('auth-token')?.value;
+  const sessionToken = cookieStore.get('session-token')?.value;
 
-  if (!token) return [];
+  if (!token || !sessionToken) return [];
+
+  const session = await db.select().from(sessions).where(eq(sessions.id, sessionToken)).get();
+  if (!session || session.userId !== token || session.expiresAt < new Date()) return [];
 
   const user = await db.select().from(users).where(eq(users.id, token)).get();
-  if (!user) return [];
+  if (!user || user.status !== 'ACTIVE') return [];
 
   const userRoleInfo = await db.select().from(userRoles).where(eq(userRoles.userId, user.id)).get();
   if (!userRoleInfo?.tenantId) return [];
@@ -106,8 +112,13 @@ export async function getBusinessNavigation(): Promise<NavItem[]> {
 export async function getCurrentUser() {
   const cookieStore = await cookies();
   const token = cookieStore.get('auth-token')?.value;
+  const sessionToken = cookieStore.get('session-token')?.value;
 
-  if (!token) return { username: "Guest" };
+  if (!token || !sessionToken) return { username: "Guest" };
+  
+  const session = await db.select().from(sessions).where(eq(sessions.id, sessionToken)).get();
+  if (!session || session.userId !== token || session.expiresAt < new Date()) return { username: "Guest" };
+
   const user = await db.select().from(users).where(eq(users.id, token)).get();
   return user || { username: "Guest" };
 }
@@ -115,8 +126,12 @@ export async function getCurrentUser() {
 export async function getTemplateSlug(): Promise<string> {
   const cookieStore = await cookies();
   const token = cookieStore.get('auth-token')?.value;
+  const sessionToken = cookieStore.get('session-token')?.value;
 
-  if (!token) return 'egg-shop';
+  if (!token || !sessionToken) return 'egg-shop';
+
+  const session = await db.select().from(sessions).where(eq(sessions.id, sessionToken)).get();
+  if (!session || session.userId !== token || session.expiresAt < new Date()) return 'egg-shop';
 
   const userRoleInfo = await db.select().from(userRoles).where(eq(userRoles.userId, token)).get();
   if (!userRoleInfo?.tenantId) return 'egg-shop';

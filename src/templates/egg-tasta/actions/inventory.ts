@@ -1,5 +1,7 @@
 "use server";
 
+import { requirePermissionAction } from "@/shared/actions/rbac";
+
 import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 import { db } from "@/shared/db/database";
@@ -20,6 +22,7 @@ async function getTenantId() {
 }
 
 export async function createStockAdjustmentAction(data: any) {
+  await requirePermissionAction('create:inventory');
   try {
     const tenantId = await getTenantId();
     const adjustment = await InventoryRepository.createStockAdjustment(tenantId, data, "system");
@@ -32,6 +35,7 @@ export async function createStockAdjustmentAction(data: any) {
 }
 
 export async function getStockAdjustmentsAction(options: any = {}) {
+  await requirePermissionAction('view:inventory');
   try {
     const tenantId = await getTenantId();
     const result = await InventoryRepository.listStockAdjustments(tenantId, options);
@@ -43,6 +47,7 @@ export async function getStockAdjustmentsAction(options: any = {}) {
 }
 
 export async function getStockValuationAction() {
+  await requirePermissionAction('view:inventory');
   try {
     const tenantId = await getTenantId();
     const valuations = await InventoryRepository.getStockValuation(tenantId);

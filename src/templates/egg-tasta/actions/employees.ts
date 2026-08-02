@@ -1,5 +1,7 @@
 "use server";
 
+import { requirePermissionAction } from "@/shared/actions/rbac";
+
 import { EmployeeRepository } from "../db/repositories/EmployeeRepository";
 import { cookies } from "next/headers";
 import { db } from "@/shared/db/database";
@@ -17,6 +19,7 @@ async function getTenantIdFromSession(): Promise<string | null> {
 }
 
 export async function getNextEmpIdAction() {
+  await requirePermissionAction('view:users');
   try {
     const tenantId = await getTenantIdFromSession();
     if (!tenantId) return { success: false, error: "Unauthorized" };
@@ -29,6 +32,7 @@ export async function getNextEmpIdAction() {
 }
 
 export async function getEmployeesAction() {
+  await requirePermissionAction('view:users');
   try {
     const tenantId = await getTenantIdFromSession();
     if (!tenantId) return { success: false, error: "Unauthorized", data: [] };
@@ -42,6 +46,7 @@ export async function getEmployeesAction() {
 }
 
 export async function createEmployeeAction(formData: FormData) {
+  await requirePermissionAction('create:users');
   try {
     const tenantId = await getTenantIdFromSession();
     if (!tenantId) return { success: false, error: "Unauthorized" };
@@ -88,6 +93,7 @@ export async function createEmployeeAction(formData: FormData) {
 }
 
 export async function updateEmployeeAction(id: string, formData: FormData) {
+  await requirePermissionAction('edit:users');
   try {
     const tenantId = await getTenantIdFromSession();
     if (!tenantId) return { success: false, error: "Unauthorized" };
@@ -123,6 +129,7 @@ export async function updateEmployeeAction(id: string, formData: FormData) {
 }
 
 export async function toggleEmployeeStatusAction(id: string) {
+  await requirePermissionAction('edit:users');
   try {
     const tenantId = await getTenantIdFromSession();
     if (!tenantId) return { success: false, error: "Unauthorized" };
@@ -138,6 +145,7 @@ export async function toggleEmployeeStatusAction(id: string) {
 }
 
 export async function deleteEmployeeAction(id: string) {
+  await requirePermissionAction('delete:users');
   try {
     const tenantId = await getTenantIdFromSession();
     if (!tenantId) return { success: false, error: "Unauthorized" };

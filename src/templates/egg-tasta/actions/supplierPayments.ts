@@ -1,5 +1,7 @@
 "use server";
 
+import { requirePermissionAction } from "@/shared/actions/rbac";
+
 import { db } from "@/shared/db/database";
 import { SupplierPaymentRepository } from "@/templates/egg-tasta/db/repositories/SupplierPaymentRepository";
 import { userRoles } from "@/platform/db/schema";
@@ -20,6 +22,7 @@ async function getTenantId() {
 }
 
 export async function createSupplierPaymentAction(data: any) {
+  await requirePermissionAction('create:supplier_payments');
   try {
     const { tenantId, userId } = await getTenantId();
     
@@ -50,6 +53,7 @@ export async function createSupplierPaymentAction(data: any) {
 }
 
 export async function listSupplierPaymentsAction(options: any = {}) {
+  await requirePermissionAction('view:supplier_payments');
   try {
     const { tenantId } = await getTenantId();
     const result = await SupplierPaymentRepository.listPayments(tenantId, options);
@@ -60,6 +64,7 @@ export async function listSupplierPaymentsAction(options: any = {}) {
 }
 
 export async function deleteSupplierPaymentAction(paymentId: string) {
+  await requirePermissionAction('delete:supplier_payments');
   try {
     const { tenantId } = await getTenantId();
     await SupplierPaymentRepository.deletePayment(tenantId, paymentId);

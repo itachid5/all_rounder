@@ -1,5 +1,7 @@
 "use server";
 
+import { requirePermissionAction } from "@/shared/actions/rbac";
+
 import { db } from "@/shared/db/database";
 import { productCategories, productUnits } from "@/templates/egg-tasta/db/schema";
 
@@ -22,6 +24,7 @@ async function getTenantId() {
 }
 
 export async function createProductAction(formData: FormData) {
+  await requirePermissionAction('create:products');
   try {
     const tenantId = await getTenantId();
     
@@ -95,6 +98,7 @@ export async function getCategoriesAndUnits() {
 }
 
 export async function listProductsAction(options: any = {}) {
+  await requirePermissionAction('view:products');
   try {
     const tenantId = await getTenantId();
     const result = await ProductRepository.listProducts(tenantId, options);
@@ -105,6 +109,7 @@ export async function listProductsAction(options: any = {}) {
 }
 
 export async function softDeleteProductAction(productCode: string) {
+  await requirePermissionAction('delete:products');
   try {
     const tenantId = await getTenantId();
     await ProductRepository.softDeleteProduct(tenantId, productCode);
@@ -115,6 +120,7 @@ export async function softDeleteProductAction(productCode: string) {
 }
 
 export async function bulkUpdateStatusAction(productCodes: string[], status: 'ACTIVE' | 'INACTIVE' | 'ARCHIVED') {
+  await requirePermissionAction('edit:products');
   try {
     const tenantId = await getTenantId();
     await ProductRepository.bulkUpdateStatus(tenantId, productCodes, status);

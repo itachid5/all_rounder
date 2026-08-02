@@ -1,5 +1,7 @@
 "use server";
 
+import { requirePermissionAction } from "@/shared/actions/rbac";
+
 import { db } from "@/shared/db/database";
 import { DashboardRepository } from "@/templates/egg-tasta/db/repositories/DashboardRepository";
 import { userRoles } from "@/platform/db/schema";
@@ -19,6 +21,7 @@ async function getTenantId() {
 }
 
 export async function getDashboardSummaryAction(filterOptions: { range?: string; from?: string; to?: string } = {}) {
+  await requirePermissionAction('view:dashboard');
   try {
     const tenantId = await getTenantId();
     const data = await DashboardRepository.getSummary(tenantId, filterOptions);

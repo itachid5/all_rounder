@@ -6,6 +6,7 @@ import Link from "next/link";
 import { listSalesAction, deleteSaleAction } from "@/templates/egg-tasta/actions/sales";
 import { Button, Table, Thead, Tbody, Tr, Th, Td, EmptyState, Badge } from "@/templates/egg-tasta/components";
 import { formatDate } from "@/shared/utils/date";
+import { PermissionGuard } from "@/shared/components/permission-context";
 
 export function ManageSalesClient({ initialData, initialTotal }: { initialData: any[], initialTotal: number }) {
   const [isPending, startTransition] = useTransition();
@@ -83,16 +84,20 @@ export function ManageSalesClient({ initialData, initialTotal }: { initialData: 
         </div>
 
         <div className="flex gap-2 w-full sm:w-auto">
-          <Button variant="outline" className="hidden sm:flex" onClick={() => alert('Export feature coming soon.')}>
-            <FileDown className="h-4 w-4 mr-2" />
-            Export
-          </Button>
-          <Link href="/app/sales/new">
-            <Button variant="primary">
-              <Plus className="h-4 w-4 mr-2" />
-              New Sale
+          <PermissionGuard permission="export:sales">
+            <Button variant="outline" className="hidden sm:flex" onClick={() => alert('Export feature coming soon.')}>
+              <FileDown className="h-4 w-4 mr-2" />
+              Export
             </Button>
-          </Link>
+          </PermissionGuard>
+          <PermissionGuard permission="create:sales">
+            <Link href="/app/sales/new">
+              <Button variant="primary">
+                <Plus className="h-4 w-4 mr-2" />
+                New Sale
+              </Button>
+            </Link>
+          </PermissionGuard>
         </div>
       </div>
 
@@ -125,9 +130,11 @@ export function ManageSalesClient({ initialData, initialTotal }: { initialData: 
                   description="Try adjusting your filters or create a new sale." 
                   icon={Search} 
                   action={
-                    <Link href="/app/sales/new">
-                      <Button variant="outline" size="sm">New Sale</Button>
-                    </Link>
+                    <PermissionGuard permission="create:sales">
+                      <Link href="/app/sales/new">
+                        <Button variant="outline" size="sm">New Sale</Button>
+                      </Link>
+                    </PermissionGuard>
                   }
                 />
               </Td>
@@ -150,20 +157,28 @@ export function ManageSalesClient({ initialData, initialTotal }: { initialData: 
                   </Td>
                   <Td className="text-right">
                     <div className="flex items-center justify-end gap-1">
-                      <button className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded dark:hover:text-slate-300 dark:hover:bg-slate-800 transition-colors" title="View">
-                        <Eye className="h-4 w-4" />
-                      </button>
-                      <button className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded dark:hover:text-blue-400 dark:hover:bg-blue-900/30 transition-colors" title="Print">
-                        <Printer className="h-4 w-4" />
-                      </button>
-                      <Link href="/app/sales/returns">
-                        <button className="p-1.5 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded dark:hover:text-purple-400 dark:hover:bg-purple-900/30 transition-colors" title="Return Sale">
-                          <ArrowRightLeft className="h-4 w-4" />
+                      <PermissionGuard permission="view:sales">
+                        <button className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded dark:hover:text-slate-300 dark:hover:bg-slate-800 transition-colors" title="View">
+                          <Eye className="h-4 w-4" />
                         </button>
-                      </Link>
+                      </PermissionGuard>
+                      <PermissionGuard permission="print:sales">
+                        <button className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded dark:hover:text-blue-400 dark:hover:bg-blue-900/30 transition-colors" title="Print">
+                          <Printer className="h-4 w-4" />
+                        </button>
+                      </PermissionGuard>
+                      <PermissionGuard permission="create:sales_returns">
+                        <Link href="/app/sales/returns">
+                          <button className="p-1.5 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded dark:hover:text-purple-400 dark:hover:bg-purple-900/30 transition-colors" title="Return Sale">
+                            <ArrowRightLeft className="h-4 w-4" />
+                          </button>
+                        </Link>
+                      </PermissionGuard>
+                      <PermissionGuard permission="delete:sales">
                         <button onClick={() => handleDelete(item.id, item.invoiceNo)} className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded dark:hover:text-red-400 dark:hover:bg-red-900/30 transition-colors" title="Delete">
                           <Trash2 className="h-4 w-4" />
                         </button>
+                      </PermissionGuard>
                     </div>
                   </Td>
                 </Tr>

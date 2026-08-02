@@ -21,7 +21,7 @@ export class EmployeeRepository {
     const list = await db
       .select({ empId: employees.empId })
       .from(employees)
-      .where(eq(employees.tenantId, tenantId))
+      .where(and(eq(employees.tenantId, tenantId), eq(employees.isInternal, false)))
       .all();
 
     let maxNum = 0;
@@ -52,17 +52,17 @@ export class EmployeeRepository {
         createdAt: employees.createdAt,
       })
       .from(employees)
-      .where(eq(employees.tenantId, tenantId))
+      .where(and(eq(employees.tenantId, tenantId), eq(employees.isInternal, false)))
       .orderBy(desc(employees.createdAt))
       .all();
 
-    // Fetch usernames for linked users
+    // Fetch usernames for linked non-internal users
     const results = await Promise.all(
       list.map(async (emp) => {
         let username = "";
         let lastLogin = "Never";
         if (emp.userId) {
-          const u = await db.select().from(users).where(eq(users.id, emp.userId)).get();
+          const u = await db.select().from(users).where(and(eq(users.id, emp.userId), eq(users.isInternal, false))).get();
           if (u) {
             username = u.username;
             if (u.lastLoginAt) {
@@ -85,14 +85,14 @@ export class EmployeeRepository {
     const emp = await db
       .select()
       .from(employees)
-      .where(and(eq(employees.id, id), eq(employees.tenantId, tenantId)))
+      .where(and(eq(employees.id, id), eq(employees.tenantId, tenantId), eq(employees.isInternal, false)))
       .get();
 
     if (!emp) return null;
 
     let username = "";
     if (emp.userId) {
-      const u = await db.select().from(users).where(eq(users.id, emp.userId)).get();
+      const u = await db.select().from(users).where(and(eq(users.id, emp.userId), eq(users.isInternal, false))).get();
       if (u) username = u.username;
     }
 
@@ -111,7 +111,7 @@ export class EmployeeRepository {
     const existingEmp = await db
       .select()
       .from(employees)
-      .where(and(eq(employees.tenantId, tenantId), eq(employees.mobile, params.mobile)))
+      .where(and(eq(employees.tenantId, tenantId), eq(employees.mobile, params.mobile), eq(employees.isInternal, false)))
       .get();
 
     if (existingEmp) {
@@ -146,17 +146,18 @@ export class EmployeeRepository {
         userType: "BUSINESS",
         status: params.status === "ACTIVE" ? "ACTIVE" : "INACTIVE",
         mustChangePassword: false,
+        isInternal: false,
       });
 
       // Find or assign default role
       let role = await db
         .select()
         .from(roles)
-        .where(and(eq(roles.tenantId, tenantId), eq(roles.slug, params.designation.toLowerCase())))
+        .where(and(eq(roles.tenantId, tenantId), eq(roles.slug, params.designation.toLowerCase()), eq(roles.isInternal, false)))
         .get();
 
       if (!role) {
-        role = await db.select().from(roles).where(eq(roles.tenantId, tenantId)).get();
+        role = await db.select().from(roles).where(and(eq(roles.tenantId, tenantId), eq(roles.isInternal, false))).get();
       }
 
       if (role) {
@@ -178,6 +179,7 @@ export class EmployeeRepository {
       designation: params.designation,
       joinDate: params.joinDate,
       status: params.status || "ACTIVE",
+      isInternal: false,
       userId: createdUserId,
     });
 
@@ -212,7 +214,7 @@ export class EmployeeRepository {
         status: params.status,
         updatedAt: new Date(),
       })
-      .where(and(eq(employees.id, id), eq(employees.tenantId, tenantId)));
+      .where(and(eq(employees.id, id), eq(employees.tenantId, tenantId), eq(employees.isInternal, false)));
 
     if (existing.userId) {
       const nameParts = params.fullName.trim().split(" ");
@@ -230,7 +232,7 @@ export class EmployeeRepository {
         userUpdate.passwordHash = await argon2.hash(params.password.trim());
       }
 
-      await db.update(users).set(userUpdate).where(eq(users.id, existing.userId));
+      await db.update(users).set(userUpdate).where(and(eq(users.id, existing.userId), eq(users.isInternal, false)));
     }
   }
 
@@ -243,13 +245,13 @@ export class EmployeeRepository {
     await db
       .update(employees)
       .set({ status: newStatus, updatedAt: new Date() })
-      .where(and(eq(employees.id, id), eq(employees.tenantId, tenantId)));
+      .where(and(eq(employees.id, id), eq(employees.tenantId, tenantId), eq(employees.isInternal, false)));
 
     if (existing.userId) {
       await db
         .update(users)
         .set({ status: newStatus, updatedAt: new Date() })
-        .where(eq(users.id, existing.userId));
+        .where(and(eq(users.id, existing.userId), eq(users.isInternal, false)));
     }
 
     return newStatus;
@@ -261,11 +263,11 @@ export class EmployeeRepository {
 
     await db
       .delete(employees)
-      .where(and(eq(employees.id, id), eq(employees.tenantId, tenantId)));
+      .where(and(eq(employees.id, id), eq(employees.tenantId, tenantId), eq(employees.isInternal, false)));
 
     if (existing.userId) {
       await db.delete(userRoles).where(eq(userRoles.userId, existing.userId));
-      await db.delete(users).where(eq(users.id, existing.userId));
+      await db.delete(users).where(and(eq(users.id, existing.userId), eq(users.isInternal, false)));
     }
   }
 }

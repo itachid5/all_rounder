@@ -1,5 +1,7 @@
 "use server";
 
+import { requirePermissionAction } from "@/shared/actions/rbac";
+
 import { db } from "@/shared/db/database";
 import { SupplierRepository } from "@/templates/egg-tasta/db/repositories/SupplierRepository";
 import { userRoles } from "@/platform/db/schema";
@@ -19,6 +21,7 @@ async function getTenantId() {
 }
 
 export async function createSupplierAction(formData: FormData) {
+  await requirePermissionAction('create:suppliers');
   try {
     const tenantId = await getTenantId();
     const data = {
@@ -45,6 +48,7 @@ export async function createSupplierAction(formData: FormData) {
 }
 
 export async function listSuppliersAction(options: any = {}) {
+  await requirePermissionAction('view:suppliers');
   try {
     const tenantId = await getTenantId();
     const result = await SupplierRepository.listSuppliers(tenantId, options);
@@ -55,6 +59,7 @@ export async function listSuppliersAction(options: any = {}) {
 }
 
 export async function updateSupplierStatusAction(supplierCodes: string[], status: 'ACTIVE' | 'INACTIVE' | 'ARCHIVED') {
+  await requirePermissionAction('edit:suppliers');
   try {
     const tenantId = await getTenantId();
     await SupplierRepository.updateSupplierStatus(tenantId, supplierCodes, status);

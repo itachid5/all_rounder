@@ -5,6 +5,7 @@ import { Search, Plus, Printer, XCircle } from "lucide-react";
 import Link from "next/link";
 import { Button, Table, Thead, Tbody, Tr, Th, Td, EmptyState, StatusBadge } from "@/templates/egg-tasta/components";
 import { formatDate } from "@/shared/utils/date";
+import { PermissionGuard } from "@/shared/components/permission-context";
 
 export function ManageExpensesClient({ initialData }: { initialData: any[] }) {
   const [search, setSearch] = useState("");
@@ -27,12 +28,14 @@ export function ManageExpensesClient({ initialData }: { initialData: any[] }) {
         </div>
 
         <div className="flex gap-2 w-full sm:w-auto">
-          <Link href="/app/expenses/new">
-            <Button variant="primary">
-              <Plus className="h-4 w-4 mr-2" />
-              Add Expense
-            </Button>
-          </Link>
+          <PermissionGuard permission="create:expenses">
+            <Link href="/app/expenses/new">
+              <Button variant="primary">
+                <Plus className="h-4 w-4 mr-2" />
+                Add Expense
+              </Button>
+            </Link>
+          </PermissionGuard>
         </div>
       </div>
 
@@ -58,9 +61,11 @@ export function ManageExpensesClient({ initialData }: { initialData: any[] }) {
                   description="Record a new expense to track your business outgoing." 
                   icon={Search} 
                   action={
-                    <Link href="/app/expenses/new">
-                      <Button variant="outline" size="sm">Add Expense</Button>
-                    </Link>
+                    <PermissionGuard permission="create:expenses">
+                      <Link href="/app/expenses/new">
+                        <Button variant="outline" size="sm">Add Expense</Button>
+                      </Link>
+                    </PermissionGuard>
                   }
                 />
               </Td>
@@ -79,12 +84,16 @@ export function ManageExpensesClient({ initialData }: { initialData: any[] }) {
                 </Td>
                 <Td className="text-right">
                   <div className="flex items-center justify-end gap-1">
-                    <button className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors" title="Print">
-                      <Printer className="h-4 w-4" />
-                    </button>
-                    <button className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors" title="Cancel Expense">
-                      <XCircle className="h-4 w-4" />
-                    </button>
+                    <PermissionGuard permission="print:expenses">
+                      <button className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors" title="Print">
+                        <Printer className="h-4 w-4" />
+                      </button>
+                    </PermissionGuard>
+                    <PermissionGuard permission="delete:expenses">
+                      <button className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors" title="Cancel Expense">
+                        <XCircle className="h-4 w-4" />
+                      </button>
+                    </PermissionGuard>
                   </div>
                 </Td>
               </Tr>

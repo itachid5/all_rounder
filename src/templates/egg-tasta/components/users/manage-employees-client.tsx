@@ -13,6 +13,7 @@ import {
   updateEmployeeAction 
 } from "@/templates/egg-tasta/actions/employees";
 import { getRolesAction } from "@/shared/actions/rbac";
+import { PermissionGuard } from "@/shared/components/permission-context";
 
 interface EmployeeItem {
   id: string;
@@ -152,12 +153,14 @@ export function ManageEmployeesClient() {
           />
         </div>
 
-        <Link href="/app/users/new">
-          <Button variant="primary">
-            <Plus className="h-4 w-4 mr-2" />
-            Add Employee
-          </Button>
-        </Link>
+        <PermissionGuard permission="create:employees">
+          <Link href="/app/users/new">
+            <Button variant="primary">
+              <Plus className="h-4 w-4 mr-2" />
+              Add Employee
+            </Button>
+          </Link>
+        </PermissionGuard>
       </div>
 
       {/* Employee Data Table */}
@@ -221,37 +224,43 @@ export function ManageEmployeesClient() {
                 </Td>
                 <Td className="text-right">
                   <div className="flex items-center justify-end gap-1">
-                    <button
-                      onClick={() => setEditingEmp(item)}
-                      className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-slate-800 rounded-lg transition-colors"
-                      title="Edit Employee"
-                    >
-                      <Edit className="h-4 w-4" />
-                    </button>
+                    <PermissionGuard permission="edit:employees">
+                      <button
+                        onClick={() => setEditingEmp(item)}
+                        className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-slate-800 rounded-lg transition-colors"
+                        title="Edit Employee"
+                      >
+                        <Edit className="h-4 w-4" />
+                      </button>
+                    </PermissionGuard>
 
-                    <button
-                      onClick={() => handleToggleStatus(item)}
-                      className={`p-1.5 rounded-lg transition-colors ${
-                        item.status === "ACTIVE"
-                          ? "text-slate-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/40"
-                          : "text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/40"
-                      }`}
-                      title={item.status === "ACTIVE" ? "Suspend Employee" : "Activate Employee"}
-                    >
-                      {item.status === "ACTIVE" ? (
-                        <UserX className="h-4 w-4" />
-                      ) : (
-                        <UserCheck className="h-4 w-4" />
-                      )}
-                    </button>
+                    <PermissionGuard permission="edit:employees">
+                      <button
+                        onClick={() => handleToggleStatus(item)}
+                        className={`p-1.5 rounded-lg transition-colors ${
+                          item.status === "ACTIVE"
+                            ? "text-slate-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/40"
+                            : "text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/40"
+                        }`}
+                        title={item.status === "ACTIVE" ? "Suspend Employee" : "Activate Employee"}
+                      >
+                        {item.status === "ACTIVE" ? (
+                          <UserX className="h-4 w-4" />
+                        ) : (
+                          <UserCheck className="h-4 w-4" />
+                        )}
+                      </button>
+                    </PermissionGuard>
 
-                    <button
-                      onClick={() => handleDelete(item)}
-                      className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg transition-colors"
-                      title="Delete Employee"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
+                    <PermissionGuard permission="delete:employees">
+                      <button
+                        onClick={() => handleDelete(item)}
+                        className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg transition-colors"
+                        title="Delete Employee"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </PermissionGuard>
                   </div>
                 </Td>
               </Tr>

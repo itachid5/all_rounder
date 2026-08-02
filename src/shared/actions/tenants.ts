@@ -174,7 +174,7 @@ export async function provisionBusiness(formData: FormData) {
       credentials: {
         username,
         password,
-        url: `${protocol}://${host}/app/login`
+        url: `${protocol}://${host}/business-login`
       } 
     };
   } catch (error: any) {

@@ -1,5 +1,7 @@
 "use server";
 
+import { requirePermissionAction } from "@/shared/actions/rbac";
+
 import { db } from "@/shared/db/database";
 import { PurchaseRepository } from "@/templates/egg-tasta/db/repositories/PurchaseRepository";
 import { userRoles } from "@/platform/db/schema";
@@ -19,6 +21,7 @@ async function getTenantId() {
 }
 
 export async function createPurchaseAction(data: any) {
+  await requirePermissionAction('create:purchases');
   try {
     const { tenantId, userId } = await getTenantId();
     
@@ -46,6 +49,7 @@ export async function createPurchaseAction(data: any) {
 }
 
 export async function listPurchasesAction(options: any = {}) {
+  await requirePermissionAction('view:purchases');
   try {
     const { tenantId } = await getTenantId();
     const result = await PurchaseRepository.listPurchases(tenantId, options);
@@ -56,6 +60,7 @@ export async function listPurchasesAction(options: any = {}) {
 }
 
 export async function deletePurchaseAction(purchaseId: string) {
+  await requirePermissionAction('delete:purchases');
   try {
     const { tenantId } = await getTenantId();
     await PurchaseRepository.deletePurchase(tenantId, purchaseId);

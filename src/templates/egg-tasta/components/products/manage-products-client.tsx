@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { listProductsAction, bulkUpdateStatusAction } from "@/templates/egg-tasta/actions/products";
 import { Button, Table, Thead, Tbody, Tr, Th, Td, EmptyState, StatusBadge } from "@/templates/egg-tasta/components";
+import { PermissionGuard } from "@/shared/components/permission-context";
 
 export function ManageProductsClient({ initialData, initialTotal }: { initialData: any[], initialTotal: number }) {
   const router = useRouter();
@@ -136,31 +137,39 @@ export function ManageProductsClient({ initialData, initialTotal }: { initialDat
         </div>
 
         <div className="flex gap-2 w-full sm:w-auto">
-          <Button variant="outline" className="hidden sm:flex" onClick={() => alert('Export feature coming soon.')}>
-            <FileDown className="h-4 w-4 mr-2" />
-            Export
-          </Button>
-          <Link href="/app/products/new">
-            <Button variant="primary">
-              <Plus className="h-4 w-4 mr-2" />
-              Add Product
+          <PermissionGuard permission="export:products">
+            <Button variant="outline" className="hidden sm:flex" onClick={() => alert('Export feature coming soon.')}>
+              <FileDown className="h-4 w-4 mr-2" />
+              Export
             </Button>
-          </Link>
+          </PermissionGuard>
+          <PermissionGuard permission="create:products">
+            <Link href="/app/products/new">
+              <Button variant="primary">
+                <Plus className="h-4 w-4 mr-2" />
+                Add Product
+              </Button>
+            </Link>
+          </PermissionGuard>
         </div>
       </div>
 
       {/* Bulk Actions Bar */}
       {selectedIds.size > 0 && (
-        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-md p-3 flex items-center justify-between animate-in fade-in slide-in-from-top-2">
-          <span className="text-sm font-medium text-blue-800 dark:text-blue-300">
-            {selectedIds.size} products selected
-          </span>
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm" onClick={() => handleBulkAction('ACTIVE')}>Activate</Button>
-            <Button variant="outline" size="sm" onClick={() => handleBulkAction('INACTIVE')}>Deactivate</Button>
-            <Button variant="outline" size="sm" onClick={() => handleBulkAction('ARCHIVED')} className="text-amber-600 hover:text-amber-700 border-amber-200 hover:bg-amber-50 dark:text-amber-400 dark:border-amber-900/50 dark:hover:bg-amber-900/30">Archive</Button>
+        <PermissionGuard permission="edit:products">
+          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-md p-3 flex items-center justify-between animate-in fade-in slide-in-from-top-2">
+            <span className="text-sm font-medium text-blue-800 dark:text-blue-300">
+              {selectedIds.size} products selected
+            </span>
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" onClick={() => handleBulkAction('ACTIVE')}>Activate</Button>
+              <Button variant="outline" size="sm" onClick={() => handleBulkAction('INACTIVE')}>Deactivate</Button>
+              <PermissionGuard permission="delete:products">
+                <Button variant="outline" size="sm" onClick={() => handleBulkAction('ARCHIVED')} className="text-amber-600 hover:text-amber-700 border-amber-200 hover:bg-amber-50 dark:text-amber-400 dark:border-amber-900/50 dark:hover:bg-amber-900/30">Archive</Button>
+              </PermissionGuard>
+            </div>
           </div>
-        </div>
+        </PermissionGuard>
       )}
 
       {/* Table */}
@@ -203,9 +212,11 @@ export function ManageProductsClient({ initialData, initialTotal }: { initialDat
                   description="Try adjusting your filters or search query." 
                   icon={Search} 
                   action={
-                    <Link href="/app/products/new">
-                      <Button variant="outline" size="sm">Add Product</Button>
-                    </Link>
+                    <PermissionGuard permission="create:products">
+                      <Link href="/app/products/new">
+                        <Button variant="outline" size="sm">Add Product</Button>
+                      </Link>
+                    </PermissionGuard>
                   }
                 />
               </Td>
@@ -246,21 +257,27 @@ export function ManageProductsClient({ initialData, initialTotal }: { initialDat
                   </Td>
                   <Td className="text-right">
                     <div className="flex items-center justify-end gap-1">
-                      <button className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded dark:hover:text-slate-300 dark:hover:bg-slate-800 transition-colors" title="View">
-                        <Eye className="h-4 w-4" />
-                      </button>
-                      <button className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded dark:hover:text-blue-400 dark:hover:bg-blue-900/30 transition-colors" title="Edit">
-                        <Edit className="h-4 w-4" />
-                      </button>
-                      {item.status === 'ARCHIVED' ? (
-                        <button onClick={() => handleRestore(item.productCode)} className="p-1.5 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded dark:hover:text-emerald-400 dark:hover:bg-emerald-900/30 transition-colors" title="Restore">
-                          <RotateCcw className="h-4 w-4" />
+                      <PermissionGuard permission="view:products">
+                        <button className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded dark:hover:text-slate-300 dark:hover:bg-slate-800 transition-colors" title="View">
+                          <Eye className="h-4 w-4" />
                         </button>
-                      ) : (
-                        <button onClick={() => handleArchive(item.productCode)} className="p-1.5 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded dark:hover:text-amber-400 dark:hover:bg-amber-900/30 transition-colors" title="Archive">
-                          <Archive className="h-4 w-4" />
+                      </PermissionGuard>
+                      <PermissionGuard permission="edit:products">
+                        <button className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded dark:hover:text-blue-400 dark:hover:bg-blue-900/30 transition-colors" title="Edit">
+                          <Edit className="h-4 w-4" />
                         </button>
-                      )}
+                      </PermissionGuard>
+                      <PermissionGuard permission="delete:products">
+                        {item.status === 'ARCHIVED' ? (
+                          <button onClick={() => handleRestore(item.productCode)} className="p-1.5 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded dark:hover:text-emerald-400 dark:hover:bg-emerald-900/30 transition-colors" title="Restore">
+                            <RotateCcw className="h-4 w-4" />
+                          </button>
+                        ) : (
+                          <button onClick={() => handleArchive(item.productCode)} className="p-1.5 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded dark:hover:text-amber-400 dark:hover:bg-amber-900/30 transition-colors" title="Archive">
+                            <Archive className="h-4 w-4" />
+                          </button>
+                        )}
+                      </PermissionGuard>
                     </div>
                   </Td>
                 </Tr>

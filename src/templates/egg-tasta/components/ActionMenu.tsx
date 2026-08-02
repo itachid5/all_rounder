@@ -11,17 +11,23 @@ export interface ActionMenuItem {
   onClick?: () => void;
   href?: string;
   variant?: 'default' | 'danger';
+  requiredPermission?: string;
 }
 
 interface ActionMenuProps {
   items: ActionMenuItem[];
 }
 
+import { usePermission } from "@/shared/components/permission-context";
+
 export function ActionMenu({ items }: ActionMenuProps) {
+  const { hasPermission } = usePermission();
   const [isOpen, setIsOpen] = useState(false);
   const [coords, setCoords] = useState({ top: 0, left: 0, width: 0 });
   const buttonRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+
+  const visibleItems = items.filter(item => !item.requiredPermission || hasPermission(item.requiredPermission));
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -73,7 +79,7 @@ export function ActionMenu({ items }: ActionMenuProps) {
       }}
     >
       <div className="py-1" role="menu" aria-orientation="vertical">
-        {items.map((item, index) => {
+        {visibleItems.map((item, index) => {
           const className = `group flex items-center w-full px-4 py-2 text-sm transition-colors ${
             item.variant === 'danger'
               ? 'text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20'
@@ -124,6 +130,8 @@ export function ActionMenu({ items }: ActionMenuProps) {
       </div>
     </div>
   ) : null;
+
+  if (visibleItems.length === 0) return null;
 
   return (
     <div className="relative inline-block text-left">

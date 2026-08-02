@@ -158,7 +158,7 @@ export function BusinessSidebar({
             ) : (
               <Building2 className="h-6 w-6 text-blue-600 dark:text-blue-400 shrink-0" />
             )}
-            <span className="truncate">{branding?.tenantName || "Egg Shop"}</span>
+            <span className="truncate">{branding?.tenantName || "Business"}</span>
           </Link>
           <button onClick={() => setOpen(false)} className="lg:hidden text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white">
             <X className="h-5 w-5" />

@@ -1,5 +1,7 @@
 "use server";
 
+import { requirePermissionAction } from "@/shared/actions/rbac";
+
 import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 import { db } from "@/shared/db/database";
@@ -20,6 +22,7 @@ async function getTenantId() {
 }
 
 export async function createAccountAction(data: any) {
+  await requirePermissionAction('create:cashbook');
   try {
     const tenantId = await getTenantId();
     const account = await AccountRepository.createAccount(tenantId, data, "system");
@@ -32,6 +35,7 @@ export async function createAccountAction(data: any) {
 }
 
 export async function getAccountsAction(options: any = {}) {
+  await requirePermissionAction('view:cashbook');
   try {
     const tenantId = await getTenantId();
     const result = await AccountRepository.listAccounts(tenantId, options);
@@ -43,6 +47,7 @@ export async function getAccountsAction(options: any = {}) {
 }
 
 export async function getTransactionsAction(options: any = {}) {
+  await requirePermissionAction('view:cashbook');
   try {
     const tenantId = await getTenantId();
     const result = await AccountRepository.listTransactions(tenantId, options);

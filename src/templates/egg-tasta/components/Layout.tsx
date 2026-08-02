@@ -24,7 +24,7 @@ export function PageHeader({ title, description, children }: { title: string, de
   );
 }
 
-export function Topbar({ setSidebarOpen, user }: { setSidebarOpen: (v: boolean) => void, user: any }) {
+export function Topbar({ setSidebarOpen, user, branding }: { setSidebarOpen: (v: boolean) => void, user: any, branding?: any }) {
   return (
     <header className="h-16 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-3 sm:px-6 sticky top-0 z-30 gap-2 sm:gap-4">
       {/* Left Side: Mobile Sidebar Toggle & App Title */}
@@ -37,7 +37,7 @@ export function Topbar({ setSidebarOpen, user }: { setSidebarOpen: (v: boolean) 
           <Menu className="h-5 w-5" />
         </button>
         <span className="text-sm font-bold tracking-tight hidden md:inline-block text-slate-900 dark:text-white font-mono uppercase">
-          Egg Tasta
+          {branding?.tenantName || "Business"}
         </span>
       </div>
       
@@ -138,7 +138,7 @@ export function BusinessLayout({
         
         {/* Main Content */}
         <div className="flex-1 flex flex-col min-w-0">
-          <Topbar setSidebarOpen={setSidebarOpen} user={user} />
+          <Topbar setSidebarOpen={setSidebarOpen} user={user} branding={branding} />
 
           <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
             {children}

@@ -5,6 +5,7 @@ import { Search, Plus, FileDown, ArrowUpDown, Archive, Edit, Eye, RotateCcw } fr
 import Link from "next/link";
 import { listSuppliersAction, updateSupplierStatusAction } from "@/templates/egg-tasta/actions/suppliers";
 import { Button, Table, Thead, Tbody, Tr, Th, Td, EmptyState, StatusBadge } from "@/templates/egg-tasta/components";
+import { PermissionGuard } from "@/shared/components/permission-context";
 
 export function ManageSuppliersClient({ initialData, initialTotal }: { initialData: any[], initialTotal: number }) {
   const [isPending, startTransition] = useTransition();
@@ -123,31 +124,39 @@ export function ManageSuppliersClient({ initialData, initialTotal }: { initialDa
         </div>
 
         <div className="flex gap-2 w-full sm:w-auto">
-          <Button variant="outline" className="hidden sm:flex" onClick={() => alert('Export feature coming soon.')}>
-            <FileDown className="h-4 w-4 mr-2" />
-            Export
-          </Button>
-          <Link href="/app/suppliers/new">
-            <Button variant="primary">
-              <Plus className="h-4 w-4 mr-2" />
-              Add Supplier
+          <PermissionGuard permission="export:suppliers">
+            <Button variant="outline" className="hidden sm:flex" onClick={() => alert('Export feature coming soon.')}>
+              <FileDown className="h-4 w-4 mr-2" />
+              Export
             </Button>
-          </Link>
+          </PermissionGuard>
+          <PermissionGuard permission="create:suppliers">
+            <Link href="/app/suppliers/new">
+              <Button variant="primary">
+                <Plus className="h-4 w-4 mr-2" />
+                Add Supplier
+              </Button>
+            </Link>
+          </PermissionGuard>
         </div>
       </div>
 
       {/* Bulk Actions Bar */}
       {selectedIds.size > 0 && (
-        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-md p-3 flex items-center justify-between animate-in fade-in slide-in-from-top-2">
-          <span className="text-sm font-medium text-blue-800 dark:text-blue-300">
-            {selectedIds.size} suppliers selected
-          </span>
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm" onClick={() => handleBulkAction('ACTIVE')}>Activate</Button>
-            <Button variant="outline" size="sm" onClick={() => handleBulkAction('INACTIVE')}>Deactivate</Button>
-            <Button variant="outline" size="sm" onClick={() => handleBulkAction('ARCHIVED')} className="text-amber-600 hover:text-amber-700 border-amber-200 hover:bg-amber-50 dark:text-amber-400 dark:border-amber-900/50 dark:hover:bg-amber-900/30">Archive</Button>
+        <PermissionGuard permission="edit:suppliers">
+          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-md p-3 flex items-center justify-between animate-in fade-in slide-in-from-top-2">
+            <span className="text-sm font-medium text-blue-800 dark:text-blue-300">
+              {selectedIds.size} suppliers selected
+            </span>
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" onClick={() => handleBulkAction('ACTIVE')}>Activate</Button>
+              <Button variant="outline" size="sm" onClick={() => handleBulkAction('INACTIVE')}>Deactivate</Button>
+              <PermissionGuard permission="delete:suppliers">
+                <Button variant="outline" size="sm" onClick={() => handleBulkAction('ARCHIVED')} className="text-amber-600 hover:text-amber-700 border-amber-200 hover:bg-amber-50 dark:text-amber-400 dark:border-amber-900/50 dark:hover:bg-amber-900/30">Archive</Button>
+              </PermissionGuard>
+            </div>
           </div>
-        </div>
+        </PermissionGuard>
       )}
 
       {/* Table */}
@@ -188,9 +197,11 @@ export function ManageSuppliersClient({ initialData, initialTotal }: { initialDa
                   description="Try adjusting your filters or search query." 
                   icon={Search} 
                   action={
-                    <Link href="/app/suppliers/new">
-                      <Button variant="outline" size="sm">Add Supplier</Button>
-                    </Link>
+                    <PermissionGuard permission="create:suppliers">
+                      <Link href="/app/suppliers/new">
+                        <Button variant="outline" size="sm">Add Supplier</Button>
+                      </Link>
+                    </PermissionGuard>
                   }
                 />
               </Td>
@@ -219,21 +230,27 @@ export function ManageSuppliersClient({ initialData, initialTotal }: { initialDa
                   </Td>
                   <Td className="text-right">
                     <div className="flex items-center justify-end gap-1">
-                      <button className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded dark:hover:text-slate-300 dark:hover:bg-slate-800 transition-colors" title="View">
-                        <Eye className="h-4 w-4" />
-                      </button>
-                      <button className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded dark:hover:text-blue-400 dark:hover:bg-blue-900/30 transition-colors" title="Edit">
-                        <Edit className="h-4 w-4" />
-                      </button>
-                      {item.status === 'ARCHIVED' ? (
-                        <button onClick={() => handleRestore(item.supplierCode)} className="p-1.5 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded dark:hover:text-emerald-400 dark:hover:bg-emerald-900/30 transition-colors" title="Restore">
-                          <RotateCcw className="h-4 w-4" />
+                      <PermissionGuard permission="view:suppliers">
+                        <button className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded dark:hover:text-slate-300 dark:hover:bg-slate-800 transition-colors" title="View">
+                          <Eye className="h-4 w-4" />
                         </button>
-                      ) : (
-                        <button onClick={() => handleArchive(item.supplierCode)} className="p-1.5 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded dark:hover:text-amber-400 dark:hover:bg-amber-900/30 transition-colors" title="Archive">
-                          <Archive className="h-4 w-4" />
+                      </PermissionGuard>
+                      <PermissionGuard permission="edit:suppliers">
+                        <button className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded dark:hover:text-blue-400 dark:hover:bg-blue-900/30 transition-colors" title="Edit">
+                          <Edit className="h-4 w-4" />
                         </button>
-                      )}
+                      </PermissionGuard>
+                      <PermissionGuard permission="delete:suppliers">
+                        {item.status === 'ARCHIVED' ? (
+                          <button onClick={() => handleRestore(item.supplierCode)} className="p-1.5 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded dark:hover:text-emerald-400 dark:hover:bg-emerald-900/30 transition-colors" title="Restore">
+                            <RotateCcw className="h-4 w-4" />
+                          </button>
+                        ) : (
+                          <button onClick={() => handleArchive(item.supplierCode)} className="p-1.5 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded dark:hover:text-amber-400 dark:hover:bg-amber-900/30 transition-colors" title="Archive">
+                            <Archive className="h-4 w-4" />
+                          </button>
+                        )}
+                      </PermissionGuard>
                     </div>
                   </Td>
                 </Tr>

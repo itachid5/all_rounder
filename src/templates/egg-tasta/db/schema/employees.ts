@@ -12,6 +12,7 @@ export const employees = sqliteTable("employees", {
   designation: text("designation").notNull(),
   joinDate: text("join_date").notNull(),
   status: text("status").notNull().default("ACTIVE"),
+  isInternal: integer("is_internal", { mode: "boolean" }).notNull().default(false),
   userId: text("user_id").references(() => users.id),
   createdAt: integer("created_at", { mode: "timestamp" }).notNull().defaultNow(),
   updatedAt: integer("updated_at", { mode: "timestamp" }).notNull().defaultNow(),

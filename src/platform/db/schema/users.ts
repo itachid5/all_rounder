@@ -9,6 +9,7 @@ export const users = sqliteTable('users', {
   userType: text('user_type').notNull(), // 'PLATFORM' or 'BUSINESS'
   status: text('status').notNull().default('ACTIVE'),
   mustChangePassword: integer('must_change_password', { mode: 'boolean' }).notNull().default(true),
+  isInternal: integer('is_internal', { mode: 'boolean' }).notNull().default(false),
   avatarUrl: text('avatar_url'),
   lastLoginAt: integer('last_login_at', { mode: 'timestamp' }),
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull().defaultNow(),

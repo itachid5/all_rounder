@@ -9,6 +9,7 @@ import { EditCustomerDialog } from "./edit-customer-dialog";
 import { BalanceAdjustmentDialog } from "./balance-adjustment-dialog";
 import { CustomerProfileDrawer } from "./CustomerProfileDrawer";
 import { formatDate } from "@/shared/utils/date";
+import { usePermission, PermissionGuard } from "@/shared/components/permission-context";
 
 export interface CustomerPermissions {
   view: boolean;
@@ -19,7 +20,16 @@ export interface CustomerPermissions {
   adjustBalance: boolean;
 }
 
-export function ManageCustomersClient({ initialData, initialTotal, permissions = { view: true, add: true, edit: true, archive: true, restore: true, adjustBalance: true } }: { initialData: any[], initialTotal: number, permissions?: CustomerPermissions }) {
+export function ManageCustomersClient({ initialData, initialTotal, permissions: propPermissions }: { initialData: any[], initialTotal: number, permissions?: CustomerPermissions }) {
+  const { hasPermission } = usePermission();
+  const permissions = propPermissions || {
+    view: hasPermission('view:customers'),
+    add: hasPermission('create:customers'),
+    edit: hasPermission('edit:customers'),
+    archive: hasPermission('delete:customers'),
+    restore: hasPermission('delete:customers'),
+    adjustBalance: hasPermission('edit:customers'),
+  };
   const [isPending, startTransition] = useTransition();
   
   const [data, setData] = useState(initialData);

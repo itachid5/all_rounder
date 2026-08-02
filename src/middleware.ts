@@ -3,15 +3,17 @@ import type { NextRequest } from 'next/server';
 
 export function middleware(request: NextRequest) {
   const token = request.cookies.get('auth-token');
+  const sessionToken = request.cookies.get('session-token');
   
-  if (!token) {
+  if (!token || !sessionToken) {
     // Redirect to the appropriate login page based on the path
     const path = request.nextUrl.pathname;
     
     // Allow access to login pages and static/internal paths without token
     if (
       path === '/platform/login' || 
-      path === '/app/login' ||
+      path === '/business-login' ||
+      path === '/login-pages' ||
       path.startsWith('/_next') ||
       path.startsWith('/api')
     ) {
@@ -22,12 +24,15 @@ export function middleware(request: NextRequest) {
       return NextResponse.redirect(new URL('/platform/login', request.url));
     }
     if (path.startsWith('/app')) {
-      return NextResponse.redirect(new URL('/app/login', request.url));
+      return NextResponse.redirect(new URL('/business-login', request.url));
     }
     return NextResponse.redirect(new URL('/', request.url));
   }
   
-  return NextResponse.next();
+  // Add cache control to prevent back-button access after logout
+  const response = NextResponse.next();
+  response.headers.set('Cache-Control', 'no-store, max-age=0');
+  return response;
 }
 
 export const config = {

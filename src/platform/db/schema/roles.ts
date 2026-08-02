@@ -9,6 +9,7 @@ export const roles = sqliteTable('roles', {
   scope: text('scope').notNull(), // 'PLATFORM' or 'BUSINESS'
   tenantId: text('tenant_id').references(() => tenants.id), // null for platform roles
   isSystem: integer('is_system', { mode: 'boolean' }).notNull().default(false),
+  isInternal: integer('is_internal', { mode: 'boolean' }).notNull().default(false),
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull().defaultNow(),
   updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().defaultNow(),
 }, (t) => ({

@@ -9,12 +9,15 @@ import { useRouter } from 'next/navigation';
 export default function PlatformLogin() {
   const router = useRouter();
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (loading) return;
     setLoading(true);
     setError('');
+    setSuccess('');
     
     const formData = new FormData(e.currentTarget);
     formData.append('isPlatform', 'true');
@@ -26,7 +29,10 @@ export default function PlatformLogin() {
       } else if (result?.requiresPasswordChange) {
         router.push('/change-password');
       } else if (result?.success) {
-        router.push('/platform/dashboard');
+        setSuccess('Authentication successful. Loading platform...');
+        setTimeout(() => {
+          router.push('/platform/dashboard');
+        }, 500);
       }
     } catch (err) {
       setError('An unexpected error occurred');
@@ -48,6 +54,12 @@ export default function PlatformLogin() {
       {error && (
         <div className="mb-4 p-3 bg-red-500/10 border border-red-500/50 rounded text-red-500 text-sm">
           {error}
+        </div>
+      )}
+      
+      {success && (
+        <div className="mb-4 p-3 bg-emerald-500/10 border border-emerald-500/50 rounded text-emerald-600 dark:text-emerald-400 text-sm font-medium">
+          {success}
         </div>
       )}
       
@@ -88,8 +100,8 @@ export default function PlatformLogin() {
       </form>
       
       <div className="mt-6 text-center">
-        <Link href="/" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-          &larr; Back to home
+        <Link href="/login-pages" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+          &larr; Back to landing page
         </Link>
       </div>
     </div>

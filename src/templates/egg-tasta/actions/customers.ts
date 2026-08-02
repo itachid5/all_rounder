@@ -1,5 +1,7 @@
 "use server";
 
+import { requirePermissionAction } from "@/shared/actions/rbac";
+
 import { db } from "@/shared/db/database";
 import { CustomerRepository } from "@/templates/egg-tasta/db/repositories/CustomerRepository";
 import { userRoles } from "@/platform/db/schema";
@@ -19,6 +21,7 @@ async function getTenantInfo() {
 }
 
 export async function createCustomerAction(formData: FormData) {
+  await requirePermissionAction('create:customers');
   try {
     const { tenantId } = await getTenantInfo();
     const data = {
@@ -45,6 +48,7 @@ export async function createCustomerAction(formData: FormData) {
 }
 
 export async function listCustomersAction(options: any = {}) {
+  await requirePermissionAction('view:customers');
   try {
     const { tenantId } = await getTenantInfo();
     const result = await CustomerRepository.listCustomers(tenantId, options);
@@ -55,6 +59,7 @@ export async function listCustomersAction(options: any = {}) {
 }
 
 export async function updateCustomerStatusAction(customerCodes: string[], status: 'ACTIVE' | 'INACTIVE' | 'ARCHIVED') {
+  await requirePermissionAction('edit:customers');
   try {
     const { tenantId, userId } = await getTenantInfo();
     await CustomerRepository.updateCustomerStatus(tenantId, customerCodes, status, userId);
@@ -65,6 +70,7 @@ export async function updateCustomerStatusAction(customerCodes: string[], status
 }
 
 export async function updateCustomerAction(formData: FormData) {
+  await requirePermissionAction('edit:customers');
   try {
     const { tenantId, userId } = await getTenantInfo();
     const customerCode = formData.get("customerCode")?.toString();
@@ -94,6 +100,7 @@ export async function updateCustomerAction(formData: FormData) {
 }
 
 export async function adjustCustomerBalanceAction(formData: FormData) {
+  await requirePermissionAction('edit:customers');
   try {
     const { tenantId, userId } = await getTenantInfo();
     const customerCode = formData.get("customerCode")?.toString();
@@ -118,6 +125,7 @@ export async function adjustCustomerBalanceAction(formData: FormData) {
 }
 
 export async function getCustomerProfileAction(customerCode: string) {
+  await requirePermissionAction('view:customers');
   try {
     const { tenantId } = await getTenantInfo();
     const data = await CustomerRepository.getCustomerProfileData(tenantId, customerCode);

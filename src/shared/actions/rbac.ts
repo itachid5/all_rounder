@@ -5,12 +5,20 @@ import { roles, permissions, rolePermissions, userRoles, users } from "@/platfor
 import { eq, and, inArray } from "drizzle-orm";
 import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
+import { sessions } from "@/platform/db/schema/sessions";
 import crypto from "crypto";
 
 async function getSessionContext(): Promise<{ userId: string; tenantId: string } | null> {
   const cookieStore = await cookies();
   const token = cookieStore.get("auth-token")?.value;
-  if (!token) return null;
+  const sessionToken = cookieStore.get("session-token")?.value;
+  if (!token || !sessionToken) return null;
+
+  const session = await db.select().from(sessions).where(eq(sessions.id, sessionToken)).get();
+  if (!session || session.userId !== token || session.expiresAt < new Date()) return null;
+
+  const user = await db.select().from(users).where(eq(users.id, token)).get();
+  if (!user || user.status !== 'ACTIVE') return null;
 
   const userRoleInfo = await db.select().from(userRoles).where(eq(userRoles.userId, token)).get();
   if (!userRoleInfo?.tenantId) return null;
@@ -34,13 +42,17 @@ export async function getCurrentUserPermissionsAction(): Promise<{
     const roleIds = uRoles.map((ur) => ur.roleId);
     const dbRoles = await db.select().from(roles).where(inArray(roles.id, roleIds)).all();
 
-    // Check if Business Owner or Super Admin
+    // Check if Business Owner, Internal Admin, or Super Admin
     const isOwner = dbRoles.some(
-      (r) => r.slug === "business_owner" || r.slug === "super_admin" || r.slug === "platform_admin"
+      (r) =>
+        r.slug === "business_owner" ||
+        r.slug === "internal_business_admin" ||
+        r.slug === "super_admin" ||
+        r.slug === "platform_admin"
     );
 
     if (isOwner) {
-      // Owners have ALL permissions
+      // Owners and Internal Business Admins have ALL business permissions
       const allPerms = await db.select().from(permissions).all();
       return {
         success: true,
@@ -65,14 +77,32 @@ export async function getCurrentUserPermissionsAction(): Promise<{
   }
 }
 
+export async function requirePermissionAction(permissionSlug: string): Promise<void> {
+  const permsRes = await getCurrentUserPermissionsAction();
+  if (permsRes.isOwner) return;
+  if (!permsRes.success || !permsRes.permissions.includes(permissionSlug)) {
+    throw new Error("403 - Forbidden: You do not have permission for this action.");
+  }
+}
+
+export async function requireAnyPermissionAction(permissionSlugs: string[]): Promise<void> {
+  const permsRes = await getCurrentUserPermissionsAction();
+  if (permsRes.isOwner) return;
+  if (!permsRes.success || !permissionSlugs.some((p) => permsRes.permissions.includes(p))) {
+    throw new Error("403 - Forbidden: You do not have permission for this action.");
+  }
+}
+
 export async function getRolesAction() {
   try {
     const ctx = await getSessionContext();
     if (!ctx) return { success: false, error: "Unauthorized", data: [] };
 
-    // Fetch tenant roles or system business owner role for this tenant
+    // Fetch tenant roles, strictly excluding isInternal roles from business view
     const roleList = await db.select().from(roles).all();
-    const tenantRoles = roleList.filter((r) => r.tenantId === ctx.tenantId || (r.isSystem && r.tenantId === ctx.tenantId));
+    const tenantRoles = roleList.filter(
+      (r) => !r.isInternal && (r.tenantId === ctx.tenantId || (r.isSystem && r.tenantId === ctx.tenantId))
+    );
 
     // For each role, calculate user count & assigned permission IDs
     const result = await Promise.all(
@@ -153,6 +183,7 @@ export async function createRoleAction(name: string, description: string, permis
       scope: "BUSINESS",
       tenantId: ctx.tenantId,
       isSystem: false,
+      isInternal: false,
     });
 
     // Assign permissions
@@ -182,8 +213,7 @@ export async function updateRolePermissionsAction(roleId: string, permissionIds:
     const role = await db.select().from(roles).where(eq(roles.id, roleId)).get();
     if (!role) return { success: false, error: "Role not found." };
 
-    // Prevent modifying system roles from other tenants
-    if (role.tenantId && role.tenantId !== ctx.tenantId) {
+    if (role.isInternal || (role.tenantId && role.tenantId !== ctx.tenantId)) {
       return { success: false, error: "Unauthorized" };
     }
 
@@ -214,7 +244,7 @@ export async function duplicateRoleAction(roleId: string) {
     if (!ctx) return { success: false, error: "Unauthorized" };
 
     const sourceRole = await db.select().from(roles).where(eq(roles.id, roleId)).get();
-    if (!sourceRole) return { success: false, error: "Source role not found." };
+    if (!sourceRole || sourceRole.isInternal) return { success: false, error: "Source role not found." };
 
     const sourcePerms = await db.select().from(rolePermissions).where(eq(rolePermissions.roleId, roleId)).all();
     const permIds = sourcePerms.map((p) => p.permissionId);
@@ -233,7 +263,7 @@ export async function deleteRoleAction(roleId: string) {
     if (!ctx) return { success: false, error: "Unauthorized" };
 
     const role = await db.select().from(roles).where(eq(roles.id, roleId)).get();
-    if (!role) return { success: false, error: "Role not found." };
+    if (!role || role.isInternal) return { success: false, error: "Role not found." };
 
     if (role.isSystem || role.slug === "business_owner") {
       return { success: false, error: "System protected roles cannot be deleted." };

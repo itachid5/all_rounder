@@ -1,5 +1,7 @@
 "use server";
 
+import { requirePermissionAction } from "@/shared/actions/rbac";
+
 import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 import { db } from "@/shared/db/database";
@@ -21,6 +23,7 @@ async function getTenantId() {
 }
 
 export async function createExpenseAction(data: any) {
+  await requirePermissionAction('create:expenses');
   try {
     const tenantId = await getTenantId();
     const expense = await ExpenseRepository.createExpense(tenantId, data, "system");
@@ -33,6 +36,7 @@ export async function createExpenseAction(data: any) {
 }
 
 export async function getExpensesAction(options: any = {}) {
+  await requirePermissionAction('view:expenses');
   try {
     const tenantId = await getTenantId();
     const result = await ExpenseRepository.listExpenses(tenantId, options);
@@ -44,6 +48,7 @@ export async function getExpensesAction(options: any = {}) {
 }
 
 export async function getExpenseCategoriesAction() {
+  await requirePermissionAction('view:expenses');
   try {
     const tenantId = await getTenantId();
     const data = await db.select().from(expenseCategories).where(eq(expenseCategories.tenantId, tenantId)).all();

@@ -3,6 +3,7 @@
 import { cookies } from 'next/headers';
 import { db } from '@/shared/db/database';
 import { users } from "@/platform/db/schema";
+import { sessions } from "@/platform/db/schema/sessions";
 
 import { eq } from 'drizzle-orm';
 import { redirect } from 'next/navigation';
@@ -42,15 +43,30 @@ export async function login(formData: FormData) {
     return { error: 'Account is suspended or disabled' };
   }
 
-  // Set cookie
-  const cookieStore = await cookies();
-  cookieStore.set('auth-token', dbUser.id, {
+  const remember = formData.get('remember') === 'on';
+  
+  const cookieOptions = {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
+    sameSite: 'lax' as const,
     path: '/',
-    maxAge: 86400, // 1 day
+    ...(remember ? { maxAge: 30 * 86400 } : {})
+  };
+
+  const sessionId = crypto.randomUUID();
+  const expiresAt = new Date(Date.now() + (remember ? 30 * 86400 * 1000 : 86400 * 1000));
+
+  await db.insert(sessions).values({
+    id: sessionId,
+    userId: dbUser.id,
+    token: sessionId,
+    expiresAt,
+    createdAt: new Date(),
   });
+
+  const cookieStore = await cookies();
+  cookieStore.set('auth-token', dbUser.id, cookieOptions);
+  cookieStore.set('session-token', sessionId, cookieOptions);
 
   if (dbUser.mustChangePassword) {
     return { requiresPasswordChange: true };
@@ -103,6 +119,11 @@ export async function changePassword(formData: FormData) {
 
 export async function logout() {
   const cookieStore = await cookies();
+  const sessionId = cookieStore.get('session-token')?.value;
+  if (sessionId) {
+    await db.delete(sessions).where(eq(sessions.id, sessionId));
+  }
   cookieStore.delete('auth-token');
-  redirect('/');
+  cookieStore.delete('session-token');
+  redirect('/business-login');
 }

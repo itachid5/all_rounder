@@ -1,5 +1,7 @@
 "use server";
 
+import { requirePermissionAction } from "@/shared/actions/rbac";
+
 import { db } from "@/shared/db/database";
 import { CustomerCollectionRepository } from "@/templates/egg-tasta/db/repositories/CustomerCollectionRepository";
 import { userRoles } from "@/platform/db/schema";
@@ -44,6 +46,7 @@ export async function listCustomerCollectionsAction(options: any = {}): Promise<
 }
 
 export async function getCustomerCollectionByIdAction(id: string) {
+  await requirePermissionAction('view:customer_collections');
   try {
     const tenantId = await getTenantId();
     // Since we don't have a specific getById yet, we use list and filter
@@ -79,6 +82,7 @@ export async function updateCustomerCollectionAction(id: string, data: any): Pro
 }
 
 export async function deleteCustomerCollectionAction(id: string) {
+  await requirePermissionAction('delete:customer_collections');
   try {
     const tenantId = await getTenantId();
     await CustomerCollectionRepository.deleteCollection(tenantId, id);

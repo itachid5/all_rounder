@@ -6,6 +6,7 @@ import Link from "next/link";
 import { listPurchasesAction, deletePurchaseAction } from "@/templates/egg-tasta/actions/purchases";
 import { Button, Table, Thead, Tbody, Tr, Th, Td, EmptyState, Badge } from "@/templates/egg-tasta/components";
 import { formatDate } from "@/shared/utils/date";
+import { PermissionGuard } from "@/shared/components/permission-context";
 
 export function ManagePurchasesClient({ initialData, initialTotal }: { initialData: any[], initialTotal: number }) {
   const [isPending, startTransition] = useTransition();
@@ -83,16 +84,20 @@ export function ManagePurchasesClient({ initialData, initialTotal }: { initialDa
         </div>
 
         <div className="flex gap-2 w-full sm:w-auto">
-          <Button variant="outline" className="hidden sm:flex" onClick={() => alert('Export feature coming soon.')}>
-            <FileDown className="h-4 w-4 mr-2" />
-            Export
-          </Button>
-          <Link href="/app/purchases/new">
-            <Button variant="primary">
-              <Plus className="h-4 w-4 mr-2" />
-              New Purchase
+          <PermissionGuard permission="export:purchases">
+            <Button variant="outline" className="hidden sm:flex" onClick={() => alert('Export feature coming soon.')}>
+              <FileDown className="h-4 w-4 mr-2" />
+              Export
             </Button>
-          </Link>
+          </PermissionGuard>
+          <PermissionGuard permission="create:purchases">
+            <Link href="/app/purchases/new">
+              <Button variant="primary">
+                <Plus className="h-4 w-4 mr-2" />
+                New Purchase
+              </Button>
+            </Link>
+          </PermissionGuard>
         </div>
       </div>
 
@@ -125,9 +130,11 @@ export function ManagePurchasesClient({ initialData, initialTotal }: { initialDa
                   description="Try adjusting your filters or create a new purchase." 
                   icon={Search} 
                   action={
-                    <Link href="/app/purchases/new">
-                      <Button variant="outline" size="sm">New Purchase</Button>
-                    </Link>
+                    <PermissionGuard permission="create:purchases">
+                      <Link href="/app/purchases/new">
+                        <Button variant="outline" size="sm">New Purchase</Button>
+                      </Link>
+                    </PermissionGuard>
                   }
                 />
               </Td>
@@ -150,15 +157,21 @@ export function ManagePurchasesClient({ initialData, initialTotal }: { initialDa
                   </Td>
                   <Td className="text-right">
                     <div className="flex items-center justify-end gap-1">
-                      <button className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded dark:hover:text-slate-300 dark:hover:bg-slate-800 transition-colors" title="View">
-                        <Eye className="h-4 w-4" />
-                      </button>
-                      <button className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded dark:hover:text-blue-400 dark:hover:bg-blue-900/30 transition-colors" title="Print">
-                        <Printer className="h-4 w-4" />
-                      </button>
-                      <button onClick={() => handleDelete(item.id, item.invoiceNo)} className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded dark:hover:text-red-400 dark:hover:bg-red-900/30 transition-colors" title="Delete">
-                        <Trash2 className="h-4 w-4" />
-                      </button>
+                      <PermissionGuard permission="view:purchases">
+                        <button className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded dark:hover:text-slate-300 dark:hover:bg-slate-800 transition-colors" title="View">
+                          <Eye className="h-4 w-4" />
+                        </button>
+                      </PermissionGuard>
+                      <PermissionGuard permission="print:purchases">
+                        <button className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded dark:hover:text-blue-400 dark:hover:bg-blue-900/30 transition-colors" title="Print">
+                          <Printer className="h-4 w-4" />
+                        </button>
+                      </PermissionGuard>
+                      <PermissionGuard permission="delete:purchases">
+                        <button onClick={() => handleDelete(item.id, item.invoiceNo)} className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded dark:hover:text-red-400 dark:hover:bg-red-900/30 transition-colors" title="Delete">
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </PermissionGuard>
                     </div>
                   </Td>
                 </Tr>

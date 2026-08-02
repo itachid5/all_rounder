@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Button, Table, Thead, Tbody, Tr, Th, Td, EmptyState, StatusBadge } from "@/templates/egg-tasta/components";
 import { deleteSupplierPaymentAction } from "@/templates/egg-tasta/actions/supplierPayments";
 import { formatDate } from "@/shared/utils/date";
+import { PermissionGuard } from "@/shared/components/permission-context";
 
 export function ManagePaymentsClient({ initialData = [] }: { initialData?: any[] }) {
   const [search, setSearch] = useState("");
@@ -58,16 +59,20 @@ export function ManagePaymentsClient({ initialData = [] }: { initialData?: any[]
         </div>
 
         <div className="flex gap-2 w-full sm:w-auto">
-          <Button variant="outline" className="hidden sm:flex" onClick={() => alert('Export feature coming soon.')}>
-            <FileDown className="h-4 w-4 mr-2" />
-            Export
-          </Button>
-          <Link href="/app/supplier-payments/new">
-            <Button variant="primary">
-              <Plus className="h-4 w-4 mr-2" />
-              New Payment
+          <PermissionGuard permission="export:supplier_payments">
+            <Button variant="outline" className="hidden sm:flex" onClick={() => alert('Export feature coming soon.')}>
+              <FileDown className="h-4 w-4 mr-2" />
+              Export
             </Button>
-          </Link>
+          </PermissionGuard>
+          <PermissionGuard permission="create:supplier_payments">
+            <Link href="/app/supplier-payments/new">
+              <Button variant="primary">
+                <Plus className="h-4 w-4 mr-2" />
+                New Payment
+              </Button>
+            </Link>
+          </PermissionGuard>
         </div>
       </div>
 
@@ -104,9 +109,11 @@ export function ManagePaymentsClient({ initialData = [] }: { initialData?: any[]
                   description="You haven't recorded any supplier payments yet or no match found." 
                   icon={Search} 
                   action={
-                    <Link href="/app/supplier-payments/new">
-                      <Button variant="outline" size="sm">Record Payment</Button>
-                    </Link>
+                    <PermissionGuard permission="create:supplier_payments">
+                      <Link href="/app/supplier-payments/new">
+                        <Button variant="outline" size="sm">Record Payment</Button>
+                      </Link>
+                    </PermissionGuard>
                   }
                 />
               </Td>
@@ -137,8 +144,12 @@ export function ManagePaymentsClient({ initialData = [] }: { initialData?: any[]
                 </Td>
                 <Td className="text-right">
                   <div className="flex items-center justify-end gap-1">
-                    <button title="View" className="p-1.5 text-slate-400 hover:text-blue-500 rounded"><Eye className="h-4 w-4" /></button>
-                    <button onClick={() => handleDelete(row.payment.id, row.payment.paymentNo)} title="Delete" className="p-1.5 text-slate-400 hover:text-red-500 rounded"><Trash2 className="h-4 w-4" /></button>
+                    <PermissionGuard permission="view:supplier_payments">
+                      <button title="View" className="p-1.5 text-slate-400 hover:text-blue-500 rounded"><Eye className="h-4 w-4" /></button>
+                    </PermissionGuard>
+                    <PermissionGuard permission="delete:supplier_payments">
+                      <button onClick={() => handleDelete(row.payment.id, row.payment.paymentNo)} title="Delete" className="p-1.5 text-slate-400 hover:text-red-500 rounded"><Trash2 className="h-4 w-4" /></button>
+                    </PermissionGuard>
                   </div>
                 </Td>
               </Tr>

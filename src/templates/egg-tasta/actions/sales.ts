@@ -1,5 +1,7 @@
 "use server";
 
+import { requirePermissionAction } from "@/shared/actions/rbac";
+
 import { db } from "@/shared/db/database";
 import { SaleRepository } from "@/templates/egg-tasta/db/repositories/SaleRepository";
 import { userRoles } from "@/platform/db/schema";
@@ -19,6 +21,7 @@ async function getTenantId() {
 }
 
 export async function createSaleAction(data: any) {
+  await requirePermissionAction('create:sales');
   try {
     const tenantId = await getTenantId();
     
@@ -34,6 +37,7 @@ export async function createSaleAction(data: any) {
 }
 
 export async function listSalesAction(options: any = {}) {
+  await requirePermissionAction('view:sales');
   try {
     const tenantId = await getTenantId();
     const result = await SaleRepository.listSales(tenantId, options);
@@ -44,6 +48,7 @@ export async function listSalesAction(options: any = {}) {
 }
 
 export async function deleteSaleAction(saleId: string) {
+  await requirePermissionAction('delete:sales');
   try {
     const tenantId = await getTenantId();
     await SaleRepository.deleteSale(tenantId, saleId);

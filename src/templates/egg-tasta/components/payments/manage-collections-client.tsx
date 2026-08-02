@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Button, Table, Thead, Tbody, Tr, Th, Td, EmptyState, Badge, ActionMenu } from "@/templates/egg-tasta/components";
 import { listCustomerCollectionsAction, deleteCustomerCollectionAction } from "@/templates/egg-tasta/actions/customerCollections";
 import { formatDate } from "@/shared/utils/date";
+import { PermissionGuard } from "@/shared/components/permission-context";
 
 export function ManageCollectionsClient({ initialData, initialTotal }: { initialData: any[], initialTotal: number }) {
   const [isPending, startTransition] = useTransition();
@@ -82,12 +83,14 @@ export function ManageCollectionsClient({ initialData, initialTotal }: { initial
         </div>
 
         <div className="flex gap-2 w-full sm:w-auto">
-          <Link href="/app/customer-collection/new">
-            <Button variant="primary">
-              <Plus className="h-4 w-4 mr-2" />
-              Receive Collection
-            </Button>
-          </Link>
+          <PermissionGuard permission="create:customer_collections">
+            <Link href="/app/customer-collection/new">
+              <Button variant="primary">
+                <Plus className="h-4 w-4 mr-2" />
+                Receive Collection
+              </Button>
+            </Link>
+          </PermissionGuard>
         </div>
       </div>
 
@@ -119,9 +122,11 @@ export function ManageCollectionsClient({ initialData, initialTotal }: { initial
                   description="Create a new collection receipt to get started." 
                   icon={Search} 
                   action={
-                    <Link href="/app/customer-collection/new">
-                      <Button variant="outline" size="sm">Receive Collection</Button>
-                    </Link>
+                    <PermissionGuard permission="create:customer_collections">
+                      <Link href="/app/customer-collection/new">
+                        <Button variant="outline" size="sm">Receive Collection</Button>
+                      </Link>
+                    </PermissionGuard>
                   }
                 />
               </Td>
@@ -145,12 +150,12 @@ export function ManageCollectionsClient({ initialData, initialTotal }: { initial
                   <Td className="text-right">
                     <ActionMenu 
                       items={[
-                        { label: 'View Details', icon: <Eye />, href: `/app/customer-collection/view/${item.id}` },
-                        { label: 'Edit Collection', icon: <Edit />, href: `/app/customer-collection/edit/${item.id}` },
-                        { label: 'Print Receipt', icon: <Printer />, onClick: () => window.print() },
-                        { label: 'Download PDF', icon: <FileDown />, onClick: () => alert('Download PDF functionality coming soon.') },
-                        { label: 'Archive', icon: <Archive />, onClick: () => alert('Archive functionality coming soon.') },
-                        { label: 'Delete Permanently', icon: <Trash2 />, variant: 'danger', onClick: () => handleDelete(item.id, item.collectionNo) },
+                        { label: 'View Details', icon: <Eye />, href: `/app/customer-collection/view/${item.id}`, requiredPermission: 'view:customer_collections' },
+                        { label: 'Edit Collection', icon: <Edit />, href: `/app/customer-collection/edit/${item.id}`, requiredPermission: 'edit:customer_collections' },
+                        { label: 'Print Receipt', icon: <Printer />, onClick: () => window.print(), requiredPermission: 'print:customer_collections' },
+                        { label: 'Download PDF', icon: <FileDown />, onClick: () => alert('Download PDF functionality coming soon.'), requiredPermission: 'export:customer_collections' },
+                        { label: 'Archive', icon: <Archive />, onClick: () => alert('Archive functionality coming soon.'), requiredPermission: 'delete:customer_collections' },
+                        { label: 'Delete Permanently', icon: <Trash2 />, variant: 'danger', onClick: () => handleDelete(item.id, item.collectionNo), requiredPermission: 'delete:customer_collections' },
                       ]}
                     />
                   </Td>
