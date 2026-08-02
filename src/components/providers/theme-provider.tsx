@@ -1,12 +1,12 @@
 "use client";
-import * as React from "react";
+import React, { createContext, useState, useCallback, useEffect, useContext } from "react";
 
-const ThemeContext = React.createContext<any>(null);
+const ThemeContext = createContext<any>(null);
 
 export function ThemeProvider({ children, defaultTheme = "system", attribute = "class", enableSystem = true, disableTransitionOnChange = false }: any) {
-  const [theme, setThemeState] = React.useState(defaultTheme);
+  const [theme, setThemeState] = useState(defaultTheme);
 
-  const setTheme = React.useCallback((newTheme: string) => {
+  const setTheme = useCallback((newTheme: string) => {
     setThemeState(newTheme);
     localStorage.setItem("theme", newTheme);
     const resolvedTheme = newTheme === "system" && enableSystem 
@@ -20,7 +20,7 @@ export function ThemeProvider({ children, defaultTheme = "system", attribute = "
     }
   }, [attribute, enableSystem]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     const stored = localStorage.getItem("theme");
     if (stored) {
       setTheme(stored);
@@ -30,7 +30,7 @@ export function ThemeProvider({ children, defaultTheme = "system", attribute = "
   }, [setTheme, defaultTheme]);
 
   // Handle system preference changes
-  React.useEffect(() => {
+  useEffect(() => {
     if (theme !== "system" || !enableSystem) return;
     const media = window.matchMedia("(prefers-color-scheme: dark)");
     const listener = () => setTheme("system");
@@ -47,4 +47,4 @@ export function ThemeProvider({ children, defaultTheme = "system", attribute = "
   );
 }
 
-export const useTheme = () => React.useContext(ThemeContext);
+export const useTheme = () => useContext(ThemeContext);

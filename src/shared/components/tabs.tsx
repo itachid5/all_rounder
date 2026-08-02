@@ -1,9 +1,9 @@
 "use client";
 
-import * as React from "react";
+import React, { createContext, useState, useContext } from "react";
 import { cn } from "@/shared/utils";
 
-const TabsContext = React.createContext<{
+const TabsContext = createContext<{
   value: string;
   onValueChange: (value: string) => void;
 }>({
@@ -24,7 +24,7 @@ export function Tabs({
   children: React.ReactNode;
   className?: string;
 }) {
-  const [internalValue, setInternalValue] = React.useState(value ?? defaultValue ?? "");
+  const [internalValue, setInternalValue] = useState(value ?? defaultValue ?? "");
 
   const selectedValue = value !== undefined ? value : internalValue;
   const handleValueChange = (newValue: string) => {
@@ -67,7 +67,7 @@ export function TabsTrigger({
   children: React.ReactNode;
   disabled?: boolean;
 }) {
-  const { value: selectedValue, onValueChange } = React.useContext(TabsContext);
+  const { value: selectedValue, onValueChange } = useContext(TabsContext);
   const isSelected = selectedValue === value;
 
   return (
@@ -97,7 +97,7 @@ export function TabsContent({
   className?: string;
   children: React.ReactNode;
 }) {
-  const { value: selectedValue } = React.useContext(TabsContext);
+  const { value: selectedValue } = useContext(TabsContext);
   
   if (selectedValue !== value) return null;
 

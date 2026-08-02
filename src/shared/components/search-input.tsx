@@ -1,6 +1,6 @@
 "use client";
 
-import * as React from "react";
+import React, { useState, useEffect } from "react";
 import { Search, X } from "lucide-react";
 import { Input } from "@/shared/components/input";
 import { cn } from "@/shared/utils";
@@ -18,13 +18,13 @@ export function SearchInput({
   placeholder = "Search...",
   ...props
 }: SearchInputProps) {
-  const [localValue, setLocalValue] = React.useState(value as string || "");
+  const [localValue, setLocalValue] = useState(value as string || "");
 
-  React.useEffect(() => {
+  useEffect(() => {
     setLocalValue(value as string || "");
   }, [value]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     const handler = setTimeout(() => {
       if (onChange && localValue !== value) {
         onChange(localValue);

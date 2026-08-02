@@ -1,9 +1,9 @@
 "use client";
 
-import * as React from "react";
+import React, { createContext, useState, useRef, useEffect, useContext } from "react";
 import { cn } from "@/shared/utils";
 
-const DropdownContext = React.createContext<{
+const DropdownContext = createContext<{
   open: boolean;
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
 }>({
@@ -12,10 +12,10 @@ const DropdownContext = React.createContext<{
 });
 
 export function DropdownMenu({ children }: { children: React.ReactNode }) {
-  const [open, setOpen] = React.useState(false);
-  const containerRef = React.useRef<HTMLDivElement>(null);
+  const [open, setOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
 
-  React.useEffect(() => {
+  useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
         setOpen(false);
@@ -36,7 +36,7 @@ export function DropdownMenu({ children }: { children: React.ReactNode }) {
 }
 
 export function DropdownMenuTrigger({ children, asChild }: { children: React.ReactNode; asChild?: boolean }) {
-  const { open, setOpen } = React.useContext(DropdownContext);
+  const { open, setOpen } = useContext(DropdownContext);
 
   if (asChild) {
     return (
@@ -62,7 +62,7 @@ export function DropdownMenuContent({
   children: React.ReactNode;
   align?: "start" | "end" | "center";
 }) {
-  const { open } = React.useContext(DropdownContext);
+  const { open } = useContext(DropdownContext);
 
   if (!open) return null;
 
@@ -90,7 +90,7 @@ export function DropdownMenuItem({
   onSelect?: () => void;
   disabled?: boolean;
 }) {
-  const { setOpen } = React.useContext(DropdownContext);
+  const { setOpen } = useContext(DropdownContext);
 
   return (
     <div

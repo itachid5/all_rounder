@@ -45,10 +45,6 @@ export function TenantUsersClient({ tenantId }: { tenantId: string }) {
   const [newUsername, setNewUsername] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  useEffect(() => {
-    loadUsers();
-  }, [tenantId]);
-
   const loadUsers = async () => {
     setLoading(true);
     const res = await getTenantUsersAction(tenantId);
@@ -59,6 +55,10 @@ export function TenantUsersClient({ tenantId }: { tenantId: string }) {
     }
     setLoading(false);
   };
+
+  useEffect(() => {
+    loadUsers();
+  }, [tenantId]);
 
   const filteredUsers = users.filter(u => {
     if (search) {
