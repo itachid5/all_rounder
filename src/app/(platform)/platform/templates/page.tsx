@@ -2,6 +2,7 @@ import { Layers, CheckCircle } from "lucide-react";
 import { db } from "@/shared/db/database";
 import { templates } from "@/platform/db/schema";
 
+export const dynamic = 'force-dynamic';
 
 export default async function TemplatesPage() {
   const allTemplates = await db.select().from(templates).all();

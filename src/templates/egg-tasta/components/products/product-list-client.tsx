@@ -5,6 +5,7 @@ import { Search, Plus, ArrowUpDown, AlertTriangle } from "lucide-react";
 import Link from "next/link";
 import { listProductsAction } from "@/templates/egg-tasta/actions/products";
 import { Button, Table, Thead, Tbody, Tr, Th, Td, EmptyState, StatusBadge } from "@/templates/egg-tasta/components";
+import { PermissionGuard } from "@/shared/components/permission-context";
 
 export function ProductListClient({ initialData, initialTotal }: { initialData: any[], initialTotal: number }) {
   const [isPending, startTransition] = useTransition();
@@ -115,9 +116,14 @@ export function ProductListClient({ initialData, initialTotal }: { initialData: 
                   icon={Search} 
                   action={
                     !search && !statusFilter && !lowStockFilter && (
-                      <Link href="/app/products/new">
-                        <Button variant="primary">Add Your First Product</Button>
-                      </Link>
+                      <PermissionGuard permission="create:products">
+                        <Link href="/app/products/new" className="w-full sm:w-auto">
+                          <Button variant="primary" className="w-full sm:w-auto">
+                            <Plus className="h-4 w-4 mr-2" />
+                            Add Product
+                          </Button>
+                        </Link>
+                      </PermissionGuard>
                     )
                   }
                 />

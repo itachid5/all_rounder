@@ -15,3 +15,4 @@ export * from './sales';
 export * from './supplierLedgers';
 export * from './supplierPayments';
 export * from './suppliers';
+export * from './employees';

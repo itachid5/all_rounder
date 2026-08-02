@@ -5,6 +5,8 @@ import { tenants, users, templates } from "@/platform/db/schema";
 import { eq } from "drizzle-orm";
 import { formatDate } from "@/shared/utils/date";
 
+export const dynamic = 'force-dynamic';
+
 export default async function BusinessesPage() {
   const allTenants = await db
     .select({

@@ -15,13 +15,21 @@ Avatar.displayName = "Avatar";
 export interface AvatarImageProps extends React.ImgHTMLAttributes<HTMLImageElement> {}
 
 const AvatarImage = React.forwardRef<HTMLImageElement, AvatarImageProps>(
-  ({ className, ...props }, ref) => (
-    <img
-      ref={ref}
-      className={cn("aspect-square h-full w-full object-cover", className)}
-      {...props}
-    />
-  )
+  ({ className, src, alt = "", ...props }, ref) => {
+    const sanitizedSrc = typeof src === "string" ? src.trim() : src;
+    if (!sanitizedSrc) {
+      return null;
+    }
+    return (
+      <img
+        ref={ref}
+        src={sanitizedSrc}
+        alt={alt}
+        className={cn("aspect-square h-full w-full object-cover", className)}
+        {...props}
+      />
+    );
+  }
 );
 AvatarImage.displayName = "AvatarImage";
 

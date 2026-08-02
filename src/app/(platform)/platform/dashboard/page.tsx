@@ -4,6 +4,8 @@ import { tenants, users, auditLogs } from "@/platform/db/schema";
 
 import { eq, count, desc } from "drizzle-orm";
 
+export const dynamic = 'force-dynamic';
+
 export default async function DashboardPage() {
   // Fetch real metrics from the database
   const [totalBusinessesResult] = await db.select({ value: count() }).from(tenants);

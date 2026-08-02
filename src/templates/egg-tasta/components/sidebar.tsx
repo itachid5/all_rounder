@@ -15,11 +15,13 @@ export type NavItem = {
 export function BusinessSidebar({ 
   navigation, 
   open, 
-  setOpen 
+  setOpen,
+  branding
 }: { 
   navigation: NavItem[];
   open: boolean;
   setOpen: (open: boolean) => void;
+  branding?: any;
 }) {
   const pathname = usePathname();
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -148,9 +150,15 @@ export function BusinessSidebar({
       
       <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-50 border-r border-slate-200 dark:border-slate-800 flex flex-col transition-transform duration-200 ease-in-out ${open ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0 lg:static`}>
         <div className="h-16 flex items-center justify-between px-6 border-b border-slate-200 dark:border-slate-800">
-          <Link href="/app/dashboard" onClick={() => setOpen(false)} className="flex items-center gap-2 font-bold text-lg">
-            <Building2 className="h-6 w-6 text-blue-600 dark:text-blue-400" />
-            <span>Egg Shop</span>
+          <Link href="/app/dashboard" onClick={() => setOpen(false)} className="flex items-center gap-2.5 font-bold text-lg overflow-hidden">
+            {branding?.logoUrl ? (
+              <img src={branding.logoUrl} alt={branding.tenantName || "Logo"} className="h-8 max-w-[130px] object-contain shrink-0" />
+            ) : branding?.iconUrl ? (
+              <img src={branding.iconUrl} alt={branding.tenantName || "Icon"} className="h-7 w-7 rounded-lg object-cover shrink-0" />
+            ) : (
+              <Building2 className="h-6 w-6 text-blue-600 dark:text-blue-400 shrink-0" />
+            )}
+            <span className="truncate">{branding?.tenantName || "Egg Shop"}</span>
           </Link>
           <button onClick={() => setOpen(false)} className="lg:hidden text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white">
             <X className="h-5 w-5" />

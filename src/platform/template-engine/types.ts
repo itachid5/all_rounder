@@ -11,10 +11,17 @@ export interface TemplateMetadata {
 
 export interface TemplateContract {
   metadata: TemplateMetadata;
-  navigation: any; // Can be a static list or a function returning a list
+  navigation: any;
   routes: string[];
   permissions: string[];
   modules: string[];
   theme: any;
-  Layout: React.ComponentType<{ children: ReactNode; navigation: any[]; user: any }>;
+  Layout: React.ComponentType<{ 
+    children: ReactNode; 
+    navigation: any[]; 
+    user: any; 
+    branding?: any; 
+    userPermissions?: string[]; 
+    isOwner?: boolean; 
+  }>;
 }

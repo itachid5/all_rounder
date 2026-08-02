@@ -1,30 +1,98 @@
 "use client";
 
-import React, { useState } from "react";
-import { UserPlus } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { UserPlus, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { FormSection, FormGrid, TextField, SelectField, Button } from "@/templates/egg-tasta/components";
+import { createEmployeeAction, getNextEmpIdAction } from "@/templates/egg-tasta/actions/employees";
+import { getRolesAction } from "@/shared/actions/rbac";
 
 export function AddEmployeeClient() {
+  const router = useRouter();
+  const [empId, setEmpId] = useState("EMP-001");
+  const [roles, setRoles] = useState<{ value: string; label: string }[]>([]);
   const [loading, setLoading] = useState(false);
+  const [fetchingData, setFetchingData] = useState(true);
+  const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  useEffect(() => {
+    async function loadData() {
+      const [empRes, rolesRes] = await Promise.all([
+        getNextEmpIdAction(),
+        getRolesAction()
+      ]);
+
+      if (empRes.success && empRes.empId) {
+        setEmpId(empRes.empId);
+      }
+
+      if (rolesRes.success && rolesRes.data) {
+        const roleOpts = rolesRes.data.map((r: any) => ({
+          value: r.name,
+          label: r.name,
+        }));
+        setRoles(roleOpts.length > 0 ? roleOpts : [{ value: "Staff", label: "Staff" }]);
+      }
+
+      setFetchingData(false);
+    }
+    loadData();
+  }, []);
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
-      alert("Employee creation logic pending backend integration.");
-    }, 500);
+    setMessage(null);
+
+    const formData = new FormData(e.currentTarget);
+    const res = await createEmployeeAction(formData);
+
+    setLoading(false);
+
+    if (res.success) {
+      setMessage({
+        type: "success",
+        text: `Employee created successfully with ID: ${res.empId || empId}!`
+      });
+      setTimeout(() => {
+        router.push("/app/users/manage");
+      }, 1200);
+    } else {
+      setMessage({
+        type: "error",
+        text: res.error || "Failed to create employee."
+      });
+    }
   };
 
   return (
     <form className="space-y-8" onSubmit={handleSubmit}>
-      <FormSection title="Employee Details" description="Personal and login information." icon={UserPlus}>
+      {message && (
+        <div
+          className={`p-4 rounded-xl flex items-center justify-between text-sm font-medium border animate-in fade-in duration-200 ${
+            message.type === "success"
+              ? "bg-emerald-50 text-emerald-800 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800"
+              : "bg-rose-50 text-rose-800 border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800"
+          }`}
+        >
+          <div className="flex items-center gap-2.5">
+            {message.type === "success" ? (
+              <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+            ) : (
+              <AlertCircle className="h-4 w-4 text-rose-600 dark:text-rose-400 shrink-0" />
+            )}
+            <span>{message.text}</span>
+          </div>
+        </div>
+      )}
+
+      <FormSection title="Employee Details" description="Personal and organization details." icon={UserPlus}>
         <FormGrid>
           <TextField 
             label="Employee ID" 
             name="empId" 
-            placeholder="EMP-001" 
+            value={empId} 
             disabled 
           />
           <TextField 
@@ -49,13 +117,7 @@ export function AddEmployeeClient() {
             label="Designation (Role)" 
             name="role" 
             required
-            options={[
-              { value: "manager", label: "Manager" },
-              { value: "salesman", label: "Salesman" },
-              { value: "cashier", label: "Cashier" },
-              { value: "accountant", label: "Accountant" },
-              { value: "store_keeper", label: "Store Keeper" },
-            ]}
+            options={roles.length > 0 ? roles : [{ value: "Staff", label: "Loading roles..." }]}
           />
           <TextField 
             label="Joining Date" 
@@ -76,26 +138,25 @@ export function AddEmployeeClient() {
         </FormGrid>
       </FormSection>
 
-      <FormSection title="Login Credentials" description="Credentials used for platform access." icon={UserPlus}>
+      <FormSection title="Login Credentials (Optional)" description="Create platform user account if login access is required." icon={UserPlus}>
         <FormGrid>
           <TextField 
             label="Username" 
             name="username" 
             placeholder="e.g. john_doe"
-            required 
           />
           <div className="hidden sm:block"></div>
           <TextField 
             label="Password" 
             name="password" 
             type="password"
-            required 
+            placeholder="At least 6 characters"
           />
           <TextField 
             label="Confirm Password" 
             name="confirmPassword" 
             type="password"
-            required 
+            placeholder="Re-enter password"
           />
         </FormGrid>
       </FormSection>
@@ -109,8 +170,15 @@ export function AddEmployeeClient() {
             Cancel
           </Button>
         </Link>
-        <Button variant="primary" type="submit" disabled={loading}>
-          {loading ? "Saving..." : "Save Employee"}
+        <Button variant="primary" type="submit" disabled={loading || fetchingData}>
+          {loading ? (
+            <span className="flex items-center gap-2">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Saving Employee...
+            </span>
+          ) : (
+            "Save Employee"
+          )}
         </Button>
       </div>
     </form>

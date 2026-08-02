@@ -1,13 +1,13 @@
 import { TemplateContract } from "./types";
 import { notFound } from "next/navigation";
 import { TemplateRegistry } from "./registry";
+import { eggTastaPageMap } from "@/templates/egg-tasta/pages";
 
 export async function loadTemplateContract(templateId: string): Promise<TemplateContract> {
   try {
     const templateModule = await import(`@/templates/${templateId}/index.ts`);
     const contract = templateModule.default as TemplateContract;
     
-    // Automatic Registration upon load
     if (!TemplateRegistry.get(contract.metadata.id)) {
       TemplateRegistry.register(contract.metadata);
     }
@@ -21,26 +21,28 @@ export async function loadTemplateContract(templateId: string): Promise<Template
 
 export async function loadTemplatePage(templateId: string, path: string) {
   try {
+    // 1. Static page map resolution (avoids Turbopack runtime ChunkLoadError)
+    if (templateId === "egg-tasta") {
+      const pageComponent = eggTastaPageMap[path];
+      if (pageComponent) {
+        return pageComponent;
+      }
+    }
+
     const contract = await loadTemplateContract(templateId);
     
-    // VERIFY route exists before blindly importing
     if (!contract.routes.includes(path)) {
       console.warn(`[Template Engine] Attempted to load unregistered route: ${path}`);
       notFound();
     }
 
-    // Dynamic import for the page component.
-    // Webpack will trace this and include all page.tsx files under src/templates/*/app/**/page.tsx
     const TemplatePage = (await import(`@/templates/${templateId}/app/${path}/page`)).default;
     return TemplatePage;
   } catch (error) {
-    // If it's a MODULE_NOT_FOUND error (meaning the physical file is missing despite being registered), 
-    // or if the route verification failed and threw notFound(), handle it.
     if (error && typeof error === 'object' && 'digest' in error) {
-      throw error; // Let Next.js handle notFound()
+      throw error;
     }
     console.error(`[Template Engine] Route not found or failed to load in template ${templateId}: ${path}`, error);
     notFound();
   }
 }
-

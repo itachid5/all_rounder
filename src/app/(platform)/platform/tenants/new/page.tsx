@@ -27,13 +27,15 @@ export default function NewBusinessPage() {
     const formData = new FormData(e.currentTarget);
     try {
       const res = await provisionBusiness(formData);
-      if (res.error) {
+      if (res?.error) {
         setError(res.error);
-      } else if (res.success && res.credentials) {
+      } else if (res?.success && res?.credentials) {
         setCredentials(res.credentials);
+      } else {
+        setError("An unknown error occurred during provisioning.");
       }
-    } catch (err) {
-      setError("Failed to provision business. Please try again.");
+    } catch (err: any) {
+      setError(err?.message || "Error communicating with server.");
     } finally {
       setLoading(false);
     }

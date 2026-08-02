@@ -2,6 +2,7 @@
 
 import { db } from "@/shared/db/database";
 import { users, tenants, roles, userRoles, templates } from "@/platform/db/schema";
+import { accounts } from "@/templates/egg-tasta/db/schema/accounts";
 
 import { eq, and } from "drizzle-orm";
 import crypto from "crypto";
@@ -10,29 +11,40 @@ import { headers } from "next/headers";
 
 export async function provisionBusiness(formData: FormData) {
   try {
-    const businessName = formData.get('businessName') as string;
-    const templateSlug = formData.get('template') as string;
-    const timezone = formData.get('timezone') as string;
-    const currency = formData.get('currency') as string;
-    const language = formData.get('language') as string;
-    const ownerName = formData.get('ownerName') as string;
-    const username = formData.get('username') as string;
-    const password = formData.get('password') as string;
+    const businessName = (formData.get('businessName') as string || '').trim();
+    const templateSlug = (formData.get('template') as string || '').trim();
+    const timezone = (formData.get('timezone') as string || 'Asia/Dhaka').trim();
+    const currency = (formData.get('currency') as string || 'BDT').trim();
+    const language = (formData.get('language') as string || 'en').trim();
+    const ownerName = (formData.get('ownerName') as string || '').trim();
+    const username = (formData.get('username') as string || '').trim();
+    const password = (formData.get('password') as string || '').trim();
 
-    if (!businessName || !templateSlug || !ownerName || !username || !password) {
-      return { error: 'All required fields must be filled' };
+    if (!businessName) {
+      return { error: 'Business Name is required' };
+    }
+    if (!templateSlug) {
+      return { error: 'Template selection is required' };
+    }
+    if (!ownerName) {
+      return { error: 'Owner Name is required' };
+    }
+    if (!username) {
+      return { error: 'Username is required' };
+    }
+    if (!password || password.length < 8) {
+      return { error: 'Password must be at least 8 characters long' };
     }
 
-    // Check if username exists
+    // 1. Check if username exists globally
     const existingUser = await db.select().from(users).where(eq(users.username, username)).get();
     if (existingUser) {
-      return { error: 'Username already exists' };
+      return { error: `Username "${username}" already exists. Please choose a different username.` };
     }
 
-    // Find the template
+    // 2. Resolve template
     let template = await db.select().from(templates).where(eq(templates.slug, templateSlug)).get();
     
-    // If template doesn't exist, create it dynamically
     if (!template) {
       const templateId = crypto.randomUUID();
       const templateName = templateSlug === 'egg-tasta' ? 'Egg Tasta' : 
@@ -44,24 +56,15 @@ export async function provisionBusiness(formData: FormData) {
         description: `Business template for ${templateName}.`,
         version: '1.0.0',
         status: 'ACTIVE',
-      }).execute();
+      });
       template = await db.select().from(templates).where(eq(templates.id, templateId)).get();
     }
 
     if (!template) {
-      return { error: 'Failed to resolve template' };
+      return { error: 'Failed to resolve or create business template' };
     }
 
-    // Generate IDs
-    const userId = crypto.randomUUID();
-    const tenantId = crypto.randomUUID();
-    let roleId: string = crypto.randomUUID();
-
-    // 1. Create Business Admin User
-    const passwordHash = await argon2.hash(password);
-    const [firstName, ...lastNameParts] = ownerName.split(' ');
-    
-    // Generate base slug and check availability
+    // 3. Generate base slug and check uniqueness
     let slug = businessName.toLowerCase().replace(/[^a-z0-9]+/g, '-');
     if (slug.endsWith('-')) slug = slug.slice(0, -1);
     if (slug.startsWith('-')) slug = slug.slice(1);
@@ -76,25 +79,41 @@ export async function provisionBusiness(formData: FormData) {
       counter++;
     }
 
+    // 4. Generate IDs & Password Hash
+    const userId = crypto.randomUUID();
+    const tenantId = crypto.randomUUID();
+    let roleId: string = crypto.randomUUID();
+    const passwordHash = await argon2.hash(password);
+    const [firstName, ...lastNameParts] = ownerName.split(' ');
+
     const settings = JSON.stringify({
+      businessName,
+      slug,
+      logoUrl: null,
       timezone,
       currency,
       language,
+      dateFormat: 'YYYY-MM-DD',
+      numberFormat: 'en-US',
+      status: 'ACTIVE',
+      createdDate: new Date().toISOString(),
     });
 
-    // Run inserts in a transaction for atomicity
+    // 5. Atomic Transaction for all records
     await db.transaction(async (tx) => {
+      // a. Create User
       await tx.insert(users).values({
         id: userId,
         username,
         passwordHash,
-        firstName: firstName || '',
+        firstName: firstName || ownerName,
         lastName: lastNameParts.join(' ') || '',
         userType: 'BUSINESS',
         status: 'ACTIVE',
         mustChangePassword: true,
       });
 
+      // b. Create Tenant
       await tx.insert(tenants).values({
         id: tenantId,
         name: businessName,
@@ -105,8 +124,8 @@ export async function provisionBusiness(formData: FormData) {
         status: 'ACTIVE',
       });
 
+      // c. Create or Assign Business Owner Role
       let role = await tx.select().from(roles).where(and(eq(roles.slug, 'business_owner'), eq(roles.tenantId, tenantId))).get();
-      
       if (!role) {
         await tx.insert(roles).values({
           id: roleId,
@@ -121,17 +140,34 @@ export async function provisionBusiness(formData: FormData) {
         roleId = role.id;
       }
 
+      // d. Assign Role to User
       await tx.insert(userRoles).values({
         userId: userId,
         roleId: roleId,
         tenantId: tenantId,
       });
+
+      // e. Create Default Cash Account
+      await tx.insert(accounts).values({
+        id: crypto.randomUUID(),
+        tenantId: tenantId,
+        name: 'Main Cash Account',
+        type: 'CASH',
+        openingBalance: 0,
+        currentBalance: 0,
+        status: 'ACTIVE',
+      });
     });
 
-    // In a real app we'd construct the URL from the request or env vars
-    const headersList = await headers();
-    const host = headersList.get('host') || 'localhost:3000';
-    const protocol = host.includes('localhost') ? 'http' : 'https';
+    let host = 'localhost:3000';
+    let protocol = 'http';
+    try {
+      const headersList = await headers();
+      host = headersList.get('host') || 'localhost:3000';
+      protocol = host.includes('localhost') ? 'http' : 'https';
+    } catch {
+      // Fallback for non-request environments or CLI testing
+    }
     
     return { 
       success: true, 
@@ -142,7 +178,19 @@ export async function provisionBusiness(formData: FormData) {
       } 
     };
   } catch (error: any) {
-    console.error("Provisioning error:", error);
-    return { error: error.message || 'An unexpected error occurred' };
+    const rawError = error?.message || String(error);
+    console.error("Business Provisioning Failed:", rawError);
+    
+    let userFacingMessage = rawError;
+    if (rawError.includes('UNIQUE constraint failed')) {
+      if (rawError.includes('users.username')) {
+        userFacingMessage = 'Username already exists. Please choose another username.';
+      } else if (rawError.includes('tenants.slug')) {
+        userFacingMessage = 'Business slug already exists. Please choose another business name.';
+      } else {
+        userFacingMessage = 'Database uniqueness constraint failed.';
+      }
+    }
+    return { error: userFacingMessage };
   }
 }

@@ -18,10 +18,10 @@ async function getTenantId() {
   return userRoleInfo.tenantId;
 }
 
-export async function getDashboardSummaryAction() {
+export async function getDashboardSummaryAction(filterOptions: { range?: string; from?: string; to?: string } = {}) {
   try {
     const tenantId = await getTenantId();
-    const data = await DashboardRepository.getSummary(tenantId);
+    const data = await DashboardRepository.getSummary(tenantId, filterOptions);
     return { success: true, data };
   } catch (error: any) {
     return { success: false, error: error.message || "Failed to load dashboard data" };
