@@ -245,6 +245,9 @@ export async function duplicateRoleAction(roleId: string) {
 
     const sourceRole = await db.select().from(roles).where(eq(roles.id, roleId)).get();
     if (!sourceRole || sourceRole.isInternal) return { success: false, error: "Source role not found." };
+    if (sourceRole.tenantId && sourceRole.tenantId !== ctx.tenantId) {
+      return { success: false, error: "Unauthorized" };
+    }
 
     const sourcePerms = await db.select().from(rolePermissions).where(eq(rolePermissions.roleId, roleId)).all();
     const permIds = sourcePerms.map((p) => p.permissionId);
@@ -264,6 +267,9 @@ export async function deleteRoleAction(roleId: string) {
 
     const role = await db.select().from(roles).where(eq(roles.id, roleId)).get();
     if (!role || role.isInternal) return { success: false, error: "Role not found." };
+    if (role.tenantId && role.tenantId !== ctx.tenantId) {
+      return { success: false, error: "Unauthorized" };
+    }
 
     if (role.isSystem || role.slug === "business_owner") {
       return { success: false, error: "System protected roles cannot be deleted." };

@@ -1,6 +1,6 @@
 import { db } from "@/shared/db/database";
 import { employees } from "../schema/employees";
-import { users, userRoles, roles } from "@/platform/db/schema";
+import { users, userRoles, roles, tenants } from "@/platform/db/schema";
 import { eq, and, desc } from "drizzle-orm";
 import crypto from "crypto";
 import * as argon2 from "argon2";
@@ -221,12 +221,18 @@ export class EmployeeRepository {
       const firstName = nameParts[0] || "Employee";
       const lastName = nameParts.slice(1).join(" ") || "";
 
+      const tenant = await db.select().from(tenants).where(eq(tenants.id, tenantId)).get();
+      const isOwner = tenant?.ownerId === existing.userId;
+
       const userUpdate: any = {
         firstName,
         lastName,
-        status: params.status === "ACTIVE" ? "ACTIVE" : "INACTIVE",
         updatedAt: new Date(),
       };
+
+      if (!isOwner || params.status === "ACTIVE") {
+        userUpdate.status = params.status === "ACTIVE" ? "ACTIVE" : "INACTIVE";
+      }
 
       if (params.password && params.password.trim().length > 0) {
         userUpdate.passwordHash = await argon2.hash(params.password.trim());
@@ -248,6 +254,10 @@ export class EmployeeRepository {
       .where(and(eq(employees.id, id), eq(employees.tenantId, tenantId), eq(employees.isInternal, false)));
 
     if (existing.userId) {
+      const tenant = await db.select().from(tenants).where(eq(tenants.id, tenantId)).get();
+      if (tenant?.ownerId === existing.userId) {
+        throw new Error("Cannot change status of the Business Owner.");
+      }
       await db
         .update(users)
         .set({ status: newStatus, updatedAt: new Date() })
@@ -266,6 +276,10 @@ export class EmployeeRepository {
       .where(and(eq(employees.id, id), eq(employees.tenantId, tenantId), eq(employees.isInternal, false)));
 
     if (existing.userId) {
+      const tenant = await db.select().from(tenants).where(eq(tenants.id, tenantId)).get();
+      if (tenant?.ownerId === existing.userId) {
+        throw new Error("Cannot delete the Business Owner. Please transfer ownership or delete the business instead.");
+      }
       await db.delete(userRoles).where(eq(userRoles.userId, existing.userId));
       await db.delete(users).where(and(eq(users.id, existing.userId), eq(users.isInternal, false)));
     }

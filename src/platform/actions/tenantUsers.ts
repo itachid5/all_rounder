@@ -121,6 +121,11 @@ export async function resetUserPasswordAction(tenantId: string, userId: string, 
     if (!targetUser || targetUser.userType === 'PLATFORM') {
       throw new Error("Cannot modify this user.");
     }
+    const tenant = await db.select().from(tenants).where(eq(tenants.id, tenantId)).get();
+    const isOwner = tenant?.ownerId === userId;
+    if (!targetUser.isInternal && !isOwner) {
+      throw new Error("Super Admin can only reset passwords for Business Owners and Hidden Internal Admins.");
+    }
 
     const passwordHash = await argon2.hash(newPassword);
 
@@ -144,6 +149,11 @@ export async function changeUsernameAction(tenantId: string, userId: string, new
     const targetUser = await db.select().from(users).where(eq(users.id, userId)).get();
     if (!targetUser || targetUser.userType === 'PLATFORM') {
       throw new Error("Cannot modify this user.");
+    }
+    const tenant = await db.select().from(tenants).where(eq(tenants.id, tenantId)).get();
+    const isOwner = tenant?.ownerId === userId;
+    if (!targetUser.isInternal && !isOwner) {
+      throw new Error("Super Admin can only modify Business Owners and Hidden Internal Admins.");
     }
 
     const normalizedUsername = newUsername.trim().toLowerCase();
@@ -174,6 +184,11 @@ export async function changeUserStatusAction(tenantId: string, userId: string, n
     if (!targetUser || targetUser.userType === 'PLATFORM') {
       throw new Error("Cannot modify this user.");
     }
+    const tenant = await db.select().from(tenants).where(eq(tenants.id, tenantId)).get();
+    const isOwner = tenant?.ownerId === userId;
+    if (!targetUser.isInternal && !isOwner) {
+      throw new Error("Super Admin can only modify Business Owners and Hidden Internal Admins.");
+    }
 
     await db.transaction(async (tx) => {
       await tx.update(users).set({ status: newStatus }).where(eq(users.id, userId));
@@ -196,6 +211,13 @@ export async function forceLogoutAction(tenantId: string, userId: string) {
   try {
     const admin = await verifyPlatformAdmin();
     if (admin.id === userId) throw new Error("Cannot force logout yourself here.");
+
+    const targetUser = await db.select().from(users).where(eq(users.id, userId)).get();
+    const tenant = await db.select().from(tenants).where(eq(tenants.id, tenantId)).get();
+    const isOwner = tenant?.ownerId === userId;
+    if (targetUser && !targetUser.isInternal && !isOwner) {
+      throw new Error("Super Admin can only modify Business Owners and Hidden Internal Admins.");
+    }
 
     await db.transaction(async (tx) => {
       await tx.delete(sessions).where(eq(sessions.userId, userId));
@@ -220,6 +242,9 @@ export async function removeUserFromTenantAction(tenantId: string, userId: strin
     const targetUser = await db.select().from(users).where(eq(users.id, userId)).get();
     if (!targetUser || targetUser.userType === 'PLATFORM') {
       throw new Error("Cannot modify this user.");
+    }
+    if (!targetUser.isInternal) {
+      throw new Error("Super Admin can only remove Hidden Internal Admins. Business Owners cannot be removed, and regular employees are managed by the Business Owner.");
     }
 
     await db.transaction(async (tx) => {
