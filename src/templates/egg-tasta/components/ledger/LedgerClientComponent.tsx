@@ -19,13 +19,16 @@ import {
   X,
   FileSpreadsheet,
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
+  Building2,
+  User,
+  Phone,
+  MapPin
 } from "lucide-react";
 import Link from "next/link";
 import { Table, Thead, Tbody, Tr, Th, Td, EmptyState, Modal } from "@/templates/egg-tasta/components";
 import { useCurrency } from "@/shared/components/regional-context";
 import { usePermission } from "@/shared/components/permission-context";
-import { formatDate } from "@/shared/utils/date";
 import { getLedgerEntriesAction, createManualAdjustmentAction } from "@/templates/egg-tasta/actions/ledger";
 
 export interface LedgerClientProps {
@@ -37,13 +40,21 @@ export interface LedgerClientProps {
     totalCredit: number;
     currentBalance: number;
   };
-  customersList?: { id: string; name: string; customerCode?: string }[];
+  customersList?: { id: string; name: string; customerCode?: string; mobile?: string; address?: string; previousDue?: number }[];
   suppliersList?: { id: string; name: string; supplierCode?: string }[];
   defaultTransactionType?: string;
   defaultCustomerId?: string;
   defaultSupplierId?: string;
   title?: string;
   description?: string;
+  headerData?: {
+    businessName: string;
+    logoUrl?: string | null;
+    address: string;
+    phone: string;
+    printedBy: string;
+    generatedAt: string;
+  };
 }
 
 export function LedgerClientComponent({
@@ -57,8 +68,16 @@ export function LedgerClientComponent({
   defaultSupplierId = "ALL",
   title = "General Ledger",
   description = "Complete production-ready financial transaction & balance ledger.",
+  headerData = {
+    businessName: "Egg Tasta ERP",
+    logoUrl: null,
+    address: "Main Outlet Road, Dhaka, Bangladesh",
+    phone: "+880 1700-000000",
+    printedBy: "Business Admin",
+    generatedAt: new Date().toLocaleString(),
+  },
 }: LedgerClientProps) {
-  const { formatCurrency, formatMoney } = useCurrency();
+  const { formatCurrency } = useCurrency();
   const { hasAnyPermission, isOwner } = usePermission();
 
   const canView = isOwner || hasAnyPermission(["ledger.view", "view:ledger", "view:reports"]);
@@ -104,6 +123,10 @@ export function LedgerClientComponent({
   const [formSuccess, setFormSuccess] = useState<string | null>(null);
 
   const totalPages = Math.ceil(total / limit) || 1;
+
+  // Selected customer object for printing customer ledger details
+  const selectedCustomer = customerId !== "ALL" ? customersList.find((c) => c.id === customerId) : null;
+  const selectedSupplier = supplierId !== "ALL" ? suppliersList.find((s) => s.id === supplierId) : null;
 
   function fetchLedger(
     newSearch = search,
@@ -217,7 +240,7 @@ export function LedgerClientComponent({
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `Ledger_Report_${new Date().toISOString().split("T")[0]}.csv`);
+    link.setAttribute("download", `${title.replace(/\s+/g, "_")}_${new Date().toISOString().split("T")[0]}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -258,28 +281,58 @@ export function LedgerClientComponent({
 
   return (
     <div className="space-y-6">
-      {/* Printable CSS override */}
+      {/* Printable CSS override for A4 Portrait Ledger */}
       <style jsx global>{`
         @media print {
-          body * {
-            visibility: hidden;
+          @page {
+            size: A4 portrait;
+            margin: 12mm;
           }
-          #ledger-printable-section, #ledger-printable-section * {
-            visibility: visible;
+          body {
+            background: #ffffff !important;
+            color: #000000 !important;
+            font-size: 10pt !important;
+            -webkit-print-color-adjust: exact;
+          }
+          .no-print, nav, aside, button, select, input, .no-print * {
+            display: none !important;
           }
           #ledger-printable-section {
-            position: absolute;
-            left: 0;
-            top: 0;
-            width: 100%;
+            display: block !important;
+            width: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
           }
-          .no-print {
-            display: none !important;
+          table {
+            width: 100% !important;
+            border-collapse: collapse !important;
+            margin-top: 15px !important;
+          }
+          thead {
+            display: table-header-group !important;
+          }
+          tr {
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
+          }
+          th {
+            background-color: #f1f5f9 !important;
+            color: #0f172a !important;
+            border: 1px solid #cbd5e1 !important;
+            padding: 6px 8px !important;
+            font-weight: bold !important;
+            font-size: 9pt !important;
+          }
+          td {
+            border: 1px solid #cbd5e1 !important;
+            padding: 6px 8px !important;
+            font-size: 9pt !important;
+            color: #0f172a !important;
           }
         }
       `}</style>
 
-      {/* Header & Breadcrumbs */}
+      {/* Header & Breadcrumbs (Screen) */}
       <div className="no-print flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <nav className="flex items-center text-sm text-slate-500 dark:text-slate-400 mb-1">
@@ -321,17 +374,17 @@ export function LedgerClientComponent({
           {canPrint && (
             <button
               onClick={handlePrint}
-              className="px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl font-medium text-sm flex items-center gap-2 shadow-sm transition-colors"
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-medium text-sm flex items-center gap-2 shadow-sm transition-colors"
             >
-              <Printer className="h-4 w-4 text-slate-600 dark:text-slate-400" />
-              Print
+              <Printer className="h-4 w-4" />
+              Print Ledger
             </button>
           )}
         </div>
       </div>
 
-      {/* Top Summary Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* Top Summary Cards (Screen) */}
+      <div className="no-print grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Opening Balance */}
         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm relative overflow-hidden">
           <div className="flex items-center justify-between">
@@ -384,7 +437,7 @@ export function LedgerClientComponent({
         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm relative overflow-hidden">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-              Current Balance
+              Current Due / Balance
             </span>
             <div className="h-9 w-9 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center">
               <Calculator className="h-5 w-5" />
@@ -399,7 +452,7 @@ export function LedgerClientComponent({
           >
             {formatCurrency(summary.currentBalance)}
           </div>
-          <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">Ending period net balance</p>
+          <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">Closing period net balance</p>
         </div>
       </div>
 
@@ -463,7 +516,7 @@ export function LedgerClientComponent({
             </select>
           </div>
 
-          {/* Customer */}
+          {/* Customer Filter */}
           <div>
             <select
               value={customerId}
@@ -472,18 +525,18 @@ export function LedgerClientComponent({
                 setPage(1);
                 fetchLedger(search, transactionType, e.target.value, supplierId, startDate, endDate, 1);
               }}
-              className="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-slate-900 dark:text-white"
+              className="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-slate-900 dark:text-white font-medium"
             >
               <option value="ALL">All Customers</option>
               {customersList.map((c) => (
                 <option key={c.id} value={c.id}>
-                  {c.name}
+                  {c.name} ({c.customerCode || "Cust"})
                 </option>
               ))}
             </select>
           </div>
 
-          {/* Supplier */}
+          {/* Supplier Filter */}
           <div>
             <select
               value={supplierId}
@@ -521,6 +574,123 @@ export function LedgerClientComponent({
 
       {/* Printable Section */}
       <div id="ledger-printable-section" className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-sm">
+        {/* BUSINESS PRINT HEADER */}
+        <div className="p-6 border-b border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row justify-between items-start gap-4">
+          <div className="flex items-center gap-4">
+            {headerData.logoUrl ? (
+              <img src={headerData.logoUrl} alt="Business Logo" className="h-12 max-w-[150px] object-contain shrink-0" />
+            ) : (
+              <div className="h-12 w-12 rounded-xl bg-blue-600 text-white flex items-center justify-center font-bold text-xl shrink-0">
+                <Building2 className="h-6 w-6" />
+              </div>
+            )}
+            <div>
+              <h2 className="text-xl font-bold text-slate-900 dark:text-white uppercase tracking-wide">
+                {headerData.businessName}
+              </h2>
+              <p className="text-xs text-slate-500 dark:text-slate-400">{headerData.address}</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400">Phone: {headerData.phone}</p>
+            </div>
+          </div>
+
+          <div className="text-left sm:text-right">
+            <h3 className="text-lg font-bold text-slate-900 dark:text-white uppercase tracking-wider text-blue-600 dark:text-blue-400">
+              {title}
+            </h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+              Generated: <strong>{headerData.generatedAt}</strong>
+            </p>
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              Printed By: <strong>{headerData.printedBy}</strong>
+            </p>
+          </div>
+        </div>
+
+        {/* CUSTOMER / SUPPLIER INFORMATION BLOCK (If customer selected or customer ledger) */}
+        {(selectedCustomer || selectedSupplier) && (
+          <div className="p-6 bg-slate-50/80 dark:bg-slate-800/40 border-b border-slate-200 dark:border-slate-800">
+            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3">
+              {selectedCustomer ? "Customer Information" : "Supplier Information"}
+            </h4>
+
+            {selectedCustomer && (
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
+                <div>
+                  <span className="text-xs text-slate-400 block">Customer Name</span>
+                  <span className="font-bold text-slate-900 dark:text-white">{selectedCustomer.name}</span>
+                </div>
+                <div>
+                  <span className="text-xs text-slate-400 block">Customer Code</span>
+                  <span className="font-mono font-semibold text-blue-600 dark:text-blue-400">
+                    {selectedCustomer.customerCode}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-xs text-slate-400 block">Phone</span>
+                  <span className="text-slate-800 dark:text-slate-200">{selectedCustomer.mobile || "-"}</span>
+                </div>
+                <div>
+                  <span className="text-xs text-slate-400 block">Address</span>
+                  <span className="text-slate-800 dark:text-slate-200 truncate block">
+                    {selectedCustomer.address || "-"}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-xs text-slate-400 block">Opening Balance</span>
+                  <span className="font-semibold text-slate-900 dark:text-white">
+                    {formatCurrency(summary.openingBalance)}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-xs text-slate-400 block">Current Due</span>
+                  <span className="font-bold text-rose-600 dark:text-rose-400">
+                    {formatCurrency(summary.currentBalance)}
+                  </span>
+                </div>
+                <div className="col-span-2">
+                  <span className="text-xs text-slate-400 block">Date Range Filter</span>
+                  <span className="text-slate-800 dark:text-slate-200 font-medium">
+                    {startDate && endDate
+                      ? `${startDate} to ${endDate}`
+                      : startDate
+                      ? `From ${startDate}`
+                      : endDate
+                      ? `Up to ${endDate}`
+                      : "All Time"}
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {selectedSupplier && (
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
+                <div>
+                  <span className="text-xs text-slate-400 block">Supplier Name</span>
+                  <span className="font-bold text-slate-900 dark:text-white">{selectedSupplier.name}</span>
+                </div>
+                <div>
+                  <span className="text-xs text-slate-400 block">Supplier Code</span>
+                  <span className="font-mono font-semibold text-blue-600 dark:text-blue-400">
+                    {selectedSupplier.supplierCode}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-xs text-slate-400 block">Opening Balance</span>
+                  <span className="font-semibold text-slate-900 dark:text-white">
+                    {formatCurrency(summary.openingBalance)}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-xs text-slate-400 block">Current Due</span>
+                  <span className="font-bold text-rose-600 dark:text-rose-400">
+                    {formatCurrency(summary.currentBalance)}
+                  </span>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
         {isPending && (
           <div className="no-print bg-blue-50/50 dark:bg-blue-900/20 px-4 py-2 border-b border-blue-100 dark:border-blue-900/30 text-xs font-medium text-blue-600 dark:text-blue-400 flex items-center gap-2">
             <RefreshCw className="h-3.5 w-3.5 animate-spin" />
@@ -528,6 +698,7 @@ export function LedgerClientComponent({
           </div>
         )}
 
+        {/* LEDGER TABLE */}
         {data.length === 0 ? (
           <EmptyState
             title="No Ledger Entries Found"
@@ -542,10 +713,9 @@ export function LedgerClientComponent({
                   Date {sortBy === "entryDate" && (sortOrder === "asc" ? "↑" : "↓")}
                 </Th>
                 <Th onClick={() => handleSort("voucherNo")} className="cursor-pointer select-none">
-                  Voucher No {sortBy === "voucherNo" && (sortOrder === "asc" ? "↑" : "↓")}
+                  Voucher {sortBy === "voucherNo" && (sortOrder === "asc" ? "↑" : "↓")}
                 </Th>
-                <Th>Type</Th>
-                <Th>Reference</Th>
+                <Th>Transaction Type</Th>
                 <Th>Description</Th>
                 <Th onClick={() => handleSort("debit")} className="cursor-pointer select-none text-right">
                   Debit {sortBy === "debit" && (sortOrder === "asc" ? "↑" : "↓")}
@@ -556,7 +726,6 @@ export function LedgerClientComponent({
                 <Th onClick={() => handleSort("runningBalance")} className="cursor-pointer select-none text-right">
                   Running Balance {sortBy === "runningBalance" && (sortOrder === "asc" ? "↑" : "↓")}
                 </Th>
-                <Th>Created By</Th>
                 <Th className="no-print text-center">Actions</Th>
               </Tr>
             </Thead>
@@ -579,12 +748,9 @@ export function LedgerClientComponent({
                         {formatTxLabel(row.transactionType)}
                       </span>
                     </Td>
-                    <Td className="text-xs text-slate-500 font-mono">
-                      {row.referenceNo || "-"}
-                    </Td>
                     <Td className="max-w-xs truncate" title={row.description || ""}>
                       {row.description || "-"}
-                      {(row.customerName || row.supplierName) && (
+                      {!selectedCustomer && !selectedSupplier && (row.customerName || row.supplierName) && (
                         <div className="text-xs text-slate-400 dark:text-slate-500">
                           {row.customerName ? `Cust: ${row.customerName}` : `Supp: ${row.supplierName}`}
                         </div>
@@ -605,7 +771,6 @@ export function LedgerClientComponent({
                     >
                       {formatCurrency(row.runningBalance)}
                     </Td>
-                    <Td className="text-xs text-slate-500 dark:text-slate-400">{row.createdBy || "System"}</Td>
                     <Td className="no-print text-center">
                       <div className="flex items-center justify-center gap-1">
                         <button
@@ -633,7 +798,37 @@ export function LedgerClientComponent({
           </Table>
         )}
 
-        {/* Table Footer / Pagination */}
+        {/* LEDGER SUMMARY SECTION (Printed & Screen) */}
+        <div className="p-6 border-t border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50">
+          <div className="max-w-md ml-auto p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl space-y-2 text-sm">
+            <div className="flex justify-between text-slate-600 dark:text-slate-400">
+              <span>Opening Balance :</span>
+              <span className="font-bold text-slate-900 dark:text-white">
+                {formatCurrency(summary.openingBalance)}
+              </span>
+            </div>
+            <div className="flex justify-between text-slate-600 dark:text-slate-400">
+              <span>Total Debit :</span>
+              <span className="font-bold text-rose-600 dark:text-rose-400">{formatCurrency(summary.totalDebit)}</span>
+            </div>
+            <div className="flex justify-between text-slate-600 dark:text-slate-400">
+              <span>Total Credit :</span>
+              <span className="font-bold text-emerald-600 dark:text-emerald-400">
+                {formatCurrency(summary.totalCredit)}
+              </span>
+            </div>
+            <div className="flex justify-between text-base border-t border-slate-200 dark:border-slate-800 pt-2 font-bold text-slate-900 dark:text-white">
+              <span>Closing Balance / Net :</span>
+              <span>{formatCurrency(summary.currentBalance)}</span>
+            </div>
+            <div className="flex justify-between text-sm border-t border-slate-100 dark:border-slate-800/80 pt-1 font-bold text-rose-600 dark:text-rose-400">
+              <span>Current Due :</span>
+              <span>{formatCurrency(summary.currentBalance)}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Screen Table Footer / Pagination */}
         <div className="no-print px-6 py-4 border-t border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
           <div>
             Showing <span className="font-semibold text-slate-900 dark:text-white">{data.length}</span> of{" "}
