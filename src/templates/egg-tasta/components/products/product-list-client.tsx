@@ -6,8 +6,10 @@ import Link from "next/link";
 import { listProductsAction } from "@/templates/egg-tasta/actions/products";
 import { Button, Table, Thead, Tbody, Tr, Th, Td, EmptyState, StatusBadge } from "@/templates/egg-tasta/components";
 import { PermissionGuard } from "@/shared/components/permission-context";
+import { useCurrency } from "@/shared/components/regional-context";
 
 export function ProductListClient({ initialData, initialTotal }: { initialData: any[], initialTotal: number }) {
+  const { symbol } = useCurrency();
   const [isPending, startTransition] = useTransition();
   
   const [data, setData] = useState(initialData);
@@ -138,9 +140,9 @@ export function ProductListClient({ initialData, initialTotal }: { initialData: 
                 <Tr key={item.id}>
                   <Td className="font-mono text-xs font-medium text-slate-500">{item.productCode}</Td>
                   <Td className="font-medium">{item.name}</Td>
-                  <Td className="text-right text-slate-600 dark:text-slate-400">৳{item.purchasePrice?.toFixed(2)}</Td>
-                  <Td className="text-right font-medium">৳{item.sellingPrice?.toFixed(2)}</Td>
-                  <Td className="text-right text-slate-600 dark:text-slate-400">৳{item.wholesalePrice?.toFixed(2)}</Td>
+                  <Td className="text-right text-slate-600 dark:text-slate-400">{symbol}{item.purchasePrice?.toFixed(2)}</Td>
+                  <Td className="text-right font-medium">{symbol}{item.sellingPrice?.toFixed(2)}</Td>
+                  <Td className="text-right text-slate-600 dark:text-slate-400">{symbol}{item.wholesalePrice?.toFixed(2)}</Td>
                   <Td className="text-right">
                     <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${isLowStock ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400' : 'bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-300'}`}>
                       {stockToDisplay}

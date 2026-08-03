@@ -1,13 +1,18 @@
-
 import React from "react";
 import { Calculator, FileDown, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { Button, Table, Thead, Tbody, Tr, Th, Td } from "@/templates/egg-tasta/components";
 import { getStockValuationAction } from "@/templates/egg-tasta/actions/inventory";
+import { getRegionalSettingsAction } from "@/shared/actions/regional";
 
 export default async function StockValuationPage() {
-  const res = await getStockValuationAction();
+  const [res, regionalRes] = await Promise.all([
+    getStockValuationAction(),
+    getRegionalSettingsAction(),
+  ]);
+
   const valuations = res.success ? (res.data || []) : [];
+  const symbol = regionalRes.success ? regionalRes.data.currencySymbol : '৳';
 
   const totalQuantity = valuations.reduce((acc: number, curr: any) => acc + curr.quantity, 0);
   const totalValue = valuations.reduce((acc: number, curr: any) => acc + curr.totalValue, 0);
@@ -47,12 +52,12 @@ export default async function StockValuationPage() {
         </div>
         
         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-6 shadow-sm flex items-center gap-4">
-          <div className="h-12 w-12 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 rounded-full flex items-center justify-center">
-            <span className="text-2xl font-bold">৳</span>
+          <div className="h-12 w-12 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 rounded-full flex items-center justify-center font-bold text-2xl">
+            {symbol}
           </div>
           <div>
             <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Total Inventory Value</p>
-            <h3 className="text-2xl font-bold text-slate-900 dark:text-white">৳ {totalValue.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</h3>
+            <h3 className="text-2xl font-bold text-slate-900 dark:text-white">{symbol}{totalValue.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</h3>
           </div>
         </div>
       </div>
@@ -72,8 +77,8 @@ export default async function StockValuationPage() {
               <Tr key={item.id}>
                 <Td className="font-medium text-slate-900 dark:text-white">{item.product}</Td>
                 <Td className="text-right font-medium">{item.quantity}</Td>
-                <Td className="text-right text-slate-500">৳ {item.price.toFixed(2)}</Td>
-                <Td className="text-right font-bold text-slate-900 dark:text-white">৳ {item.totalValue.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</Td>
+                <Td className="text-right text-slate-500">{symbol}{item.price.toFixed(2)}</Td>
+                <Td className="text-right font-bold text-slate-900 dark:text-white">{symbol}{item.totalValue.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</Td>
               </Tr>
             ))}
           </Tbody>

@@ -7,6 +7,7 @@ import { Menu, Package, Wallet, ShoppingCart } from "lucide-react";
 import Link from "next/link";
 import { BusinessSidebar, NavItem } from "./sidebar";
 import { PermissionProvider, PermissionGuard } from "@/shared/components/permission-context";
+import { RegionalProvider } from "@/shared/components/regional-context";
 
 export function ContentContainer({ children }: { children: React.ReactNode }) {
   return <div className="space-y-6">{children}</div>;
@@ -113,6 +114,7 @@ export function BusinessLayout({
   navigation,
   user,
   branding,
+  regional,
   userPermissions = [],
   isOwner = false,
 }: {
@@ -120,31 +122,34 @@ export function BusinessLayout({
   navigation: NavItem[];
   user: any;
   branding?: any;
+  regional?: any;
   userPermissions?: string[];
   isOwner?: boolean;
 }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
-    <PermissionProvider permissions={userPermissions} isOwner={isOwner}>
-      <div className="egg-tasta-theme flex min-h-screen bg-slate-50 dark:bg-slate-950">
-        <FaviconUpdater faviconUrl={branding?.faviconUrl} />
-        <BusinessSidebar 
-          navigation={navigation} 
-          open={sidebarOpen} 
-          setOpen={setSidebarOpen} 
-          branding={branding}
-        />
-        
-        {/* Main Content */}
-        <div className="flex-1 flex flex-col min-w-0">
-          <Topbar setSidebarOpen={setSidebarOpen} user={user} branding={branding} />
+    <RegionalProvider settings={regional}>
+      <PermissionProvider permissions={userPermissions} isOwner={isOwner}>
+        <div className="egg-tasta-theme flex min-h-screen bg-slate-50 dark:bg-slate-950">
+          <FaviconUpdater faviconUrl={branding?.faviconUrl} />
+          <BusinessSidebar 
+            navigation={navigation} 
+            open={sidebarOpen} 
+            setOpen={setSidebarOpen} 
+            branding={branding}
+          />
+          
+          {/* Main Content */}
+          <div className="flex-1 flex flex-col min-w-0">
+            <Topbar setSidebarOpen={setSidebarOpen} user={user} branding={branding} />
 
-          <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
-            {children}
-          </main>
+            <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
+              {children}
+            </main>
+          </div>
         </div>
-      </div>
-    </PermissionProvider>
+      </PermissionProvider>
+    </RegionalProvider>
   );
 }

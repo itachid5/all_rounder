@@ -5,8 +5,10 @@ import { Search, ArrowUpDown, Eye, Printer, FileDown, ShoppingCart } from "lucid
 import { Table, Thead, Tbody, Tr, Th, Td, EmptyState, Badge, ActionMenu, Button } from "@/templates/egg-tasta/components";
 import { listPurchasesAction } from "@/templates/egg-tasta/actions/purchases";
 import { formatDate } from "@/shared/utils/date";
+import { useCurrency } from "@/shared/components/regional-context";
 
 export function PurchaseLedgerClient({ initialData, initialTotal }: { initialData: any[], initialTotal: number }) {
+  const { symbol } = useCurrency();
   const [isPending, startTransition] = useTransition();
   const [data, setData] = useState(initialData);
   const [total, setTotal] = useState(initialTotal);
@@ -92,7 +94,7 @@ export function PurchaseLedgerClient({ initialData, initialTotal }: { initialDat
           <div className="flex items-center gap-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800/40 px-3 py-1.5 rounded-lg">
             <ShoppingCart className="h-4 w-4 text-blue-600 dark:text-blue-400" />
             <span className="text-xs font-medium text-slate-600 dark:text-slate-300">Page Purchases:</span>
-            <span className="text-sm font-bold text-blue-700 dark:text-blue-400">৳{totalPageAmount.toFixed(2)}</span>
+            <span className="text-sm font-bold text-blue-700 dark:text-blue-400">{symbol}{totalPageAmount.toFixed(2)}</span>
           </div>
 
           <Button variant="outline" size="sm" onClick={handleExport}>
@@ -141,9 +143,9 @@ export function PurchaseLedgerClient({ initialData, initialTotal }: { initialDat
                   <Td className="text-slate-600 dark:text-slate-400">{formatDate(item.date)}</Td>
                   <Td className="font-mono text-xs font-medium text-slate-600">{item.invoiceNo}</Td>
                   <Td className="font-medium">{row.supplierName}</Td>
-                  <Td className="text-right font-semibold">৳{item.totalAmount.toFixed(2)}</Td>
-                  <Td className="text-right text-emerald-600 dark:text-emerald-400">৳{item.paidAmount.toFixed(2)}</Td>
-                  <Td className="text-right text-rose-600 dark:text-rose-400">৳{item.dueAmount.toFixed(2)}</Td>
+                  <Td className="text-right font-semibold">{symbol}{item.totalAmount.toFixed(2)}</Td>
+                  <Td className="text-right text-emerald-600 dark:text-emerald-400">{symbol}{item.paidAmount.toFixed(2)}</Td>
+                  <Td className="text-right text-rose-600 dark:text-rose-400">{symbol}{item.dueAmount.toFixed(2)}</Td>
                   <Td>
                     <Badge variant={item.status === 'PAID' ? 'success' : item.status === 'PARTIAL' ? 'warning' : 'danger'}>
                       {item.status}

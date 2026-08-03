@@ -1,67 +1,29 @@
-"use client";
+import { getRegionalSettingsAction } from "@/shared/actions/regional";
+import { RegionalSettingsClient } from "@/templates/egg-tasta/components/settings/regional-settings-client";
+import { ChevronRight } from "lucide-react";
+import Link from "next/link";
 
-import React from "react";
-import { DollarSign } from "lucide-react";
-import GenericSettingsPage from "@/templates/egg-tasta/components/settings/generic-settings-page";
-import { FormGrid, SelectField } from "@/templates/egg-tasta/components";
+export default async function FinancialSettingsPage() {
+  const res = await getRegionalSettingsAction();
+  const settings = res.data;
 
-export default function FinancialSettingsPage() {
   return (
-    <GenericSettingsPage title="Financial Settings" description="Configure currency, accounting formats, and fiscal periods." icon={DollarSign}>
-      <FormGrid>
-        <SelectField 
-          label="Base Currency" 
-          name="currency" 
-          options={[
-            { value: "BDT", label: "Bangladeshi Taka (BDT)" },
-            { value: "USD", label: "US Dollar (USD)" },
-            { value: "EUR", label: "Euro (EUR)" },
-          ]}
-        />
-        <SelectField 
-          label="Currency Symbol" 
-          name="currencySymbol" 
-          options={[
-            { value: "৳", label: "৳ (Taka)" },
-            { value: "$", label: "$ (Dollar)" },
-            { value: "€", label: "€ (Euro)" },
-          ]}
-        />
-        <SelectField 
-          label="Decimal Places" 
-          name="decimals" 
-          options={[
-            { value: "0", label: "0 (e.g. 100)" },
-            { value: "2", label: "2 (e.g. 100.00)" },
-          ]}
-          defaultValue="2"
-        />
-        <SelectField 
-          label="Default Payment Method" 
-          name="defaultPayment" 
-          options={[
-            { value: "cash", label: "Cash" },
-            { value: "bank", label: "Bank" },
-            { value: "mobile", label: "Mobile Banking" },
-          ]}
-        />
-        <SelectField 
-          label="Fiscal Year Start Month" 
-          name="fiscalYear" 
-          options={[
-            { value: "jan", label: "January (Jan - Dec)" },
-            { value: "jul", label: "July (Jul - Jun)" },
-          ]}
-        />
-        <SelectField 
-          label="Opening Financial Year" 
-          name="openingYear" 
-          options={[
-            { value: "2024", label: "2024" },
-            { value: "2023", label: "2023" },
-          ]}
-        />
-      </FormGrid>
-    </GenericSettingsPage>
+    <div className="space-y-6">
+      {/* Header and Breadcrumbs */}
+      <div>
+        <nav className="flex items-center text-sm text-slate-500 dark:text-slate-400 mb-2">
+          <Link href="/app/dashboard" className="hover:text-blue-600 dark:hover:text-blue-400">Dashboard</Link>
+          <ChevronRight className="h-4 w-4 mx-1" />
+          <Link href="/app/settings" className="hover:text-blue-600 dark:hover:text-blue-400">Settings</Link>
+          <ChevronRight className="h-4 w-4 mx-1" />
+          <span className="text-slate-900 dark:text-slate-100 font-medium">Regional & Financial Settings</span>
+        </nav>
+        
+        <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">Regional & Financial Settings</h1>
+        <p className="text-slate-500 dark:text-slate-400 mt-1">Configure base currency, symbols, timezones, and language.</p>
+      </div>
+
+      <RegionalSettingsClient initialSettings={settings} />
+    </div>
   );
 }

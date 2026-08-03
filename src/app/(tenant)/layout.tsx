@@ -1,6 +1,7 @@
 import { getBusinessNavigation, getCurrentUser } from "@/shared/actions/navigation";
 import { getTemplateSlug } from "@/shared/actions/navigation";
 import { getTenantBrandingAction } from "@/shared/actions/branding";
+import { getRegionalSettingsAction } from "@/shared/actions/regional";
 import { getCurrentUserPermissionsAction } from "@/shared/actions/rbac";
 import { loadTemplateContract } from "@/platform/template-engine/loader";
 
@@ -17,6 +18,8 @@ export default async function TenantLayout({
   const contract = await loadTemplateContract(templateSlug);
   const brandingRes = await getTenantBrandingAction();
   const branding = brandingRes.success ? brandingRes.data : {};
+  const regionalRes = await getRegionalSettingsAction();
+  const regional = regionalRes.success ? regionalRes.data : { currency: 'BDT', currencySymbol: '৳', timezone: 'Asia/Dhaka', language: 'en' };
 
   const permsRes = await getCurrentUserPermissionsAction();
   const userPermissions = permsRes.permissions || [];
@@ -29,6 +32,7 @@ export default async function TenantLayout({
       navigation={navigation} 
       user={user} 
       branding={branding}
+      regional={regional}
       userPermissions={userPermissions}
       isOwner={isOwner}
     >

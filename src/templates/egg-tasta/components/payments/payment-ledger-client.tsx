@@ -4,9 +4,11 @@ import React, { useState, useTransition } from "react";
 import { Search, ArrowUpDown, Eye, Printer, FileText } from "lucide-react";
 import { Table, Thead, Tbody, Tr, Th, Td, EmptyState, Badge, ActionMenu, Button } from "@/templates/egg-tasta/components";
 import { formatDate } from "@/shared/utils/date";
+import { useCurrency } from "@/shared/components/regional-context";
 
 export function PaymentLedgerClient({ initialData }: { initialData: any[] }) {
-  const [isPending] = useTransition();
+  const { symbol } = useCurrency();
+  const [isPending, startTransition] = useTransition();
   const [search, setSearch] = useState("");
   const [methodFilter, setMethodFilter] = useState("");
   const [sortBy, setSortBy] = useState("createdAt");
@@ -79,7 +81,7 @@ export function PaymentLedgerClient({ initialData }: { initialData: any[] }) {
         <div className="flex items-center gap-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800/40 px-4 py-2 rounded-lg">
           <FileText className="h-4 w-4 text-blue-600 dark:text-blue-400" />
           <span className="text-xs font-medium text-slate-600 dark:text-slate-300">Total Page Payments:</span>
-          <span className="text-sm font-bold text-blue-700 dark:text-blue-400">৳{totalAmount.toFixed(2)}</span>
+          <span className="text-sm font-bold text-blue-700 dark:text-blue-400">{symbol}{totalAmount.toFixed(2)}</span>
         </div>
       </div>
 
@@ -124,7 +126,7 @@ export function PaymentLedgerClient({ initialData }: { initialData: any[] }) {
                   <Td className="font-medium">{row.supplierName || item.supplierName}</Td>
                   <Td className="text-slate-500">{row.accountName || item.accountName || "Default Cash"}</Td>
                   <Td>{item.paymentMethod || item.method}</Td>
-                  <Td className="text-right font-semibold text-blue-600 dark:text-blue-400">৳{(item.amount || 0).toFixed(2)}</Td>
+                  <Td className="text-right font-semibold text-blue-600 dark:text-blue-400">{symbol}{(item.amount || 0).toFixed(2)}</Td>
                   <Td>
                     <Badge variant={item.status === 'COMPLETED' ? 'success' : 'danger'}>{item.status || 'COMPLETED'}</Badge>
                   </Td>

@@ -21,6 +21,7 @@ export interface TemplateContract {
     navigation: any[]; 
     user: any; 
     branding?: any; 
+    regional?: any;
     userPermissions?: string[]; 
     isOwner?: boolean; 
   }>;
