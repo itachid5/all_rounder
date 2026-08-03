@@ -87,6 +87,20 @@ export class CustomerCollectionRepository {
                     description: `Collection Received: ${collectionNo}`
                   }).run();
 
+          const { LedgerService } = await import("@/templates/egg-tasta/services/LedgerService");
+          await LedgerService.postEntry(tenantId, {
+            transactionType: "CUSTOMER_COLLECTION",
+            debit: 0,
+            credit: amount,
+            customerId: data.customerId,
+            entityType: "CUSTOMER",
+            referenceType: "COLLECTION",
+            referenceId: collectionId,
+            referenceNo: collectionNo,
+            entryDate: date,
+            description: `Customer Collection #${collectionNo} (${data.paymentMethod || 'CASH'})`,
+          }, tx);
+
           // 5. Update Cash/Bank Account & Add Transaction
           const account = await tx.select().from(accounts).where(and(eq(accounts.tenantId, tenantId), eq(accounts.id, accountId))).get();
           if (account) {

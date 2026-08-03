@@ -69,8 +69,11 @@ export async function deleteSaleFromRepo(tenantId: string, saleId: string) {
       }
     }
 
-    // 5. Delete Customer Ledger Entries
+    // 5. Delete Customer Ledger Entries & Central Ledger Entries
     await tx.delete(customerLedgers).where(and(eq(customerLedgers.tenantId, tenantId), eq(customerLedgers.referenceId, saleId))).run();
+    const { LedgerService } = await import("@/templates/egg-tasta/services/LedgerService");
+    await LedgerService.deleteEntryByReference(tenantId, "SALE", saleId, tx);
+    await LedgerService.deleteEntryByReference(tenantId, "SALE_PAYMENT", saleId, tx);
 
     // 6. Delete Sale Items
     await tx.delete(saleItems).where(eq(saleItems.saleId, saleId)).run();

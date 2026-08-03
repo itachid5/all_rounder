@@ -46,6 +46,7 @@ export default async function DynamicAppRoute({
     'inventory': 'view:inventory',
     'expenses': 'view:expenses',
     'cashbook': 'view:cashbook',
+    'ledger': 'view:reports',
     'reports': 'view:reports',
     'users': 'view:users',
     'data': 'view:data_management',

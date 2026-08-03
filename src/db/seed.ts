@@ -247,10 +247,41 @@ async function seed() {
               { name: "Purchase Ledger", route: "/app/purchases/ledger", sortOrder: 3 },
             ]
           },
-          { name: "Sales", route: "/app/sales/manage", icon: "DollarSign", sortOrder: 8 },
-          { name: "Sales Return", route: "/app/sales-return/manage", icon: "MoveRight", sortOrder: 9 },
+          { 
+            name: "Sales", 
+            route: "#", 
+            icon: "DollarSign", 
+            sortOrder: 8,
+            children: [
+              { name: "Add Sale", route: "/app/sales/new", sortOrder: 1 },
+              { name: "Manage Sales", route: "/app/sales/manage", sortOrder: 2 },
+              { name: "Sales Report", route: "/app/sales/report", sortOrder: 3 },
+            ]
+          },
+          { 
+            name: "Sales Return", 
+            route: "#", 
+            icon: "MoveRight", 
+            sortOrder: 9,
+            children: [
+              { name: "Add Sales Return", route: "/app/sales-return/new", sortOrder: 1 },
+              { name: "Manage Sales Return", route: "/app/sales-return/manage", sortOrder: 2 },
+              { name: "Sales Return Report", route: "/app/sales-return/report", sortOrder: 3 },
+            ]
+          },
           { name: "Inventory", route: "/app/inventory/adjustment", icon: "Database", sortOrder: 10 },
-          { name: "Expenses", route: "/app/expenses/manage", icon: "DollarSign", sortOrder: 11 },
+          { 
+            name: "Expenses", 
+            route: "#", 
+            icon: "DollarSign", 
+            sortOrder: 11,
+            children: [
+              { name: "Add Expense Head", route: "/app/expenses/heads", sortOrder: 1 },
+              { name: "Add Expense", route: "/app/expenses/new", sortOrder: 2 },
+              { name: "Manage Expenses", route: "/app/expenses/manage", sortOrder: 3 },
+              { name: "Expense Report", route: "/app/expenses/report", sortOrder: 4 },
+            ]
+          },
           { name: "Cashbook", route: "/app/cashbook", icon: "WalletCards", sortOrder: 12 },
           { name: "Reports", route: "/app/reports/dashboard", icon: "activity", sortOrder: 13 },
           { name: "User Management", route: "/app/users/manage", icon: "users", sortOrder: 14 },

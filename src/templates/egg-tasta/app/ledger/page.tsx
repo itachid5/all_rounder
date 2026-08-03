@@ -5,7 +5,7 @@ import { CustomerRepository } from "@/templates/egg-tasta/db/repositories/Custom
 import { SupplierRepository } from "@/templates/egg-tasta/db/repositories/SupplierRepository";
 import { getTenantId } from "@/shared/utils/auth";
 
-export default async function SupplierLedgerPage() {
+export default async function GeneralLedgerPage() {
   let tenantId: string = "";
   try {
     const res = await getTenantId();
@@ -39,8 +39,8 @@ export default async function SupplierLedgerPage() {
       initialSummary={initialSummary}
       customersList={customersList}
       suppliersList={suppliersList}
-      title="Supplier Ledger"
-      description="Transaction history, purchases, supplier payments, and running balances for suppliers."
+      title="General Ledger"
+      description="Complete production-ready financial transaction & running balance ledger."
     />
   );
 }

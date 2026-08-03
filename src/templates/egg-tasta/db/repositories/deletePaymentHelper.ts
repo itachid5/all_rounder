@@ -20,8 +20,10 @@ export async function deletePaymentHelper(tenantId: string, paymentId: string) {
         .run();
     }
 
-    // 3. Delete Supplier Ledger Entry
+    // 3. Delete Supplier Ledger Entry & Central Ledger Entry
     await tx.delete(supplierLedgers).where(and(eq(supplierLedgers.tenantId, tenantId), eq(supplierLedgers.referenceId, paymentId))).run();
+    const { LedgerService } = await import("@/templates/egg-tasta/services/LedgerService");
+    await LedgerService.deleteEntryByReference(tenantId, "SUPPLIER_PAYMENT", paymentId, tx);
 
     // 4. Update Cash/Bank Account & Add Reversing Transaction
     if (payment.accountId) {

@@ -10,7 +10,7 @@ export default function SalesReturnReportPage() {
         <nav className="flex items-center text-sm text-slate-500 dark:text-slate-400 mb-2">
           <Link href="/app/dashboard" className="hover:text-blue-600 dark:hover:text-blue-400">Dashboard</Link>
           <ChevronRight className="h-4 w-4 mx-1" />
-          <span className="text-slate-900 dark:text-slate-100 font-medium">Sales Return</span>
+          <Link href="/app/sales-return/manage" className="hover:text-blue-600 dark:hover:text-blue-400">Sales Return</Link>
           <ChevronRight className="h-4 w-4 mx-1" />
           <span className="text-slate-900 dark:text-slate-100 font-medium">Sales Return Report</span>
         </nav>

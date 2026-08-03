@@ -137,8 +137,7 @@ export class SaleRepository {
                             .run();
           }
 
-          // 4. Create Customer Ledger Entries
-          // Sale increases due (Debit)
+          // 4. Create Customer Ledger Entries & Central Ledger Entries
           await tx.insert(customerLedgers).values({
                     id: randomUUID(),
                     tenantId,
@@ -153,6 +152,20 @@ export class SaleRepository {
                     description: `Sales Invoice: ${invoiceNo}`
                   }).run();
 
+          const { LedgerService } = await import("@/templates/egg-tasta/services/LedgerService");
+          await LedgerService.postEntry(tenantId, {
+            transactionType: "SALES",
+            debit: data.grandTotal,
+            credit: 0,
+            customerId: data.customerId,
+            entityType: "CUSTOMER",
+            referenceType: "SALE",
+            referenceId: saleId,
+            referenceNo: invoiceNo,
+            entryDate: date,
+            description: `Sales Invoice #${invoiceNo}`,
+          }, tx);
+
           // Payment decreases due (Credit)
           if (data.paidAmount > 0) {
             await tx.insert(customerLedgers).values({
@@ -165,9 +178,22 @@ export class SaleRepository {
                             referenceNo: invoiceNo,
                             debit: 0,
                             credit: data.paidAmount,
-                            balance: customer ? customer.previousDue + dueAmount : dueAmount,
-                            description: `Payment for Invoice: ${invoiceNo}`
+                            balance: customer ? customer.previousDue + data.grandTotal - data.paidAmount : data.grandTotal - data.paidAmount,
+                            description: `Payment Received for Invoice: ${invoiceNo}`
                           }).run();
+
+            await LedgerService.postEntry(tenantId, {
+              transactionType: "CUSTOMER_COLLECTION",
+              debit: 0,
+              credit: data.paidAmount,
+              customerId: data.customerId,
+              entityType: "CUSTOMER",
+              referenceType: "SALE_PAYMENT",
+              referenceId: saleId,
+              referenceNo: invoiceNo,
+              entryDate: date,
+              description: `Payment received for Invoice #${invoiceNo}`,
+            }, tx);
           }
 
           // 5. Create Activity Log

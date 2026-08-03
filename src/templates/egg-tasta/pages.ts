@@ -100,9 +100,12 @@ import SettingsImportExportPage from "./app/settings/import-export/page";
 
 import ProfilePage from "./app/profile/page";
 
+import GeneralLedgerPage from "./app/ledger/page";
+
 export const eggTastaPageMap: Record<string, any> = {
   "": DashboardPage,
   "dashboard": DashboardPage,
+  "ledger": GeneralLedgerPage,
   "products": ProductsPage,
   "products/list": ProductListPage,
   "products/new": NewProductPage,

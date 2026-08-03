@@ -20,8 +20,10 @@ export async function deleteCollectionFromRepo(tenantId: string, collectionId: s
         .run();
     }
 
-    // 3. Delete Customer Ledger Entry
+    // 3. Delete Customer Ledger Entry & Central Ledger Entry
     await tx.delete(customerLedgers).where(and(eq(customerLedgers.tenantId, tenantId), eq(customerLedgers.referenceId, collectionId))).run();
+    const { LedgerService } = await import("@/templates/egg-tasta/services/LedgerService");
+    await LedgerService.deleteEntryByReference(tenantId, "COLLECTION", collectionId, tx);
 
     // 4. Update Cash/Bank Account & Add Reversing Transaction
     if (collection.accountId) {

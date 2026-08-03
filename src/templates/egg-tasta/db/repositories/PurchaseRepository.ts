@@ -131,8 +131,7 @@ export class PurchaseRepository {
                             .run();
           }
 
-          // 4. Create Supplier Ledger Entries
-          // Purchase increases due (Debit)
+          // 4. Create Supplier Ledger Entries & Central Ledger Entries
           await tx.insert(supplierLedgers).values({
                     id: randomUUID(),
                     tenantId,
@@ -146,6 +145,20 @@ export class PurchaseRepository {
                     balance: supplier ? supplier.previousDue + data.grandTotal : data.grandTotal,
                     description: `Purchase Invoice: ${invoiceNo}`
                   }).run();
+
+          const { LedgerService } = await import("@/templates/egg-tasta/services/LedgerService");
+          await LedgerService.postEntry(tenantId, {
+            transactionType: "PURCHASE",
+            debit: data.grandTotal,
+            credit: 0,
+            supplierId: data.supplierId,
+            entityType: "SUPPLIER",
+            referenceType: "PURCHASE",
+            referenceId: purchaseId,
+            referenceNo: invoiceNo,
+            entryDate: date,
+            description: `Purchase Invoice #${invoiceNo}`,
+          }, tx);
 
           // Payment decreases due (Credit)
           if (data.paidAmount > 0) {
@@ -162,6 +175,19 @@ export class PurchaseRepository {
                             balance: supplier ? supplier.previousDue + dueAmount : dueAmount,
                             description: `Payment for Invoice: ${invoiceNo}`
                           }).run();
+
+            await LedgerService.postEntry(tenantId, {
+              transactionType: "PURCHASE_PAYMENT",
+              debit: 0,
+              credit: data.paidAmount,
+              supplierId: data.supplierId,
+              entityType: "SUPPLIER",
+              referenceType: "PURCHASE_PAYMENT",
+              referenceId: purchaseId,
+              referenceNo: invoiceNo,
+              entryDate: date,
+              description: `Payment for Purchase Invoice #${invoiceNo}`,
+            }, tx);
             
             // 5. Update Cash/Bank Account and create Transaction
             const accountId = data.accountId;

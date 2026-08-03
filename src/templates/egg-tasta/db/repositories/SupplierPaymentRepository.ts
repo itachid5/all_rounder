@@ -63,7 +63,7 @@ export class SupplierPaymentRepository {
                             .run();
           }
 
-          // 3. Create Supplier Ledger Entry (Credit)
+          // 3. Create Supplier Ledger Entry (Credit) & Central Ledger Entry
           await tx.insert(supplierLedgers).values({
                     id: randomUUID(),
                     tenantId,
@@ -77,6 +77,20 @@ export class SupplierPaymentRepository {
                     balance: supplier ? supplier.previousDue - data.amount : -data.amount,
                     description: `Supplier Payment: ${paymentNo}`
                   }).run();
+
+          const { LedgerService } = await import("@/templates/egg-tasta/services/LedgerService");
+          await LedgerService.postEntry(tenantId, {
+            transactionType: "SUPPLIER_PAYMENT",
+            debit: 0,
+            credit: data.amount,
+            supplierId: data.supplierId,
+            entityType: "SUPPLIER",
+            referenceType: "SUPPLIER_PAYMENT",
+            referenceId: paymentId,
+            referenceNo: paymentNo,
+            entryDate: date,
+            description: `Supplier Payment #${paymentNo} (${data.paymentMethod || 'CASH'})`,
+          }, tx);
 
           // 4. Update Cash/Bank Account and create Transaction
           const accountId = data.accountId;

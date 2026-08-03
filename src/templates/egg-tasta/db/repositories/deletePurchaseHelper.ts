@@ -30,8 +30,11 @@ export async function deletePurchaseHelper(tenantId: string, purchaseId: string)
         .run();
     }
 
-    // 3. Delete Supplier Ledger Entries (both PURCHASE and PAYMENT)
+    // 3. Delete Supplier Ledger Entries (both PURCHASE and PAYMENT) & Central Ledger Entries
     await tx.delete(supplierLedgers).where(and(eq(supplierLedgers.tenantId, tenantId), eq(supplierLedgers.referenceId, purchaseId))).run();
+    const { LedgerService } = await import("@/templates/egg-tasta/services/LedgerService");
+    await LedgerService.deleteEntryByReference(tenantId, "PURCHASE", purchaseId, tx);
+    await LedgerService.deleteEntryByReference(tenantId, "PURCHASE_PAYMENT", purchaseId, tx);
 
     // 4. Update Cash/Bank Account if paid
     if (purchase.paidAmount > 0) {

@@ -5,12 +5,15 @@ let _db: ReturnType<typeof drizzle> | null = null;
 
 function getDb() {
   if (!_db) {
-    if (!process.env.TURSO_DATABASE_URL || !process.env.TURSO_AUTH_TOKEN) {
-      throw new Error("TURSO_DATABASE_URL and TURSO_AUTH_TOKEN must be set in environment variables");
+    const url = process.env.TURSO_DATABASE_URL || process.env.DATABASE_URL;
+    const authToken = process.env.TURSO_AUTH_TOKEN || process.env.DATABASE_AUTH_TOKEN;
+
+    if (!url) {
+      throw new Error("DATABASE_URL / TURSO_DATABASE_URL must be set in environment variables");
     }
     const client = createClient({
-      url: process.env.TURSO_DATABASE_URL,
-      authToken: process.env.TURSO_AUTH_TOKEN,
+      url,
+      authToken,
       fetch: (url: RequestInfo | URL, init?: RequestInit) => {
         return fetch(url, { ...init, cache: 'no-store' });
       }
