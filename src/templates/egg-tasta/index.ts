@@ -20,7 +20,7 @@ const contract: TemplateContract = {
     "sales-return/manage", "sales-return/new", "sales-return/report",
     "inventory/low", "inventory/adjustment", "inventory/movement", "inventory/valuation", "inventory/report",
     "dashboard", "data/backup", "data/export", "data/logs", "data/maintenance", "data/restore", "data/import", "data/cleanup",
-    "products/manage", "products", "products/new", "modules", "roles",
+    "products/manage", "products", "products/new", "products/list", "modules", "roles",
     "customers/manage", "customers/due", "customers/new", "customers/ledger",
     "sales/payments", "sales/manage", "sales/returns", "sales/new", "sales/report",
     "reports/stock", "reports/supplier", "reports/purchases", "reports/payment", "reports/pnl", "reports/expense", "reports/dashboard", "reports/customer", "reports/collection", "reports/sales",

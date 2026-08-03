@@ -1,5 +1,6 @@
 import DashboardPage from "./app/dashboard/page";
 import ProductsPage from "./app/products/page";
+import ProductListPage from "./app/products/list/page";
 import NewProductPage from "./app/products/new/page";
 import ManageProductsPage from "./app/products/manage/page";
 
@@ -100,6 +101,7 @@ export const eggTastaPageMap: Record<string, any> = {
   "": DashboardPage,
   "dashboard": DashboardPage,
   "products": ProductsPage,
+  "products/list": ProductListPage,
   "products/new": NewProductPage,
   "products/manage": ManageProductsPage,
   "customers": CustomersManagePage,

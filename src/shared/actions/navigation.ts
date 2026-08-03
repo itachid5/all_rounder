@@ -13,8 +13,27 @@ import { getTenantId } from "@/shared/utils/auth";
 
 const DEFAULT_BUSINESS_NAV: NavItem[] = [
   { label: "Dashboard", href: "/app/dashboard", icon: "dashboard" },
-  { label: "Products", href: "/app/products/manage", icon: "layers" },
-  { label: "Suppliers", href: "/app/suppliers/manage", icon: "users" },
+  {
+    label: "Products",
+    href: "#",
+    icon: "layers",
+    subItems: [
+      { label: "Add Product", href: "/app/products/new" },
+      { label: "Manage Products", href: "/app/products/manage" },
+      { label: "Product List", href: "/app/products/list" },
+    ],
+  },
+  {
+    label: "Suppliers",
+    href: "#",
+    icon: "users",
+    subItems: [
+      { label: "Add Supplier", href: "/app/suppliers/new" },
+      { label: "Manage Suppliers", href: "/app/suppliers/manage" },
+      { label: "Supplier Due", href: "/app/suppliers/due" },
+      { label: "Supplier Ledger", href: "/app/suppliers/ledger" },
+    ],
+  },
   { label: "Supplier Payments", href: "/app/supplier-payments/manage", icon: "DollarSign" },
   { label: "Customers", href: "/app/customers/manage", icon: "users" },
   { label: "Customer Collection", href: "/app/customer-collection/manage", icon: "HandCoins" },
@@ -69,17 +88,39 @@ export async function getBusinessNavigation(): Promise<NavItem[]> {
     )
     .orderBy(asc(templateNavigations.sortOrder));
 
-  const itemsToBuild = navItems.length > 0 ? navItems : DEFAULT_BUSINESS_NAV.map((d, i) => ({
-    id: `default-${i}`,
-    templateId: tenant.templateId,
-    name: d.label,
-    slug: d.label.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
-    icon: d.icon,
-    route: d.href,
-    sortOrder: i + 1,
-    parentId: null,
-    isActive: true,
-  }));
+  const itemsToBuild = navItems.length > 0 ? navItems : (() => {
+    const flat: any[] = [];
+    DEFAULT_BUSINESS_NAV.forEach((d, i) => {
+      const parentId = `default-${i}`;
+      flat.push({
+        id: parentId,
+        templateId: tenant.templateId,
+        name: d.label,
+        slug: d.label.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
+        icon: d.icon,
+        route: d.href,
+        sortOrder: i + 1,
+        parentId: null,
+        isActive: true,
+      });
+      if (d.subItems) {
+        d.subItems.forEach((sub, subIdx) => {
+          flat.push({
+            id: `default-${i}-sub-${subIdx}`,
+            templateId: tenant.templateId,
+            name: sub.label,
+            slug: sub.label.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
+            icon: sub.icon,
+            route: sub.href,
+            sortOrder: subIdx + 1,
+            parentId: parentId,
+            isActive: true,
+          });
+        });
+      }
+    });
+    return flat;
+  })();
 
   // Route to Permission Mapping for Employee Role Filtering
   const routePermMap: Record<string, string> = {

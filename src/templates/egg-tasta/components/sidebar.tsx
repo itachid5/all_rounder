@@ -28,9 +28,12 @@ export function BusinessSidebar({
 
   useEffect(() => {
     const activeParent = navigation.find(item => 
-      pathname === item.href || 
-      (item.subItems && item.subItems.some(sub => pathname === sub.href || pathname.startsWith(sub.href))) ||
-      (item.href !== '/app/dashboard' && pathname.startsWith(item.href))
+      (item.href !== '#' && item.href !== '/app/dashboard' && (pathname === item.href || pathname.startsWith(item.href + '/'))) ||
+      (item.subItems && item.subItems.some(sub => 
+        pathname === sub.href || 
+        (sub.href === '/app/products/list' && pathname === '/app/products') ||
+        (sub.href !== '#' && pathname.startsWith(sub.href + '/'))
+      ))
     );
     if (activeParent) {
       setExpandedId(activeParent.label);
@@ -63,8 +66,12 @@ export function BusinessSidebar({
     return items.map((item) => {
       const hasChildren = item.subItems && item.subItems.length > 0;
       const isExactActive = pathname === item.href;
-      const isChildActive = hasChildren && item.subItems!.some(sub => pathname === sub.href || pathname.startsWith(sub.href));
-      const isActive = isExactActive || isChildActive || (item.href !== '/app/dashboard' && pathname.startsWith(item.href));
+      const isChildActive = hasChildren && item.subItems!.some(sub => 
+        pathname === sub.href || 
+        (sub.href === '/app/products/list' && pathname === '/app/products') ||
+        (sub.href !== '#' && pathname.startsWith(sub.href + '/'))
+      );
+      const isActive = isExactActive || isChildActive || (item.href !== '/app/dashboard' && item.href !== '#' && pathname.startsWith(item.href + '/'));
       const isExpanded = expandedId === item.label;
 
       if (hasChildren) {
@@ -93,9 +100,11 @@ export function BusinessSidebar({
               }`}
             >
               <div className="overflow-hidden">
-                <div className={`pl-${depth === 0 ? '9' : '4'} pr-3 py-1 space-y-1`}>
+                <div className="pl-9 pr-3 py-1 space-y-1">
                   {item.subItems!.map(subItem => {
-                    const isSubActive = pathname === subItem.href || pathname.startsWith(subItem.href);
+                    const isSubActive = pathname === subItem.href || 
+                                        (subItem.href === '/app/products/list' && pathname === '/app/products') ||
+                                        (subItem.href !== '#' && pathname.startsWith(subItem.href + '/'));
                     return (
                       <Link
                         key={subItem.href}

@@ -177,10 +177,31 @@ async function seed() {
     if (tRecord) {
       const existingNavs = await db.select().from(schema.templateNavigations).where(eq(schema.templateNavigations.templateId, tRecord.id)).all();
       if (existingNavs.length === 0) {
-        const navItems = [
+        const navItems: any[] = [
           { name: "Dashboard", route: "/app/dashboard", icon: "dashboard", sortOrder: 1 },
-          { name: "Products", route: "/app/products/manage", icon: "layers", sortOrder: 2 },
-          { name: "Suppliers", route: "/app/suppliers/manage", icon: "users", sortOrder: 3 },
+          { 
+            name: "Products", 
+            route: "#", 
+            icon: "layers", 
+            sortOrder: 2,
+            children: [
+              { name: "Add Product", route: "/app/products/new", sortOrder: 1 },
+              { name: "Manage Products", route: "/app/products/manage", sortOrder: 2 },
+              { name: "Product List", route: "/app/products/list", sortOrder: 3 },
+            ]
+          },
+          { 
+            name: "Suppliers", 
+            route: "#", 
+            icon: "users", 
+            sortOrder: 3,
+            children: [
+              { name: "Add Supplier", route: "/app/suppliers/new", sortOrder: 1 },
+              { name: "Manage Suppliers", route: "/app/suppliers/manage", sortOrder: 2 },
+              { name: "Supplier Due", route: "/app/suppliers/due", sortOrder: 3 },
+              { name: "Supplier Ledger", route: "/app/suppliers/ledger", sortOrder: 4 },
+            ]
+          },
           { name: "Supplier Payments", route: "/app/supplier-payments/manage", icon: "DollarSign", sortOrder: 4 },
           { name: "Customers", route: "/app/customers/manage", icon: "users", sortOrder: 5 },
           { name: "Customer Collection", route: "/app/customer-collection/manage", icon: "HandCoins", sortOrder: 6 },
@@ -196,20 +217,40 @@ async function seed() {
           { name: "Settings", route: "/app/settings", icon: "settings", sortOrder: 16 },
         ];
         for (const item of navItems) {
+          const parentId = crypto.randomUUID();
           const slug = item.name.toLowerCase().replace(/[^a-z0-9]+/g, "-");
           await db.insert(schema.templateNavigations).values({
-            id: crypto.randomUUID(),
+            id: parentId,
             templateId: tRecord.id,
             name: item.name,
             slug: slug,
             route: item.route,
-            icon: item.icon,
+            icon: item.icon || null,
             parentId: null,
             sortOrder: item.sortOrder,
             isActive: true,
             createdAt: new Date(),
             updatedAt: new Date(),
           }).execute();
+
+          if (item.children && item.children.length > 0) {
+            for (const child of item.children) {
+              const childSlug = child.name.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+              await db.insert(schema.templateNavigations).values({
+                id: crypto.randomUUID(),
+                templateId: tRecord.id,
+                name: child.name,
+                slug: childSlug,
+                route: child.route,
+                icon: null,
+                parentId: parentId,
+                sortOrder: child.sortOrder,
+                isActive: true,
+                createdAt: new Date(),
+                updatedAt: new Date(),
+              }).execute();
+            }
+          }
         }
       }
     }
