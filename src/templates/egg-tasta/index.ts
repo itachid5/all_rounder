@@ -24,7 +24,7 @@ const contract: TemplateContract = {
     "customers/manage", "customers/due", "customers/new", "customers/ledger",
     "sales/payments", "sales/manage", "sales/returns", "sales/new", "sales/report",
     "reports/stock", "reports/supplier", "reports/purchases", "reports/payment", "reports/pnl", "reports/expense", "reports/dashboard", "reports/customer", "reports/collection", "reports/sales",
-    "customer-collection/manage", "customer-collection/new", "customer-collection/report", "customer-collection/view/[id]", "customer-collection/edit/[id]",
+    "customer-collection/manage", "customer-collection/new", "customer-collection/report", "customer-collection/ledger", "customer-collection/view/[id]", "customer-collection/edit/[id]",
     "" // root
   ],
   permissions: ["view_dashboard", "manage_customers", "manage_suppliers", "manage_inventory"],

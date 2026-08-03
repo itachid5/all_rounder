@@ -12,6 +12,7 @@ import CustomerLedgerPage from "./app/customers/ledger/page";
 import CustomerCollectionManagePage from "./app/customer-collection/manage/page";
 import NewCustomerCollectionPage from "./app/customer-collection/new/page";
 import CustomerCollectionReportPage from "./app/customer-collection/report/page";
+import CollectionLedgerPage from "./app/customer-collection/ledger/page";
 import CustomerCollectionEditPage from "./app/customer-collection/edit/[id]/page";
 import CustomerCollectionViewPage from "./app/customer-collection/view/[id]/page";
 
@@ -113,6 +114,7 @@ export const eggTastaPageMap: Record<string, any> = {
   "customer-collection/manage": CustomerCollectionManagePage,
   "customer-collection/new": NewCustomerCollectionPage,
   "customer-collection/report": CustomerCollectionReportPage,
+  "customer-collection/ledger": CollectionLedgerPage,
   "customer-collection/edit/[id]": CustomerCollectionEditPage,
   "customer-collection/view/[id]": CustomerCollectionViewPage,
   "suppliers": SuppliersManagePage,
