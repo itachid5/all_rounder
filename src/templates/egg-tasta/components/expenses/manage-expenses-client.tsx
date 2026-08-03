@@ -6,8 +6,10 @@ import Link from "next/link";
 import { Button, Table, Thead, Tbody, Tr, Th, Td, EmptyState, StatusBadge } from "@/templates/egg-tasta/components";
 import { formatDate } from "@/shared/utils/date";
 import { PermissionGuard } from "@/shared/components/permission-context";
+import { useCurrency } from "@/shared/components/regional-context";
 
 export function ManageExpensesClient({ initialData }: { initialData: any[] }) {
+  const { symbol } = useCurrency();
   const [search, setSearch] = useState("");
   const data = initialData || [];
 
@@ -76,7 +78,7 @@ export function ManageExpensesClient({ initialData }: { initialData: any[] }) {
                 <Td className="font-mono text-xs font-medium text-slate-500">{item.expense.expenseNo}</Td>
                 <Td className="text-slate-600 dark:text-slate-400">{formatDate(item.expense.expenseDate)}</Td>
                 <Td className="font-medium text-slate-900 dark:text-slate-200">{item.categoryName || '-'}</Td>
-                <Td className="text-right font-medium">${item.expense.amount.toFixed(2)}</Td>
+                <Td className="text-right font-medium">{symbol}{item.expense.amount.toFixed(2)}</Td>
                 <Td>{item.expense.paymentMethod}</Td>
                 <Td>{item.expense.paidTo || '-'}</Td>
                 <Td>

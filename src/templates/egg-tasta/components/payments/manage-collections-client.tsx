@@ -7,8 +7,10 @@ import { Button, Table, Thead, Tbody, Tr, Th, Td, EmptyState, Badge, ActionMenu 
 import { listCustomerCollectionsAction, deleteCustomerCollectionAction } from "@/templates/egg-tasta/actions/customerCollections";
 import { formatDate } from "@/shared/utils/date";
 import { PermissionGuard } from "@/shared/components/permission-context";
+import { useCurrency } from "@/shared/components/regional-context";
 
 export function ManageCollectionsClient({ initialData, initialTotal }: { initialData: any[], initialTotal: number }) {
+  const { symbol } = useCurrency();
   const [isPending, startTransition] = useTransition();
   const [data, setData] = useState(initialData);
   const [total, setTotal] = useState(initialTotal);
@@ -142,7 +144,7 @@ export function ManageCollectionsClient({ initialData, initialTotal }: { initial
                   </Td>
                   <Td className="font-medium">{row.customerName}</Td>
                   <Td className="text-slate-500">{row.accountName}</Td>
-                  <Td className="text-right font-medium text-emerald-600 dark:text-emerald-400">${item.amount.toFixed(2)}</Td>
+                  <Td className="text-right font-medium text-emerald-600 dark:text-emerald-400">{symbol}{item.amount.toFixed(2)}</Td>
                   <Td>{item.paymentMethod}</Td>
                   <Td>
                     <Badge variant={item.status === 'COMPLETED' ? 'success' : 'danger'}>{item.status}</Badge>

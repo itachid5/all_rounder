@@ -20,7 +20,7 @@ export default async function EditCollectionPage({ params }: { params: Promise<{
 
   return (
     <div className="max-w-4xl mx-auto">
-      <EditCollectionClient customers={customers} initialCollection={res.data} />
+      <EditCollectionClient collection={res.data} customers={customers} />
     </div>
   );
 }

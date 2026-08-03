@@ -4,8 +4,10 @@ import React, { useState, useTransition } from "react";
 import { adjustCustomerBalanceAction } from "@/templates/egg-tasta/actions/customers";
 import { AlertCircle } from "lucide-react";
 import { TextField, SelectField, Textarea, Button } from "@/templates/egg-tasta/components";
+import { useCurrency } from "@/shared/components/regional-context";
 
 export function BalanceAdjustmentDialog({ customer, onClose, onSuccess }: { customer: any, onClose: () => void, onSuccess: () => void }) {
+  const { symbol } = useCurrency();
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
@@ -49,7 +51,7 @@ export function BalanceAdjustmentDialog({ customer, onClose, onSuccess }: { cust
             
             <div className="px-3 py-2 bg-slate-50 dark:bg-slate-800 rounded-md border border-slate-200 dark:border-slate-700">
               <p className="text-sm text-slate-500 dark:text-slate-400">Current Outstanding Balance</p>
-              <p className="font-medium text-lg">${Number(customer.previousDue).toFixed(2)}</p>
+              <p className="font-medium text-lg">{symbol}{Number(customer.previousDue).toFixed(2)}</p>
             </div>
 
             <TextField 

@@ -1,5 +1,7 @@
 import React from "react";
 import { getCustomerCollectionByIdAction } from "@/templates/egg-tasta/actions/customerCollections";
+import { getRegionalSettingsAction } from "@/shared/actions/regional";
+import { formatMoney } from "@/shared/utils/currency";
 import { formatDate } from "@/shared/utils/date";
 import { notFound } from "next/navigation";
 
@@ -9,12 +11,17 @@ export default async function ViewCollectionPage({ params }: { params: Promise<{
   
   if (!id) return notFound();
   
-  const res = await getCustomerCollectionByIdAction(id);
+  const [res, regionalRes] = await Promise.all([
+    getCustomerCollectionByIdAction(id),
+    getRegionalSettingsAction(),
+  ]);
+
   if (!res.success || !res.data) {
     return notFound();
   }
   
   const item = res.data;
+  const symbol = regionalRes.success ? regionalRes.data.currencySymbol : '৳';
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
@@ -27,7 +34,7 @@ export default async function ViewCollectionPage({ params }: { params: Promise<{
           </div>
           <div>
             <p className="text-sm text-slate-500">Amount</p>
-            <p className="font-medium text-emerald-600">${item.amount.toFixed(2)}</p>
+            <p className="font-medium text-emerald-600">{formatMoney(item.amount, symbol)}</p>
           </div>
           <div>
             <p className="text-sm text-slate-500">Date</p>

@@ -10,6 +10,7 @@ import { BalanceAdjustmentDialog } from "./balance-adjustment-dialog";
 import { CustomerProfileDrawer } from "./CustomerProfileDrawer";
 import { formatDate } from "@/shared/utils/date";
 import { usePermission, PermissionGuard } from "@/shared/components/permission-context";
+import { useCurrency } from "@/shared/components/regional-context";
 
 export interface CustomerPermissions {
   view: boolean;
@@ -22,7 +23,7 @@ export interface CustomerPermissions {
 
 export function ManageCustomersClient({ initialData, initialTotal, permissions: propPermissions }: { initialData: any[], initialTotal: number, permissions?: CustomerPermissions }) {
   const { hasPermission } = usePermission();
-  const permissions = propPermissions || {
+  const permissions: CustomerPermissions = {
     view: hasPermission('view:customers'),
     add: hasPermission('create:customers'),
     edit: hasPermission('edit:customers'),
@@ -30,6 +31,7 @@ export function ManageCustomersClient({ initialData, initialTotal, permissions: 
     restore: hasPermission('delete:customers'),
     adjustBalance: hasPermission('edit:customers'),
   };
+  const { symbol } = useCurrency();
   const [isPending, startTransition] = useTransition();
   
   const [data, setData] = useState(initialData);
@@ -331,7 +333,7 @@ export function ManageCustomersClient({ initialData, initialTotal, permissions: 
                   <Td className="font-mono text-xs font-medium text-slate-500">{item.customerCode}</Td>
                   <Td className="font-medium">{item.name}</Td>
                   <Td className="text-slate-600 dark:text-slate-400">{item.mobile}</Td>
-                  <Td className="text-right text-slate-600 dark:text-slate-400">${item.previousDue?.toFixed(2)}</Td>
+                  <Td className="text-right text-slate-600 dark:text-slate-400">{symbol}{item.previousDue?.toFixed(2)}</Td>
                   <Td>
                     <StatusBadge status={item.status} />
                   </Td>

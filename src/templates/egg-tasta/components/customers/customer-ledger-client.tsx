@@ -8,8 +8,10 @@ import { getCustomerLedgerAction } from "@/templates/egg-tasta/actions/customers
 import { Button, Table, Thead, Tbody, Tr, Th, Td, EmptyState } from "@/templates/egg-tasta/components";
 import { Combobox } from "@/templates/egg-tasta/components/Combobox";
 import { formatDate } from "@/shared/utils/date";
+import { useCurrency } from "@/shared/components/regional-context";
 
 function LedgerContent({ initialCustomers }: { initialCustomers: any[] }) {
+  const { symbol } = useCurrency();
   const searchParams = useSearchParams();
   const customerCode = searchParams.get("customer");
   const urlFrom = searchParams.get("from");
@@ -169,23 +171,23 @@ function LedgerContent({ initialCustomers }: { initialCustomers: any[] }) {
           <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
             <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-sm">
               <div className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">Opening Balance</div>
-              <div className="text-xl font-bold text-slate-700 dark:text-slate-200">${data.openingBalance.toFixed(2)}</div>
+              <div className="text-xl font-bold text-slate-700 dark:text-slate-200">{symbol}{data.openingBalance.toFixed(2)}</div>
             </div>
             <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-sm">
               <div className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">Total Sales</div>
-              <div className="text-xl font-bold text-blue-600 dark:text-blue-400">${data.totalSales.toFixed(2)}</div>
+              <div className="text-xl font-bold text-blue-600 dark:text-blue-400">{symbol}{data.totalSales.toFixed(2)}</div>
             </div>
             <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-sm">
               <div className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">Total Collections</div>
-              <div className="text-xl font-bold text-emerald-600 dark:text-emerald-400">${data.totalCollection.toFixed(2)}</div>
+              <div className="text-xl font-bold text-emerald-600 dark:text-emerald-400">{symbol}{data.totalCollection.toFixed(2)}</div>
             </div>
             <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-sm">
               <div className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">Sales Returns</div>
-              <div className="text-xl font-bold text-orange-600 dark:text-orange-400">${data.totalSalesReturn.toFixed(2)}</div>
+              <div className="text-xl font-bold text-orange-600 dark:text-orange-400">{symbol}{data.totalSalesReturn.toFixed(2)}</div>
             </div>
             <div className="bg-white dark:bg-slate-900 border border-blue-200 dark:border-blue-900 rounded-xl p-5 shadow-sm bg-blue-50/50 dark:bg-blue-900/10">
               <div className="text-xs font-medium text-blue-800 dark:text-blue-300 uppercase tracking-wider mb-1">Current Balance</div>
-              <div className="text-2xl font-bold text-blue-700 dark:text-blue-400">${data.currentDue.toFixed(2)}</div>
+              <div className="text-2xl font-bold text-blue-700 dark:text-blue-400">{symbol}{data.currentDue.toFixed(2)}</div>
             </div>
           </div>
 
@@ -235,13 +237,13 @@ function LedgerContent({ initialCustomers }: { initialCustomers: any[] }) {
                           </div>
                         </Td>
                         <Td className="text-right font-medium text-red-600 dark:text-red-400">
-                          {entry.debit > 0 ? `$${entry.debit.toFixed(2)}` : '-'}
+                          {entry.debit > 0 ? `${symbol}${entry.debit.toFixed(2)}` : '-'}
                         </Td>
                         <Td className="text-right font-medium text-emerald-600 dark:text-emerald-400">
-                          {entry.credit > 0 ? `$${entry.credit.toFixed(2)}` : '-'}
+                          {entry.credit > 0 ? `${symbol}${entry.credit.toFixed(2)}` : '-'}
                         </Td>
                         <Td className="text-right font-bold text-slate-700 dark:text-slate-200">
-                          ${entry.runningBalance.toFixed(2)}
+                          {symbol}{entry.runningBalance.toFixed(2)}
                         </Td>
                       </Tr>
                     ))

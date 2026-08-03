@@ -5,8 +5,10 @@ import { useRouter } from "next/navigation";
 import { CreditCard, AlertCircle, CheckCircle2 } from "lucide-react";
 import { FormSection, FormGrid, Button, Combobox } from "@/templates/egg-tasta/components";
 import { createCustomerCollectionAction } from "@/templates/egg-tasta/actions/customerCollections";
+import { useCurrency } from "@/shared/components/regional-context";
 
 export function NewCollectionClient({ customers }: { customers: any[] }) {
+  const { formatMoney } = useCurrency();
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -105,7 +107,7 @@ export function NewCollectionClient({ customers }: { customers: any[] }) {
 
             <div className="flex flex-col">
               <label className="text-xs font-medium text-slate-500 mb-1">Current Due (Read Only)</label>
-              <input type="text" disabled value={`$${currentDue.toFixed(2)}`} className="px-3 py-2 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-md text-sm text-slate-500 w-full font-medium" />
+              <input type="text" disabled value={formatMoney(currentDue)} className="px-3 py-2 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-md text-sm text-slate-500 w-full font-medium" />
             </div>
 
             <div className="flex flex-col">

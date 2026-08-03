@@ -5,9 +5,11 @@ import { useRouter } from "next/navigation";
 import { FormSection, FormGrid, TextField, SelectField, Textarea, Button } from "@/templates/egg-tasta/components";
 import { CreditCard } from "lucide-react";
 import { createSupplierPaymentAction } from "@/templates/egg-tasta/actions/supplierPayments";
+import { useCurrency } from "@/shared/components/regional-context";
 
 export default function NewPaymentClient({ suppliers, accounts }: { suppliers: any[], accounts: any[] }) {
   const router = useRouter();
+  const { formatMoney } = useCurrency();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedSupplier, setSelectedSupplier] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -69,7 +71,7 @@ export default function NewPaymentClient({ suppliers, accounts }: { suppliers: a
             label="Current Due (Read Only)" 
             name="currentDue" 
             type="text"
-            value={`$${due.toFixed(2)}`}
+            value={formatMoney(due)}
             disabled 
           />
           <TextField 

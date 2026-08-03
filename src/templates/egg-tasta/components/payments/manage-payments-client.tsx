@@ -7,10 +7,12 @@ import { Button, Table, Thead, Tbody, Tr, Th, Td, EmptyState, StatusBadge } from
 import { deleteSupplierPaymentAction } from "@/templates/egg-tasta/actions/supplierPayments";
 import { formatDate } from "@/shared/utils/date";
 import { PermissionGuard } from "@/shared/components/permission-context";
+import { useCurrency } from "@/shared/components/regional-context";
 
 export function ManagePaymentsClient({ initialData = [] }: { initialData?: any[] }) {
   const [search, setSearch] = useState("");
   const [methodFilter, setMethodFilter] = useState("");
+  const { symbol } = useCurrency();
 
   const filteredData = useMemo(() => {
     return initialData.filter(item => {
@@ -131,7 +133,7 @@ export function ManagePaymentsClient({ initialData = [] }: { initialData?: any[]
                   {row.supplierName}
                 </Td>
                 <Td className="text-right font-medium">
-                  ${row.payment.amount.toFixed(2)}
+                  {symbol}{row.payment.amount.toFixed(2)}
                 </Td>
                 <Td>
                   {row.payment.paymentMethod}

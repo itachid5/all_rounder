@@ -5,8 +5,10 @@ import { useRouter } from "next/navigation";
 import { AlertCircle, CheckCircle2, ShoppingCart, Plus, Trash2, Printer } from "lucide-react";
 import { FormSection, FormGrid, Button, Table, Thead, Tbody, Tr, Th, Td, Combobox } from "@/templates/egg-tasta/components";
 import { createSaleAction } from "@/templates/egg-tasta/actions/sales";
+import { useCurrency } from "@/shared/components/regional-context";
 
 export function NewSaleClient({ customers, products }: { customers: any[], products: any[] }) {
+  const { symbol, formatMoney } = useCurrency();
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -223,7 +225,7 @@ export function NewSaleClient({ customers, products }: { customers: any[], produ
             
             <div className="flex flex-col">
               <label className="text-xs font-medium text-slate-500 mb-1">Customer Due</label>
-              <input type="text" disabled value={`$${customerDue.toFixed(2)}`} className="px-3 py-2 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-md text-sm font-medium text-slate-700 dark:text-slate-300 w-full" />
+              <input type="text" disabled value={formatMoney(customerDue)} className="px-3 py-2 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-md text-sm font-medium text-slate-700 dark:text-slate-300 w-full" />
             </div>
           </FormGrid>
           

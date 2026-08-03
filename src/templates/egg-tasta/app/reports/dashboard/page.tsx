@@ -1,19 +1,24 @@
 import { ChevronRight, BarChart3, TrendingUp, DollarSign, Users, Package, ShoppingCart } from "lucide-react";
 import Link from "next/link";
 import { EmptyState } from "@/templates/egg-tasta/components";
+import { getRegionalSettingsAction } from "@/shared/actions/regional";
+import { formatMoney } from "@/shared/utils/currency";
 
-export default function DashboardReportPage() {
+export default async function DashboardReportPage() {
+  const regionalRes = await getRegionalSettingsAction();
+  const symbol = regionalRes.success ? regionalRes.data.currencySymbol : '৳';
+
   const kpis = [
-    { title: "Total Sales", value: "$45,231.89", icon: TrendingUp, color: "text-emerald-500", bg: "bg-emerald-50 dark:bg-emerald-500/10" },
-    { title: "Total Purchases", value: "$32,112.50", icon: ShoppingCart, color: "text-blue-500", bg: "bg-blue-50 dark:bg-blue-500/10" },
-    { title: "Total Collections", value: "$40,000.00", icon: DollarSign, color: "text-indigo-500", bg: "bg-indigo-50 dark:bg-indigo-500/10" },
-    { title: "Total Supplier Payments", value: "$28,500.00", icon: DollarSign, color: "text-orange-500", bg: "bg-orange-50 dark:bg-orange-500/10" },
-    { title: "Total Expenses", value: "$3,250.00", icon: BarChart3, color: "text-red-500", bg: "bg-red-50 dark:bg-red-500/10" },
+    { title: "Total Sales", value: formatMoney(45231.89, symbol), icon: TrendingUp, color: "text-emerald-500", bg: "bg-emerald-50 dark:bg-emerald-500/10" },
+    { title: "Total Purchases", value: formatMoney(32112.50, symbol), icon: ShoppingCart, color: "text-blue-500", bg: "bg-blue-50 dark:bg-blue-500/10" },
+    { title: "Total Collections", value: formatMoney(40000.00, symbol), icon: DollarSign, color: "text-indigo-500", bg: "bg-indigo-50 dark:bg-indigo-500/10" },
+    { title: "Total Supplier Payments", value: formatMoney(28500.00, symbol), icon: DollarSign, color: "text-orange-500", bg: "bg-orange-50 dark:bg-orange-500/10" },
+    { title: "Total Expenses", value: formatMoney(3250.00, symbol), icon: BarChart3, color: "text-red-500", bg: "bg-red-50 dark:bg-red-500/10" },
     { title: "Total Customers", value: "142", icon: Users, color: "text-sky-500", bg: "bg-sky-50 dark:bg-sky-500/10" },
     { title: "Total Suppliers", value: "18", icon: Users, color: "text-violet-500", bg: "bg-violet-50 dark:bg-violet-500/10" },
     { title: "Total Products", value: "56", icon: Package, color: "text-pink-500", bg: "bg-pink-50 dark:bg-pink-500/10" },
-    { title: "Current Stock Value", value: "$12,450.00", icon: Package, color: "text-teal-500", bg: "bg-teal-50 dark:bg-teal-500/10" },
-    { title: "Net Profit (Est)", value: "$9,869.39", icon: TrendingUp, color: "text-emerald-600", bg: "bg-emerald-100 dark:bg-emerald-500/20" },
+    { title: "Current Stock Value", value: formatMoney(12450.00, symbol), icon: Package, color: "text-teal-500", bg: "bg-teal-50 dark:bg-teal-500/10" },
+    { title: "Net Profit (Est)", value: formatMoney(9869.39, symbol), icon: TrendingUp, color: "text-emerald-600", bg: "bg-emerald-100 dark:bg-emerald-500/20" },
   ];
 
   return (

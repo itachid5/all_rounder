@@ -3,8 +3,10 @@
 import React, { useState } from "react";
 import { Search, FileDown, ArrowUpDown, Clock } from "lucide-react";
 import { Button, Table, Thead, Tbody, Tr, Th, Td, EmptyState } from "@/templates/egg-tasta/components";
+import { useCurrency } from "@/shared/components/regional-context";
 
 export function CustomerDueClient() {
+  const { formatMoney } = useCurrency();
   const [search, setSearch] = useState("");
   const [dueFilter, setDueFilter] = useState("ALL");
 
@@ -13,7 +15,7 @@ export function CustomerDueClient() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-6 shadow-sm">
           <div className="text-sm font-medium text-slate-500">Total Outstanding Collection</div>
-          <div className="text-2xl font-bold mt-1 text-slate-900 dark:text-white">$0.00</div>
+          <div className="text-2xl font-bold mt-1 text-slate-900 dark:text-white">{formatMoney(0)}</div>
         </div>
         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-6 shadow-sm">
           <div className="text-sm font-medium text-slate-500">Total Customers with Due</div>

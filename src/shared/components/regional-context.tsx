@@ -11,6 +11,7 @@ export interface RegionalContextType {
   language: string;
   formatCurrency: (amount: number, options?: { decimals?: number }) => string;
   formatAmount: (amount: number, options?: { decimals?: number }) => string;
+  formatMoney: (amount: number, decimals?: number) => string;
 }
 
 const defaultRegional: RegionalContextType = {
@@ -33,6 +34,13 @@ const defaultRegional: RegionalContextType = {
       minimumFractionDigits: decimals,
       maximumFractionDigits: decimals,
     });
+  },
+  formatMoney: (amount: number, decimals: number = 2) => {
+    const formattedNum = Number(amount || 0).toLocaleString(undefined, {
+      minimumFractionDigits: decimals,
+      maximumFractionDigits: decimals,
+    });
+    return `৳${formattedNum}`;
   }
 };
 
@@ -75,6 +83,10 @@ export function RegionalProvider({
     });
   };
 
+  const formatMoney = (amount: number, decimals: number = 2) => {
+    return formatCurrency(amount, { decimals });
+  };
+
   return (
     <RegionalContext.Provider value={{
       currency,
@@ -83,7 +95,8 @@ export function RegionalProvider({
       timezone,
       language,
       formatCurrency,
-      formatAmount
+      formatAmount,
+      formatMoney
     }}>
       {children}
     </RegionalContext.Provider>
@@ -95,6 +108,6 @@ export function useRegional() {
 }
 
 export function useCurrency() {
-  const { currencySymbol, currency, currencyName, formatCurrency, formatAmount } = useRegional();
-  return { symbol: currencySymbol, code: currency, name: currencyName, formatCurrency, formatAmount };
+  const { currencySymbol, currency, currencyName, formatCurrency, formatAmount, formatMoney } = useRegional();
+  return { symbol: currencySymbol, code: currency, name: currencyName, formatCurrency, formatAmount, formatMoney };
 }

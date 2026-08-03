@@ -4,7 +4,8 @@ import React, { useEffect, useState } from "react";
 import { X, User, Phone, Mail, MapPin, Calendar, CreditCard, Activity, Clock, Download, ArrowRight, Printer, AlertCircle } from "lucide-react";
 import { getCustomerProfileAction } from "@/templates/egg-tasta/actions/customers";
 import { StatusBadge, Button } from "@/templates/egg-tasta/components";
-import { formatDate } from "@/shared/utils/date";
+import { formatDate, daysSince } from "@/shared/utils/date";
+import { useCurrency } from "@/shared/components/regional-context";
 
 export function CustomerProfileDrawer({ 
   customerCode, 
@@ -17,6 +18,7 @@ export function CustomerProfileDrawer({
   onEdit: (customer: any) => void,
   onAdjustBalance: (customer: any) => void
 }) {
+  const { symbol } = useCurrency();
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -116,18 +118,18 @@ export function CustomerProfileDrawer({
               <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
                 <Activity className="h-16 w-16" />
               </div>
-              <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">Current Due</p>
+              <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">Current Due Balance</p>
               <p className={`text-2xl font-bold ${customer.previousDue > 0 ? 'text-rose-600 dark:text-rose-500' : 'text-emerald-600 dark:text-emerald-500'}`}>
-                ${customer.previousDue.toFixed(2)}
+                {symbol}{customer.previousDue.toFixed(2)}
               </p>
             </div>
             <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm">
               <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">Lifetime Purchases</p>
-              <p className="text-2xl font-bold text-slate-900 dark:text-white">${stats.totalPurchases.toFixed(2)}</p>
+              <p className="text-2xl font-bold text-slate-900 dark:text-white">{symbol}{stats.totalPurchases.toFixed(2)}</p>
             </div>
             <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm">
               <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">Lifetime Paid</p>
-              <p className="text-2xl font-bold text-slate-900 dark:text-white">${stats.totalPaid.toFixed(2)}</p>
+              <p className="text-2xl font-bold text-slate-900 dark:text-white">{symbol}{stats.totalPaid.toFixed(2)}</p>
             </div>
             <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm">
               <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">Total Purchases</p>
@@ -194,7 +196,7 @@ export function CustomerProfileDrawer({
                 <div className="flex justify-between items-center py-2 border-b border-slate-50 dark:border-slate-800/50">
                   <span className="text-sm font-medium text-slate-500">Avg. Purchase Value</span>
                   <span className="font-bold text-slate-900 dark:text-white">
-                    ${stats.purchaseCount > 0 ? (stats.totalPurchases / stats.purchaseCount).toFixed(2) : '0.00'}
+                    {symbol}{stats.purchaseCount > 0 ? (stats.totalPurchases / stats.purchaseCount).toFixed(2) : '0.00'}
                   </span>
                 </div>
                 <div className="flex justify-between items-center py-2 border-b border-slate-50 dark:border-slate-800/50">
@@ -264,13 +266,13 @@ export function CustomerProfileDrawer({
                           {tx.description || tx.referenceNo || '-'}
                         </td>
                         <td className="px-5 py-3 text-right text-rose-600 font-medium">
-                          {tx.debit > 0 ? `$${tx.debit.toFixed(2)}` : '-'}
+                          {tx.debit > 0 ? `${symbol}${tx.debit.toFixed(2)}` : '-'}
                         </td>
                         <td className="px-5 py-3 text-right text-emerald-600 font-medium">
-                          {tx.credit > 0 ? `$${tx.credit.toFixed(2)}` : '-'}
+                          {tx.credit > 0 ? `${symbol}${tx.credit.toFixed(2)}` : '-'}
                         </td>
                         <td className="px-5 py-3 text-right font-bold text-slate-900 dark:text-white">
-                          ${tx.balance.toFixed(2)}
+                          {symbol}{tx.balance.toFixed(2)}
                         </td>
                       </tr>
                     ))}

@@ -1,8 +1,13 @@
 import { ChevronRight, TrendingUp, TrendingDown, DollarSign } from "lucide-react";
 import Link from "next/link";
 import { EmptyState } from "@/templates/egg-tasta/components";
+import { getRegionalSettingsAction } from "@/shared/actions/regional";
+import { formatMoney } from "@/shared/utils/currency";
 
-export default function ProfitAndLossPage() {
+export default async function ProfitAndLossPage() {
+  const regionalRes = await getRegionalSettingsAction();
+  const symbol = regionalRes.success ? regionalRes.data.currencySymbol : '৳';
+
   return (
     <div className="space-y-6">
       {/* Header and Breadcrumbs */}
@@ -47,7 +52,7 @@ export default function ProfitAndLossPage() {
             <h3 className="font-semibold text-emerald-800 dark:text-emerald-400">Total Revenue</h3>
             <TrendingUp className="h-5 w-5 text-emerald-600 dark:text-emerald-500" />
           </div>
-          <p className="text-3xl font-bold text-emerald-700 dark:text-emerald-300">$0.00</p>
+          <p className="text-3xl font-bold text-emerald-700 dark:text-emerald-300">{formatMoney(0, symbol)}</p>
           <p className="text-sm text-emerald-600/80 dark:text-emerald-500/80 mt-1">Gross Sales Income</p>
         </div>
         
@@ -56,7 +61,7 @@ export default function ProfitAndLossPage() {
             <h3 className="font-semibold text-red-800 dark:text-red-400">Total Deductions</h3>
             <TrendingDown className="h-5 w-5 text-red-600 dark:text-red-500" />
           </div>
-          <p className="text-3xl font-bold text-red-700 dark:text-red-300">$0.00</p>
+          <p className="text-3xl font-bold text-red-700 dark:text-red-300">{formatMoney(0, symbol)}</p>
           <p className="text-sm text-red-600/80 dark:text-red-500/80 mt-1">Purchases + Expenses</p>
         </div>
 
@@ -65,7 +70,7 @@ export default function ProfitAndLossPage() {
             <h3 className="font-semibold text-blue-800 dark:text-blue-400">Net Profit</h3>
             <DollarSign className="h-5 w-5 text-blue-600 dark:text-blue-500" />
           </div>
-          <p className="text-3xl font-bold text-blue-700 dark:text-blue-300">$0.00</p>
+          <p className="text-3xl font-bold text-blue-700 dark:text-blue-300">{formatMoney(0, symbol)}</p>
           <p className="text-sm text-blue-600/80 dark:text-blue-500/80 mt-1">Revenue - Deductions</p>
         </div>
       </div>

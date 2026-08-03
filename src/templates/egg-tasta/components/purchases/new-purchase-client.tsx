@@ -5,8 +5,10 @@ import { useRouter } from "next/navigation";
 import { AlertCircle, CheckCircle2, ShoppingCart, Trash2, Printer } from "lucide-react";
 import { FormSection, FormGrid, Button, Table, Thead, Tbody, Tr, Th, Td, Combobox } from "@/templates/egg-tasta/components";
 import { createPurchaseAction } from "@/templates/egg-tasta/actions/purchases";
+import { useCurrency } from "@/shared/components/regional-context";
 
 export function NewPurchaseClient({ suppliers, products }: { suppliers: any[], products: any[] }) {
+  const { formatMoney } = useCurrency();
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -206,7 +208,7 @@ export function NewPurchaseClient({ suppliers, products }: { suppliers: any[], p
             
             <div className="flex flex-col">
               <label className="text-xs font-medium text-slate-500 mb-1">Supplier Due</label>
-              <input type="text" disabled value={`$${supplierDue.toFixed(2)}`} className="px-3 py-2 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-md text-sm font-medium text-slate-700 dark:text-slate-300 w-full" />
+              <input type="text" disabled value={formatMoney(supplierDue)} className="px-3 py-2 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-md text-sm font-medium text-slate-700 dark:text-slate-300 w-full" />
             </div>
           </FormGrid>
 

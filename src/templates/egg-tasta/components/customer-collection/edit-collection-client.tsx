@@ -5,27 +5,29 @@ import { useRouter } from "next/navigation";
 import { CreditCard, AlertCircle, CheckCircle2 } from "lucide-react";
 import { FormSection, FormGrid, Button, Combobox } from "@/templates/egg-tasta/components";
 import { updateCustomerCollectionAction } from "@/templates/egg-tasta/actions/customerCollections";
+import { useCurrency } from "@/shared/components/regional-context";
 
-export function EditCollectionClient({ customers, initialCollection }: { customers: any[], initialCollection: any }) {
+export function EditCollectionClient({ collection, customers }: { collection: any, customers: any[] }) {
+  const { formatMoney } = useCurrency();
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
-  const [date, setDate] = useState(initialCollection.date ? new Date(initialCollection.date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]);
-  const [customerId, setCustomerId] = useState(initialCollection.customerId || "");
-  const [amount, setAmount] = useState(initialCollection.amount || 0);
-  const [paymentMethod, setPaymentMethod] = useState(initialCollection.paymentMethod || "CASH");
-  const [referenceNo, setReferenceNo] = useState(initialCollection.referenceNo || "");
-  const [notes, setNotes] = useState(initialCollection.notes || "");
+  const [date, setDate] = useState(collection.date ? new Date(collection.date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]);
+  const [customerId, setCustomerId] = useState(collection.customerId || "");
+  const [amount, setAmount] = useState(collection.amount || 0);
+  const [paymentMethod, setPaymentMethod] = useState(collection.paymentMethod || "CASH");
+  const [referenceNo, setReferenceNo] = useState(collection.referenceNo || "");
+  const [notes, setNotes] = useState(collection.notes || "");
 
   const selectedCustomer = customers.find(c => c.id === customerId);
   const currentDue = selectedCustomer ? selectedCustomer.previousDue : 0;
 
   // Since we are editing, the amount being edited was ALREADY subtracted from current due.
   // The actual max allowed due should include the old amount.
-  const oldAmount = initialCollection.amount || 0;
+  const oldAmount = collection.amount || 0;
   const maxAllowedDue = currentDue + oldAmount;
 
   const handleSave = () => {
@@ -53,7 +55,7 @@ export function EditCollectionClient({ customers, initialCollection }: { custome
         notes
       };
 
-      const res = await updateCustomerCollectionAction(initialCollection.id, data);
+      const res = await updateCustomerCollectionAction(collection.id, data);
       if (res.success) {
         setSuccess(`Collection updated successfully.`);
         window.scrollTo(0, 0);
@@ -85,7 +87,7 @@ export function EditCollectionClient({ customers, initialCollection }: { custome
           <FormGrid>
             <div className="flex flex-col">
               <label className="text-xs font-medium text-slate-500 mb-1">Receipt No</label>
-              <input type="text" disabled value={initialCollection.collectionNo} className="px-3 py-2 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-md text-sm text-slate-500 w-full" />
+              <input type="text" disabled value={collection.collectionNo} className="px-3 py-2 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-md text-sm text-slate-500 w-full font-medium" />
             </div>
             
             <div className="flex flex-col">
@@ -107,7 +109,7 @@ export function EditCollectionClient({ customers, initialCollection }: { custome
 
             <div className="flex flex-col">
               <label className="text-xs font-medium text-slate-500 mb-1">Max Available Due</label>
-              <input type="text" disabled value={`$${maxAllowedDue.toFixed(2)}`} className="px-3 py-2 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-md text-sm text-slate-500 w-full font-medium" />
+              <input type="text" disabled value={formatMoney(maxAllowedDue)} className="px-3 py-2 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-md text-sm text-slate-500 w-full font-medium" />
             </div>
 
             <div className="flex flex-col">

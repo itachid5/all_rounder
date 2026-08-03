@@ -9,8 +9,10 @@ import { Button, Table, Thead, Tbody, Tr, Th, Td, EmptyState, Badge } from "@/te
 import { Combobox } from "@/templates/egg-tasta/components/Combobox";
 import { ReportExportButton } from "@/templates/egg-tasta/components/reports/report-export-button";
 import { formatDate } from "@/shared/utils/date";
+import { useCurrency } from "@/shared/components/regional-context";
 
-export function CustomerCollectionReportClient({ initialData, initialTotal, initialSummary }: { initialData: any[], initialTotal: number, initialSummary?: any }) {
+export function CustomerCollectionReportClient({ initialData, initialTotal, initialSummary, customers: initialCustomers }: { initialData: any[], initialTotal: number, initialSummary: any, customers: any[] }) {
+  const { symbol } = useCurrency();
   const [isPending, startTransition] = useTransition();
   
   const [data, setData] = useState(initialData);
@@ -212,7 +214,7 @@ export function CustomerCollectionReportClient({ initialData, initialTotal, init
                       {row.customerMobile || "-"}
                     </Td>
                     <Td className="text-right font-semibold text-emerald-600 dark:text-emerald-400 whitespace-nowrap">
-                      ${item.amount.toFixed(2)}
+                      {symbol}{item.amount.toFixed(2)}
                     </Td>
                     <Td className="whitespace-nowrap text-slate-600 dark:text-slate-400 text-sm">
                       {item.paymentMethod ? item.paymentMethod.replace('_', ' ') : "-"}
@@ -254,23 +256,23 @@ export function CustomerCollectionReportClient({ initialData, initialTotal, init
         </div>
         <div>
           <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Total Amount</p>
-          <p className="text-lg font-bold text-emerald-600 dark:text-emerald-400">${(summary?.totalAmount || 0).toFixed(2)}</p>
+          <p className="text-lg font-bold text-emerald-600 dark:text-emerald-400">{symbol}{(summary?.totalAmount || 0).toFixed(2)}</p>
         </div>
         <div>
           <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Cash Total</p>
-          <p className="text-lg font-bold text-slate-700 dark:text-slate-300">${(summary?.cashTotal || 0).toFixed(2)}</p>
+          <p className="text-lg font-bold text-slate-700 dark:text-slate-300">{symbol}{(summary?.cashTotal || 0).toFixed(2)}</p>
         </div>
         <div>
           <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Bank Total</p>
-          <p className="text-lg font-bold text-slate-700 dark:text-slate-300">${(summary?.bankTotal || 0).toFixed(2)}</p>
+          <p className="text-lg font-bold text-slate-700 dark:text-slate-300">{symbol}{(summary?.bankTotal || 0).toFixed(2)}</p>
         </div>
         <div>
           <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Mobile Banking</p>
-          <p className="text-lg font-bold text-slate-700 dark:text-slate-300">${(summary?.mobileTotal || 0).toFixed(2)}</p>
+          <p className="text-lg font-bold text-slate-700 dark:text-slate-300">{symbol}{(summary?.mobileTotal || 0).toFixed(2)}</p>
         </div>
         <div>
           <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Other Total</p>
-          <p className="text-lg font-bold text-slate-700 dark:text-slate-300">${(summary?.otherTotal || 0).toFixed(2)}</p>
+          <p className="text-lg font-bold text-slate-700 dark:text-slate-300">{symbol}{(summary?.otherTotal || 0).toFixed(2)}</p>
         </div>
       </div>
 
