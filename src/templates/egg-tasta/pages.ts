@@ -24,6 +24,7 @@ import SupplierLedgerPage from "./app/suppliers/ledger/page";
 import SupplierPaymentsManagePage from "./app/supplier-payments/manage/page";
 import NewSupplierPaymentPage from "./app/supplier-payments/new/page";
 import SupplierPaymentReportPage from "./app/supplier-payments/report/page";
+import SupplierPaymentLedgerPage from "./app/supplier-payments/ledger/page";
 
 import SalesManagePage from "./app/sales/manage/page";
 import NewSalePage from "./app/sales/new/page";
@@ -39,6 +40,7 @@ import PurchasesManagePage from "./app/purchases/manage/page";
 import NewPurchasePage from "./app/purchases/new/page";
 import PurchasesReportPage from "./app/purchases/report/page";
 import PurchasesReturnsPage from "./app/purchases/returns/page";
+import PurchaseLedgerPage from "./app/purchases/ledger/page";
 
 import InventoryLowPage from "./app/inventory/low/page";
 import InventoryAdjustmentPage from "./app/inventory/adjustment/page";
@@ -126,6 +128,7 @@ export const eggTastaPageMap: Record<string, any> = {
   "supplier-payments/manage": SupplierPaymentsManagePage,
   "supplier-payments/new": NewSupplierPaymentPage,
   "supplier-payments/report": SupplierPaymentReportPage,
+  "supplier-payments/ledger": SupplierPaymentLedgerPage,
   "sales": SalesManagePage,
   "sales/manage": SalesManagePage,
   "sales/new": NewSalePage,
@@ -141,6 +144,7 @@ export const eggTastaPageMap: Record<string, any> = {
   "purchases/new": NewPurchasePage,
   "purchases/report": PurchasesReportPage,
   "purchases/returns": PurchasesReturnsPage,
+  "purchases/ledger": PurchaseLedgerPage,
   "inventory": InventoryLowPage,
   "inventory/low": InventoryLowPage,
   "inventory/adjustment": InventoryAdjustmentPage,

@@ -34,7 +34,16 @@ const DEFAULT_BUSINESS_NAV: NavItem[] = [
       { label: "Supplier Ledger", href: "/app/suppliers/ledger" },
     ],
   },
-  { label: "Supplier Payments", href: "/app/supplier-payments/manage", icon: "DollarSign" },
+  {
+    label: "Supplier Payments",
+    href: "#",
+    icon: "DollarSign",
+    subItems: [
+      { label: "Add Payment", href: "/app/supplier-payments/new" },
+      { label: "Manage Payments", href: "/app/supplier-payments/manage" },
+      { label: "Payment Ledger", href: "/app/supplier-payments/ledger" },
+    ],
+  },
   {
     label: "Customers",
     href: "#",
@@ -56,7 +65,16 @@ const DEFAULT_BUSINESS_NAV: NavItem[] = [
       { label: "Collection Ledger", href: "/app/customer-collection/ledger" },
     ],
   },
-  { label: "Purchases", href: "/app/purchases/manage", icon: "WalletCards" },
+  {
+    label: "Purchases",
+    href: "#",
+    icon: "WalletCards",
+    subItems: [
+      { label: "Add Purchase", href: "/app/purchases/new" },
+      { label: "Manage Purchases", href: "/app/purchases/manage" },
+      { label: "Purchase Ledger", href: "/app/purchases/ledger" },
+    ],
+  },
   { label: "Sales", href: "/app/sales/manage", icon: "DollarSign" },
   { label: "Sales Return", href: "/app/sales-return/manage", icon: "MoveRight" },
   { label: "Inventory", href: "/app/inventory/adjustment", icon: "Database" },

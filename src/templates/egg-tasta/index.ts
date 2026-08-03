@@ -11,9 +11,9 @@ const contract: TemplateContract = {
   },
   navigation: [], // Will be hydrated by platform from db or overridden here
   routes: [
-    "supplier-payments/manage", "supplier-payments/new", "supplier-payments/report",
+    "supplier-payments/manage", "supplier-payments/new", "supplier-payments/report", "supplier-payments/ledger",
     "settings/invoice", "settings/profile", "settings/backup", "settings/company", "settings/branding", "settings/tax", "settings/financial", "settings/preferences", "settings/audit", "settings", "settings/import-export",
-    "profile", "purchases/manage", "purchases/returns", "purchases/new", "purchases/report",
+    "profile", "purchases/manage", "purchases/returns", "purchases/new", "purchases/report", "purchases/ledger",
     "cashbook", "expenses/manage", "expenses/new", "expenses/categories", "expenses/report",
     "users/manage", "users/activity", "users", "users/new", "users/roles", "users/login-history",
     "permissions", "activity", "suppliers/manage", "suppliers/due", "suppliers/new", "suppliers/ledger",

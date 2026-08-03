@@ -202,7 +202,17 @@ async function seed() {
               { name: "Supplier Ledger", route: "/app/suppliers/ledger", sortOrder: 4 },
             ]
           },
-          { name: "Supplier Payments", route: "/app/supplier-payments/manage", icon: "DollarSign", sortOrder: 4 },
+          { 
+            name: "Supplier Payments", 
+            route: "#", 
+            icon: "DollarSign", 
+            sortOrder: 4,
+            children: [
+              { name: "Add Payment", route: "/app/supplier-payments/new", sortOrder: 1 },
+              { name: "Manage Payments", route: "/app/supplier-payments/manage", sortOrder: 2 },
+              { name: "Payment Ledger", route: "/app/supplier-payments/ledger", sortOrder: 3 },
+            ]
+          },
           { 
             name: "Customers", 
             route: "#", 
@@ -226,7 +236,17 @@ async function seed() {
               { name: "Collection Ledger", route: "/app/customer-collection/ledger", sortOrder: 3 },
             ]
           },
-          { name: "Purchases", route: "/app/purchases/manage", icon: "WalletCards", sortOrder: 7 },
+          { 
+            name: "Purchases", 
+            route: "#", 
+            icon: "WalletCards", 
+            sortOrder: 7,
+            children: [
+              { name: "Add Purchase", route: "/app/purchases/new", sortOrder: 1 },
+              { name: "Manage Purchases", route: "/app/purchases/manage", sortOrder: 2 },
+              { name: "Purchase Ledger", route: "/app/purchases/ledger", sortOrder: 3 },
+            ]
+          },
           { name: "Sales", route: "/app/sales/manage", icon: "DollarSign", sortOrder: 8 },
           { name: "Sales Return", route: "/app/sales-return/manage", icon: "MoveRight", sortOrder: 9 },
           { name: "Inventory", route: "/app/inventory/adjustment", icon: "Database", sortOrder: 10 },
