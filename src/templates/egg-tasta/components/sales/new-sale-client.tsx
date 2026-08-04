@@ -1,13 +1,18 @@
 "use client";
 
-import React, { useState, useTransition, useRef } from "react";
+import React, { useState, useTransition, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { AlertCircle, CheckCircle2, ShoppingCart, Plus, Trash2, Printer } from "lucide-react";
-import { FormSection, FormGrid, Button, Table, Thead, Tbody, Tr, Th, Td, Combobox } from "@/templates/egg-tasta/components";
+import { AlertCircle, CheckCircle2, ShoppingCart, Trash2, Printer, Plus, Tag, Box } from "lucide-react";
+import { FormSection, FormGrid, Button, Combobox } from "@/templates/egg-tasta/components";
 import { createSaleAction } from "@/templates/egg-tasta/actions/sales";
 import { useCurrency } from "@/shared/components/regional-context";
 
-export function NewSaleClient({ customers, products }: { customers: any[], products: any[] }) {
+interface NewSaleClientProps {
+  customers: any[];
+  products: any[];
+}
+
+export function NewSaleClient({ customers, products }: NewSaleClientProps) {
   const { symbol, formatMoney } = useCurrency();
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -16,24 +21,23 @@ export function NewSaleClient({ customers, products }: { customers: any[], produ
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
   const [date, setDate] = useState("");
-
-  React.useEffect(() => {
-    setDate(new Date().toISOString().split('T')[0]);
+  useEffect(() => {
+    setDate(new Date().toISOString().split("T")[0]);
   }, []);
-  
-  const [customerId, setCustomerId] = useState("");
-  
-  // Find selected customer due
-  const selectedCustomer = customers.find(c => c.id === customerId);
-  const customerDue = selectedCustomer ? selectedCustomer.previousDue : 0;
 
-  // New POS style state
+  const [customerId, setCustomerId] = useState("");
+  const selectedCustomer = customers.find((c) => c.id === customerId);
+  const customerDue = selectedCustomer ? selectedCustomer.previousDue || 0 : 0;
+
+  // Pending selection state
   const productSelectRef = useRef<HTMLDivElement>(null);
   const [pendingProductId, setPendingProductId] = useState("");
   const [pendingVariantId, setPendingVariantId] = useState("");
 
-  const pendingProduct = products.find(p => p.id === pendingProductId);
-  const pendingHasVariants = pendingProduct?.hasVariants && pendingProduct?.variants?.length > 0 && pendingProduct?.variantInventoryMode === 'VARIANT_LEVEL';
+  const pendingProduct = products.find((p) => p.id === pendingProductId);
+  const pendingVariants = pendingProduct?.variants || [];
+  const pendingHasMultipleVariants =
+    pendingProduct?.hasVariants && pendingVariants.length > 1;
 
   const [items, setItems] = useState<any[]>([]);
 
@@ -44,79 +48,165 @@ export function NewSaleClient({ customers, products }: { customers: any[], produ
   const [referenceNo, setReferenceNo] = useState("");
   const [notes, setNotes] = useState("");
 
+  // Helper function to resolve stock tracking status for a product & variant
+  const getStockInfo = (product: any, variantId: string) => {
+    if (!product) {
+      return { isStockTracked: false, availableStock: Infinity, label: "No Tracking", isSalesOnly: true };
+    }
+
+    const hasVariants = product.hasVariants && Array.isArray(product.variants) && product.variants.length > 0;
+    const isVariantLevel = product.variantInventoryMode === "VARIANT_LEVEL";
+    const isProductLevel = product.variantInventoryMode === "PRODUCT_LEVEL";
+    const isSalesOnlyMode = product.variantInventoryMode === "SALES_ONLY" || product.variantInventoryMode === "NONE";
+
+    if (isSalesOnlyMode) {
+      return { isStockTracked: false, availableStock: Infinity, label: "Sales Only", isSalesOnly: true };
+    }
+
+    if (hasVariants) {
+      const selectedVariant = product.variants.find((v: any) => v.id === variantId);
+
+      if (isVariantLevel && selectedVariant) {
+        // If variant stock is tracked
+        if (selectedVariant.currentStock !== undefined && selectedVariant.currentStock !== null) {
+          return {
+            isStockTracked: true,
+            availableStock: selectedVariant.currentStock,
+            label: `Stock: ${selectedVariant.currentStock}`,
+            isSalesOnly: false,
+          };
+        }
+      }
+
+      // If product-level tracking or variant is sales-only
+      if (isProductLevel && product.currentStock !== undefined && product.currentStock !== null) {
+        return {
+          isStockTracked: true,
+          availableStock: product.currentStock,
+          label: `Stock: ${product.currentStock}`,
+          isSalesOnly: false,
+        };
+      }
+
+      return { isStockTracked: false, availableStock: Infinity, label: "Sales Only", isSalesOnly: true };
+    } else {
+      // Product without variants
+      if (product.currentStock !== undefined && product.currentStock !== null) {
+        return {
+          isStockTracked: true,
+          availableStock: product.currentStock,
+          label: `Stock: ${product.currentStock}`,
+          isSalesOnly: false,
+        };
+      }
+      return { isStockTracked: false, availableStock: Infinity, label: "Sales Only", isSalesOnly: true };
+    }
+  };
+
   const addProductToTable = (prodId: string, varId: string = "") => {
     setError(null);
-    const prod = products.find(p => p.id === prodId);
+    const prod = products.find((p) => p.id === prodId);
     if (!prod) return;
 
-    const isVariantLevel = prod.variantInventoryMode === 'VARIANT_LEVEL';
-    const exists = items.some((item: any) => {
-      if (isVariantLevel) {
-        return item.productId === prodId && item.variantId === varId;
-      }
-      return item.productId === prodId;
-    });
-
+    // Check duplicate
+    const exists = items.some((item: any) => item.productId === prodId && item.variantId === varId);
     if (exists) {
-      setError("This product has already been added.");
+      setError(`"${prod.name}" with this variant has already been added.`);
       setPendingProductId("");
       setPendingVariantId("");
-      setTimeout(() => {
-        productSelectRef.current?.focus();
-      }, 10);
       return;
     }
 
-    const hasVariants = prod.hasVariants && prod.variants?.length > 0 && isVariantLevel;
-    
-    let availableStock = prod.variantInventoryMode === 'VARIANT_LEVEL' ? 0 : prod.currentStock;
-    if (hasVariants && prod.variantInventoryMode === 'VARIANT_LEVEL') {
-      const variant = prod.variants?.find((v: any) => v.id === varId);
-      availableStock = variant ? variant.currentStock : 0;
-    }
+    const stockInfo = getStockInfo(prod, varId);
+    const initialPrice = prod.sellingPrice || 0;
 
-    setItems(prev => [...prev, {
-      id: Date.now() + Math.random(),
-      productId: prodId,
-      variantId: varId,
-      availableStock,
-      sellingPrice: prod.sellingPrice || 0,
-      quantity: 1,
-      itemDiscount: 0,
-      total: prod.sellingPrice || 0
-    }]);
+    setItems((prev) => [
+      ...prev,
+      {
+        id: Date.now() + Math.random(),
+        productId: prodId,
+        variantId: varId,
+        isStockTracked: stockInfo.isStockTracked,
+        availableStock: stockInfo.availableStock,
+        isSalesOnly: stockInfo.isSalesOnly,
+        sellingPrice: initialPrice,
+        quantity: 1,
+        itemDiscount: 0,
+        total: initialPrice,
+      },
+    ]);
 
     setPendingProductId("");
     setPendingVariantId("");
+  };
 
-    setTimeout(() => {
-      productSelectRef.current?.focus();
-    }, 10);
+  const handleProductSelect = (selectedId: string) => {
+    setPendingProductId(selectedId);
+    setPendingVariantId("");
+
+    if (!selectedId) return;
+
+    const prod = products.find((p) => p.id === selectedId);
+    if (!prod) return;
+
+    const hasVars = prod.hasVariants && Array.isArray(prod.variants) && prod.variants.length > 0;
+
+    if (!hasVars) {
+      // No variants -> add immediately
+      addProductToTable(selectedId, "");
+    } else if (prod.variants.length === 1) {
+      // Single variant -> auto select it and add immediately
+      addProductToTable(selectedId, prod.variants[0].id);
+    }
+    // If multiple variants -> wait for user to select from variant dropdown
   };
 
   const handleRemoveItem = (id: number) => {
-    setItems(items.filter(item => item.id !== id));
+    setItems((prev) => prev.filter((item) => item.id !== id));
   };
 
   const handleItemChange = (id: number, field: string, value: any) => {
-    setItems(prevItems => prevItems.map(item => {
-      if (item.id === id) {
-        const updated = { ...item, [field]: value };
-        
-        if (field === 'quantity' && updated.availableStock < value) {
-          setError(`Cannot sell more than available stock (${updated.availableStock})`);
-          updated.quantity = updated.availableStock;
+    setError(null);
+    setItems((prevItems) =>
+      prevItems.map((item) => {
+        if (item.id !== id) return item;
+
+        const prod = products.find((p) => p.id === item.productId);
+        let updated = { ...item, [field]: value };
+
+        if (field === "variantId") {
+          const stockInfo = getStockInfo(prod, value);
+          updated.isStockTracked = stockInfo.isStockTracked;
+          updated.availableStock = stockInfo.availableStock;
+          updated.isSalesOnly = stockInfo.isSalesOnly;
         }
 
-        updated.total = (parseFloat(updated.sellingPrice || 0) * parseFloat(updated.quantity || 0)) - parseFloat(updated.itemDiscount || 0);
+        const currentStockInfo = getStockInfo(prod, updated.variantId);
+
+        if (field === "quantity" && currentStockInfo.isStockTracked) {
+          const numVal = Math.max(0, parseFloat(value) || 0);
+          if (numVal > currentStockInfo.availableStock) {
+            setError(
+              `Stock limit exceeded! Only ${currentStockInfo.availableStock} available for ${prod?.name || "this product"}.`
+            );
+            updated.quantity = currentStockInfo.availableStock;
+          } else {
+            updated.quantity = numVal;
+          }
+        }
+
+        const price = parseFloat(updated.sellingPrice || 0);
+        const qty = parseFloat(updated.quantity || 0);
+        const disc = parseFloat(updated.itemDiscount || 0);
+        updated.total = Math.max(0, price * qty - disc);
+
         return updated;
-      }
-      return item;
-    }));
+      })
+    );
   };
 
   const subTotal = items.reduce((sum, item) => sum + (item.total || 0), 0);
-  const grandTotal = subTotal - discount + otherCharges;
+  const grandTotal = Math.max(0, subTotal - discount + otherCharges);
   const remainingDue = grandTotal - paidAmount;
 
   const handleSave = () => {
@@ -127,11 +217,14 @@ export function NewSaleClient({ customers, products }: { customers: any[], produ
     const errors: Record<string, string> = {};
 
     if (!customerId) errors.customerId = "Customer is required.";
-    const validItems = items.filter(i => i.productId && i.quantity > 0);
+    const validItems = items.filter((i) => i.productId && i.quantity > 0);
     if (validItems.length === 0) errors.items = "Please add at least one valid product.";
+
     for (const item of validItems) {
-      if (item.quantity > item.availableStock) {
-        errors.items = "One or more items exceed available stock.";
+      const prod = products.find((p) => p.id === item.productId);
+      const stockInfo = getStockInfo(prod, item.variantId);
+      if (stockInfo.isStockTracked && item.quantity > stockInfo.availableStock) {
+        errors.items = `Cannot sell more than available stock (${stockInfo.availableStock}) for ${prod?.name || "product"}.`;
         break;
       }
     }
@@ -153,7 +246,7 @@ export function NewSaleClient({ customers, products }: { customers: any[], produ
         paidAmount,
         paymentMethod,
         referenceNo,
-        notes
+        notes,
       };
 
       const res = await createSaleAction(data);
@@ -168,105 +261,132 @@ export function NewSaleClient({ customers, products }: { customers: any[], produ
         setNotes("");
         setPendingProductId("");
         setPendingVariantId("");
-        window.scrollTo(0,0);
+        window.scrollTo(0, 0);
       } else {
-        setError("Something went wrong. Please try again.");
+        setError(res.error || "Something went wrong. Please try again.");
       }
     });
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-w-full">
       {error && (
-        <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 p-4 rounded-md flex items-start gap-3">
-          <AlertCircle className="h-5 w-5 mt-0.5" />
-          <p>{error}</p>
+        <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 p-4 rounded-lg flex items-start gap-3 shadow-sm">
+          <AlertCircle className="h-5 w-5 mt-0.5 shrink-0" />
+          <p className="text-sm font-medium">{error}</p>
         </div>
       )}
 
       {formErrors.items && (
-        <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 p-4 rounded-md flex items-start gap-3">
-          <AlertCircle className="h-5 w-5 mt-0.5" />
-          <p>{formErrors.items}</p>
+        <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 p-4 rounded-lg flex items-start gap-3 shadow-sm">
+          <AlertCircle className="h-5 w-5 mt-0.5 shrink-0" />
+          <p className="text-sm font-medium">{formErrors.items}</p>
         </div>
       )}
 
       {success && (
-        <div className="bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400 p-4 rounded-md flex items-start gap-3">
-          <CheckCircle2 className="h-5 w-5 mt-0.5" />
-          <p>{success}</p>
+        <div className="bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400 p-4 rounded-lg flex items-start gap-3 shadow-sm">
+          <CheckCircle2 className="h-5 w-5 mt-0.5 shrink-0" />
+          <p className="text-sm font-medium">{success}</p>
         </div>
       )}
 
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-6 shadow-sm">
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 md:p-6 shadow-sm space-y-6">
+        {/* Invoice Metadata */}
         <FormSection title="Sale Details" icon={ShoppingCart}>
-          <FormGrid>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="flex flex-col">
-              <label className="text-xs font-medium text-slate-500 mb-1">Invoice No</label>
-              <input type="text" disabled placeholder="Auto Generated" className="px-3 py-2 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-md text-sm text-slate-500 w-full" />
+              <label className="text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Invoice No</label>
+              <input
+                type="text"
+                disabled
+                placeholder="Auto Generated"
+                className="px-3 py-2 bg-slate-100 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-lg text-sm text-slate-500 font-medium w-full"
+              />
             </div>
-            
+
             <div className="flex flex-col">
-              <label className="text-xs font-medium text-slate-500 mb-1">Sale Date *</label>
-              <input type="date" value={date} onChange={e => setDate(e.target.value)} className="px-3 py-2 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-full" />
+              <label className="text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Sale Date *</label>
+              <input
+                type="date"
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+                className="px-3 py-2 bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-full"
+              />
             </div>
-            
+
             <div className="flex flex-col">
-              <label className="text-xs font-medium text-slate-500 mb-1">Customer *</label>
-              <Combobox 
-                options={customers.map(c => ({ value: c.id, label: `${c.name} (${c.customerCode})` }))}
+              <label className="text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Customer *</label>
+              <Combobox
+                options={customers.map((c) => ({ value: c.id, label: `${c.name} (${c.customerCode})` }))}
                 value={customerId}
                 onChange={(val) => setCustomerId(val)}
-                placeholder="Select Customer"
+                placeholder="Select Customer..."
                 error={!!formErrors.customerId}
               />
-              {formErrors.customerId && <span className="text-red-500 text-xs mt-1">{formErrors.customerId}</span>}
+              {formErrors.customerId && (
+                <span className="text-red-500 text-xs mt-1">{formErrors.customerId}</span>
+              )}
             </div>
-            
+
             <div className="flex flex-col">
-              <label className="text-xs font-medium text-slate-500 mb-1">Customer Due</label>
-              <input type="text" disabled value={formatMoney(customerDue)} className="px-3 py-2 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-md text-sm font-medium text-slate-700 dark:text-slate-300 w-full" />
+              <label className="text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Customer Previous Due</label>
+              <input
+                type="text"
+                disabled
+                value={formatMoney(customerDue)}
+                className="px-3 py-2 bg-slate-100 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-semibold text-slate-800 dark:text-slate-200 w-full"
+              />
             </div>
-          </FormGrid>
-          
+          </div>
+
+          {/* Product & Variant Selector Bar */}
           <div className="mt-6 pt-6 border-t border-slate-200 dark:border-slate-800">
-            <div className="space-y-4">
-              <div className="flex flex-col md:w-1/2">
-                <label className="text-xs font-medium text-slate-500 mb-1">Product Select *</label>
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
+              <div className={pendingHasMultipleVariants ? "md:col-span-7" : "md:col-span-12"}>
+                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5 flex items-center gap-1.5">
+                  <Box className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                  Select Product *
+                </label>
                 <div ref={productSelectRef}>
-                  <Combobox 
-                    options={products.map(p => ({ value: p.id, label: `${p.name} (${p.productCode})` }))}
+                  <Combobox
+                    options={products.map((p) => {
+                      const hasVars = p.hasVariants && Array.isArray(p.variants) && p.variants.length > 0;
+                      const varCountStr = hasVars ? ` [${p.variants.length} Variants]` : "";
+                      return {
+                        value: p.id,
+                        label: `${p.name} (${p.productCode})${varCountStr}`,
+                      };
+                    })}
                     value={pendingProductId}
-                    onChange={(selectedId) => {
-                      setPendingProductId(selectedId);
-                      setPendingVariantId("");
-                      
-                      if (selectedId) {
-                        const prod = products.find(p => p.id === selectedId);
-                        const hasVars = prod?.hasVariants && prod?.variants?.length > 0 && prod?.variantInventoryMode === 'VARIANT_LEVEL';
-                        if (!hasVars) {
-                          addProductToTable(selectedId, "");
-                        }
-                      }
-                    }}
-                    placeholder="Search Products..."
+                    onChange={handleProductSelect}
+                    placeholder="Search product by name or code..."
                   />
                 </div>
               </div>
-              
-              {pendingHasVariants && (
-                <div className="flex flex-col md:w-1/2">
-                  <label className="text-xs font-medium text-slate-500 mb-1">Variant Select *</label>
-                  <Combobox 
-                    options={pendingProduct.variants.map((v: any) => ({ value: v.id, label: v.name }))}
+
+              {pendingHasMultipleVariants && (
+                <div className="md:col-span-5">
+                  <label className="text-xs font-semibold text-blue-700 dark:text-blue-400 mb-1.5 flex items-center gap-1.5">
+                    <Tag className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                    Select Variant * (Required)
+                  </label>
+                  <Combobox
+                    options={pendingVariants.map((v: any) => {
+                      const stockInfo = getStockInfo(pendingProduct, v.id);
+                      return {
+                        value: v.id,
+                        label: `${v.name} — ${stockInfo.label}`,
+                      };
+                    })}
                     value={pendingVariantId}
-                    onChange={(selectedVarId) => {
-                      setPendingVariantId(selectedVarId);
-                      if (selectedVarId) {
-                        addProductToTable(pendingProductId, selectedVarId);
+                    onChange={(varId) => {
+                      setPendingVariantId(varId);
+                      if (varId) {
+                        addProductToTable(pendingProductId, varId);
                       }
                     }}
-                    placeholder="Select Variant..."
+                    placeholder="Choose variant..."
                   />
                 </div>
               )}
@@ -274,163 +394,289 @@ export function NewSaleClient({ customers, products }: { customers: any[], produ
           </div>
         </FormSection>
 
-        {/* Product Table */}
-        <div className="mt-8 border-t border-slate-200 dark:border-slate-800 pt-6">
-          <h3 className="text-sm font-medium text-slate-900 dark:text-white mb-4">Products</h3>
-          <div>
-            <Table>
-              <Thead>
-                <Tr>
-                  <Th className="w-[20%]">Selected Product</Th>
-                  <Th className="w-[15%]">Selected Variant</Th>
-                  <Th className="w-[10%] text-right">Available Stock</Th>
-                  <Th className="w-[15%] text-right">Selling Price</Th>
-                  <Th className="w-[10%] text-right">Quantity</Th>
-                  <Th className="w-[10%] text-right">Discount</Th>
-                  <Th className="w-[15%] text-right">Total</Th>
-                  <Th className="w-[5%]">Actions</Th>
-                </Tr>
-              </Thead>
-              <Tbody>
+        {/* Compact Product Table — No Horizontal Scrollbar */}
+        <div className="pt-2">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+              <span>Sale Items</span>
+              <span className="text-xs font-normal text-slate-500 dark:text-slate-400">
+                ({items.length} {items.length === 1 ? "item" : "items"})
+              </span>
+            </h3>
+          </div>
+
+          <div className="w-full max-w-full overflow-hidden border border-slate-200 dark:border-slate-800 rounded-lg">
+            <table className="w-full text-sm text-left border-collapse">
+              <thead className="bg-slate-100 dark:bg-slate-800/80 text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider border-b border-slate-200 dark:border-slate-700">
+                <tr>
+                  <th className="py-3 px-3">Product</th>
+                  <th className="py-3 px-3">Variant / Stock</th>
+                  <th className="py-3 px-2 text-right w-24">Qty</th>
+                  <th className="py-3 px-2 text-right w-28">Unit Price</th>
+                  <th className="py-3 px-2 text-right w-24">Discount</th>
+                  <th className="py-3 px-3 text-right w-28">Total</th>
+                  <th className="py-3 px-2 text-center w-12">Action</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-200 dark:divide-slate-800 bg-white dark:bg-slate-900">
                 {items.length === 0 && (
-                  <Tr>
-                    <Td colSpan={8} className="text-center py-6 text-slate-500 italic">No products added. Select a product above and click Add Product.</Td>
-                  </Tr>
+                  <tr>
+                    <td colSpan={7} className="text-center py-10 text-slate-400 dark:text-slate-500 italic">
+                      No products added yet. Select a product above to add to this sale.
+                    </td>
+                  </tr>
                 )}
                 {items.map((item) => {
-                  const selectedProduct = products.find(p => p.id === item.productId);
-                  const selectedVariant = selectedProduct?.variants?.find((v:any) => v.id === item.variantId);
-                  
+                  const selectedProduct = products.find((p) => p.id === item.productId);
+                  const selectedVariant = selectedProduct?.variants?.find((v: any) => v.id === item.variantId);
+                  const stockInfo = getStockInfo(selectedProduct, item.variantId);
+                  const hasVariants = selectedProduct?.hasVariants && Array.isArray(selectedProduct.variants) && selectedProduct.variants.length > 0;
+
                   return (
-                  <Tr key={item.id}>
-                    <Td className="font-medium text-slate-900 dark:text-white">
-                      {selectedProduct?.name || "Unknown"}
-                    </Td>
-                    <Td className="text-slate-600 dark:text-slate-400">
-                      {selectedVariant ? selectedVariant.name : ""}
-                    </Td>
-                    <Td className="text-right text-slate-500">
-                      {item.availableStock}
-                    </Td>
-                    <Td>
-                      <input 
-                        type="number" 
-                        step="0.01" 
-                        value={item.sellingPrice} 
-                        onChange={e => handleItemChange(item.id, 'sellingPrice', parseFloat(e.target.value) || 0)}
-                        className="w-full px-2 py-1.5 text-right bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-md text-sm" 
-                      />
-                    </Td>
-                    <Td>
-                      <input 
-                        type="number" 
-                        value={item.quantity} 
-                        onChange={e => handleItemChange(item.id, 'quantity', parseFloat(e.target.value) || 0)}
-                        className="w-full px-2 py-1.5 text-right bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-md text-sm" 
-                      />
-                    </Td>
-                    <Td>
-                      <input 
-                        type="number" 
-                        step="0.01" 
-                        value={item.itemDiscount} 
-                        onChange={e => handleItemChange(item.id, 'itemDiscount', parseFloat(e.target.value) || 0)}
-                        className="w-full px-2 py-1.5 text-right bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-md text-sm" 
-                      />
-                    </Td>
-                    <Td className="text-right font-medium">
-                      ${item.total.toFixed(2)}
-                    </Td>
-                    <Td>
-                      <button onClick={() => handleRemoveItem(item.id)} className="p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded">
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    </Td>
-                  </Tr>
-                )})}
-              </Tbody>
-            </Table>
+                    <tr key={item.id} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition-colors">
+                      {/* Product Name & Code */}
+                      <td className="py-2.5 px-3 font-medium text-slate-900 dark:text-white">
+                        <div className="flex flex-col">
+                          <span className="font-semibold text-slate-900 dark:text-slate-100">
+                            {selectedProduct?.name || "Unknown Product"}
+                          </span>
+                          <span className="text-xs text-slate-400 font-normal">
+                            Code: {selectedProduct?.productCode || "-"}
+                          </span>
+                        </div>
+                      </td>
+
+                      {/* Variant & Stock Badge */}
+                      <td className="py-2.5 px-3">
+                        <div className="flex flex-col gap-1">
+                          {hasVariants ? (
+                            selectedProduct.variants.length > 1 ? (
+                              <select
+                                value={item.variantId}
+                                onChange={(e) => handleItemChange(item.id, "variantId", e.target.value)}
+                                className="px-2 py-1 bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded text-xs font-medium text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-blue-500 max-w-[160px]"
+                              >
+                                <option value="">Select Variant</option>
+                                {selectedProduct.variants.map((v: any) => (
+                                  <option key={v.id} value={v.id}>
+                                    {v.name}
+                                  </option>
+                                ))}
+                              </select>
+                            ) : (
+                              <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                                {selectedVariant?.name || "Standard"}
+                              </span>
+                            )
+                          ) : (
+                            <span className="text-xs text-slate-400 font-normal">-</span>
+                          )}
+
+                          {/* Stock Status Badge */}
+                          {stockInfo.isStockTracked ? (
+                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300 max-w-fit">
+                              {stockInfo.label}
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-semibold bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 max-w-fit">
+                              {stockInfo.label}
+                            </span>
+                          )}
+                        </div>
+                      </td>
+
+                      {/* Quantity */}
+                      <td className="py-2.5 px-2 text-right">
+                        <input
+                          type="number"
+                          min="1"
+                          step="1"
+                          value={item.quantity}
+                          onChange={(e) => handleItemChange(item.id, "quantity", e.target.value)}
+                          className="w-20 px-2 py-1 text-right bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded text-sm font-semibold text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                        />
+                      </td>
+
+                      {/* Selling Price */}
+                      <td className="py-2.5 px-2 text-right">
+                        <input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          value={item.sellingPrice}
+                          onChange={(e) => handleItemChange(item.id, "sellingPrice", parseFloat(e.target.value) || 0)}
+                          className="w-24 px-2 py-1 text-right bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded text-sm font-medium text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                        />
+                      </td>
+
+                      {/* Discount */}
+                      <td className="py-2.5 px-2 text-right">
+                        <input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          value={item.itemDiscount}
+                          onChange={(e) => handleItemChange(item.id, "itemDiscount", parseFloat(e.target.value) || 0)}
+                          className="w-20 px-2 py-1 text-right bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded text-sm text-slate-700 dark:text-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                        />
+                      </td>
+
+                      {/* Total */}
+                      <td className="py-2.5 px-3 text-right font-bold text-slate-900 dark:text-white">
+                        {formatMoney(item.total)}
+                      </td>
+
+                      {/* Remove Action */}
+                      <td className="py-2.5 px-2 text-center">
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveItem(item.id)}
+                          className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors"
+                          title="Remove Item"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
         </div>
 
-        {/* Calculations and Payment */}
-        <div className="mt-8 border-t border-slate-200 dark:border-slate-800 pt-6 grid grid-cols-1 lg:grid-cols-2 gap-8">
-          
-          {/* Notes and Ref */}
-          <div className="space-y-4">
+        {/* Calculation & Payment Summary */}
+        <div className="mt-6 pt-6 border-t border-slate-200 dark:border-slate-800 grid grid-cols-1 lg:grid-cols-12 gap-6">
+          {/* Notes and Reference */}
+          <div className="lg:col-span-6 space-y-4">
             <div className="flex flex-col">
-              <label className="text-xs font-medium text-slate-500 mb-1">Reference No (Optional)</label>
-              <input type="text" value={referenceNo} onChange={e => setReferenceNo(e.target.value)} placeholder="e.g. PO No" className="px-3 py-2 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-md text-sm w-full" />
+              <label className="text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">
+                Reference No (Optional)
+              </label>
+              <input
+                type="text"
+                value={referenceNo}
+                onChange={(e) => setReferenceNo(e.target.value)}
+                placeholder="e.g. PO-8849"
+                className="px-3 py-2 bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg text-sm w-full focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              />
             </div>
             <div className="flex flex-col">
-              <label className="text-xs font-medium text-slate-500 mb-1">Notes (Optional)</label>
-              <textarea value={notes} onChange={e => setNotes(e.target.value)} rows={3} className="px-3 py-2 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-md text-sm w-full" />
+              <label className="text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">
+                Notes / Terms (Optional)
+              </label>
+              <textarea
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                rows={3}
+                placeholder="Additional notes for customer or invoice record..."
+                className="px-3 py-2 bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg text-sm w-full focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              />
             </div>
           </div>
 
-          {/* Totals */}
-          <div className="bg-slate-50 dark:bg-slate-800/30 rounded-lg p-5 space-y-3">
+          {/* Payment Breakdown Card */}
+          <div className="lg:col-span-6 bg-slate-50 dark:bg-slate-800/40 rounded-xl p-5 border border-slate-200 dark:border-slate-800 space-y-3">
             <div className="flex justify-between items-center text-sm">
-              <span className="text-slate-500">Sub Total</span>
-              <span className="font-medium">${subTotal.toFixed(2)}</span>
+              <span className="text-slate-600 dark:text-slate-400 font-medium">Sub Total</span>
+              <span className="font-semibold text-slate-900 dark:text-white">{formatMoney(subTotal)}</span>
             </div>
+
             <div className="flex justify-between items-center text-sm">
-              <span className="text-slate-500">Global Discount (-)</span>
-              <input type="number" value={discount} onChange={e => setDiscount(parseFloat(e.target.value) || 0)} className="w-24 px-2 py-1 text-right bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-md" />
+              <span className="text-slate-600 dark:text-slate-400 font-medium">Global Discount (-)</span>
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                value={discount}
+                onChange={(e) => setDiscount(parseFloat(e.target.value) || 0)}
+                className="w-28 px-2 py-1 text-right bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg text-sm font-medium focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              />
             </div>
+
             <div className="flex justify-between items-center text-sm">
-              <span className="text-slate-500">Other Charges (+)</span>
-              <input type="number" value={otherCharges} onChange={e => setOtherCharges(parseFloat(e.target.value) || 0)} className="w-24 px-2 py-1 text-right bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-md" />
-            </div>
-            
-            <div className="border-t border-slate-200 dark:border-slate-700 my-2"></div>
-            
-            <div className="flex justify-between items-center text-base font-bold text-slate-900 dark:text-white">
-              <span>Grand Total</span>
-              <span>${grandTotal.toFixed(2)}</span>
+              <span className="text-slate-600 dark:text-slate-400 font-medium">Other Charges (+)</span>
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                value={otherCharges}
+                onChange={(e) => setOtherCharges(parseFloat(e.target.value) || 0)}
+                className="w-28 px-2 py-1 text-right bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg text-sm font-medium focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              />
             </div>
 
             <div className="border-t border-slate-200 dark:border-slate-700 my-2"></div>
-            
-            <div className="flex justify-between items-center text-sm">
-              <span className="font-medium text-slate-700 dark:text-slate-300">Paid Amount</span>
-              <input type="number" value={paidAmount} onChange={e => setPaidAmount(parseFloat(e.target.value) || 0)} className="w-28 px-2 py-1 text-right bg-white dark:bg-slate-950 border border-blue-400 rounded-md font-medium text-blue-700 dark:text-blue-400" />
+
+            <div className="flex justify-between items-center text-base font-bold text-slate-900 dark:text-white">
+              <span>Grand Total</span>
+              <span className="text-lg text-blue-700 dark:text-blue-400">{formatMoney(grandTotal)}</span>
             </div>
-            
+
+            <div className="border-t border-slate-200 dark:border-slate-700 my-2"></div>
+
+            <div className="flex justify-between items-center text-sm">
+              <span className="font-semibold text-slate-700 dark:text-slate-300">Paid Amount</span>
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                value={paidAmount}
+                onChange={(e) => setPaidAmount(parseFloat(e.target.value) || 0)}
+                className="w-32 px-2 py-1.5 text-right bg-white dark:bg-slate-950 border-2 border-blue-500 rounded-lg font-bold text-blue-700 dark:text-blue-400 text-base focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              />
+            </div>
+
             {paidAmount > 0 && (
-              <div className="flex justify-between items-center text-sm mt-2">
-                <span className="text-slate-500">Payment Method</span>
-                <Combobox 
-                  options={[
-                    { value: "CASH", label: "Cash" },
-                    { value: "BANK", label: "Bank" },
-                    { value: "MOBILE_BANKING", label: "Mobile Banking" }
-                  ]}
+              <div className="flex justify-between items-center text-sm pt-1">
+                <span className="text-slate-600 dark:text-slate-400 font-medium">Payment Method</span>
+                <select
                   value={paymentMethod}
-                  onChange={(val) => setPaymentMethod(val)}
-                  className="w-40"
-                />
+                  onChange={(e) => setPaymentMethod(e.target.value)}
+                  className="w-40 px-2 py-1 bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg text-sm font-medium text-slate-800 dark:text-slate-200"
+                >
+                  <option value="CASH">Cash</option>
+                  <option value="BANK">Bank</option>
+                  <option value="MOBILE_BANKING">Mobile Banking</option>
+                </select>
               </div>
             )}
 
-            <div className="flex justify-between items-center text-sm text-red-600 dark:text-red-400 font-medium pt-2">
-              <span>Remaining Due</span>
-              <span>${remainingDue.toFixed(2)}</span>
+            <div className="flex justify-between items-center text-sm font-bold pt-2 border-t border-slate-200 dark:border-slate-700">
+              <span className="text-slate-700 dark:text-slate-300">Remaining Due</span>
+              <span className={remainingDue > 0 ? "text-red-600 dark:text-red-400 text-base" : "text-emerald-600 dark:text-emerald-400"}>
+                {formatMoney(remainingDue)}
+              </span>
             </div>
-
           </div>
         </div>
 
-        {/* Actions */}
-        <div className="flex items-center justify-end gap-3 pt-6 mt-6 border-t border-slate-200 dark:border-slate-800">
-          <Button variant="ghost" type="button" onClick={() => router.push('/app/sales/manage')} disabled={isPending}>
+        {/* Footer Actions */}
+        <div className="flex items-center justify-end gap-3 pt-6 border-t border-slate-200 dark:border-slate-800">
+          <Button
+            variant="ghost"
+            type="button"
+            onClick={() => router.push("/app/sales/manage")}
+            disabled={isPending}
+          >
             Cancel
           </Button>
-          <Button variant="outline" type="button" onClick={() => alert("Print feature pending PDF generation integration.")} disabled={isPending}>
+          <Button
+            variant="outline"
+            type="button"
+            onClick={() => alert("Print invoice functionality prepared.")}
+            disabled={isPending}
+          >
             <Printer className="h-4 w-4 mr-2" />
             Print Invoice
           </Button>
-          <Button variant="primary" type="button" onClick={handleSave} disabled={isPending}>
+          <Button
+            variant="primary"
+            type="button"
+            onClick={handleSave}
+            disabled={isPending}
+            className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-sm"
+          >
             {isPending ? "Saving..." : "Save Sale"}
           </Button>
         </div>

@@ -77,54 +77,56 @@ export class SaleRepository {
             // Decrease Product Stock
             const product = await tx.select().from(products).where(and(eq(products.tenantId, tenantId), eq(products.id, item.productId))).get();
             if (product) {
-              let previousStock = product.currentStock;
+              let previousStock = product.currentStock || 0;
               let newStock = previousStock - item.quantity;
-              
-              if (product.variantInventoryMode === 'VARIANT_LEVEL' && item.variantId) {
-                const variant = await tx.select().from(productVariants).where(and(eq(productVariants.tenantId, tenantId), eq(productVariants.id, item.variantId))).get();
-                if (variant) {
-                  previousStock = variant.currentStock;
-                  newStock = previousStock - item.quantity;
-                  
-                  if (newStock < 0) {
-                    throw new Error(`Insufficient stock for variant ${variant.name} of product ${product.name}`);
+              const isSalesOnly = item.isSalesOnly || product.variantInventoryMode === 'SALES_ONLY' || product.variantInventoryMode === 'NONE';
+
+              if (!isSalesOnly) {
+                if (product.variantInventoryMode === 'VARIANT_LEVEL' && item.variantId) {
+                  const variant = await tx.select().from(productVariants).where(and(eq(productVariants.tenantId, tenantId), eq(productVariants.id, item.variantId))).get();
+                  if (variant) {
+                    previousStock = variant.currentStock;
+                    newStock = previousStock - item.quantity;
+                    
+                    if (newStock < 0) {
+                      throw new Error(`Insufficient stock for variant ${variant.name} of product ${product.name}`);
+                    }
+                    
+                    await tx.update(productVariants)
+                      .set({ currentStock: newStock })
+                      .where(eq(productVariants.id, variant.id))
+                      .run();
                   }
-                  
-                  await tx.update(productVariants)
-                                        .set({ currentStock: newStock })
-                                        .where(eq(productVariants.id, variant.id))
-                                        .run();
-                }
-              } else {
-                if (product.currentStock < item.quantity) {
-                  throw new Error(`Insufficient stock for product ${product.name}`);
+                } else if (product.variantInventoryMode === 'PRODUCT_LEVEL') {
+                  if (product.currentStock < item.quantity) {
+                    throw new Error(`Insufficient stock for product ${product.name}`);
+                  }
+                  await tx.update(products)
+                    .set({ 
+                      currentStock: product.currentStock - item.quantity,
+                    })
+                    .where(eq(products.id, product.id))
+                    .run();
                 }
               }
 
-              await tx.update(products)
-                                .set({ 
-                                  currentStock: product.currentStock - item.quantity,
-                                })
-                                .where(eq(products.id, product.id))
-                                .run();
-                
               // Add Inventory Movement
               await tx.insert(inventoryMovements).values({
-                                id: randomUUID(),
-                                tenantId,
-                                productId: item.productId,
-                                variantId: item.variantId || null,
-                                date,
-                                type: 'OUT',
-                                referenceType: 'SALE',
-                                referenceId: saleId,
-                                referenceNo: invoiceNo,
-                                quantity: item.quantity,
-                                previousStock: previousStock,
-                                newStock: newStock,
-                                unitCost: item.sellingPrice,
-                                totalValue: item.total
-                              }).run();
+                id: randomUUID(),
+                tenantId,
+                productId: item.productId,
+                variantId: item.variantId || null,
+                date,
+                type: 'OUT',
+                referenceType: 'SALE',
+                referenceId: saleId,
+                referenceNo: invoiceNo,
+                quantity: item.quantity,
+                previousStock: previousStock,
+                newStock: newStock,
+                unitCost: item.sellingPrice,
+                totalValue: item.total
+              }).run();
             }
           }
 
