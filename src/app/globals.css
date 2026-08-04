@@ -2,6 +2,7 @@
 
 @custom-variant dark (&:is(.dark *));
 @theme inline {
+  --font-sans: var(--font-inter), var(--font-plus-jakarta), var(--font-bengali), system-ui, sans-serif;
   --color-background: hsl(var(--background));
   --color-foreground: hsl(var(--foreground));
   --color-card: hsl(var(--card));
@@ -93,6 +94,42 @@
   }
   body {
     @apply bg-background text-foreground;
-    font-family: var(--font-geist-sans), system-ui, sans-serif;
+    font-family: var(--font-inter), var(--font-plus-jakarta), var(--font-bengali), system-ui, -apple-system, sans-serif;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11", "tabular-nums";
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    line-height: 1.5;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-weight: 600;
+    letter-spacing: -0.015em;
+    line-height: 1.25;
+  }
+
+  table, th, td {
+    font-variant-numeric: tabular-nums;
+  }
+
+  th {
+    font-weight: 600;
+    letter-spacing: 0.025em;
+    vertical-align: middle;
+  }
+
+  td {
+    font-weight: 500;
+    vertical-align: middle;
+    line-height: 1.45;
+  }
+
+  button {
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+
+  label {
+    font-weight: 500;
   }
 }

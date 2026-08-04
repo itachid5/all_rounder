@@ -28,6 +28,14 @@ export function Tbody({ children }: any) {
   );
 }
 
+export function Tfoot({ children, className = "" }: any) {
+  return (
+    <tfoot className={`bg-slate-100/90 dark:bg-slate-800/90 font-bold border-t-2 border-slate-300 dark:border-slate-700 ${className}`}>
+      {children}
+    </tfoot>
+  );
+}
+
 export function Tr({ children, className = "", ...props }: any) {
   // Added zebra rows and better hover effects for ERP feel
   return (

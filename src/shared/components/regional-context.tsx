@@ -21,24 +21,37 @@ const defaultRegional: RegionalContextType = {
   timezone: "Asia/Dhaka",
   language: "en",
   formatCurrency: (amount: number, options?: { decimals?: number }) => {
-    const decimals = options?.decimals ?? 2;
-    const formattedNum = Number(amount || 0).toLocaleString(undefined, {
-      minimumFractionDigits: decimals,
-      maximumFractionDigits: decimals,
+    const val = Number(amount || 0);
+    const hasDecimals = options?.decimals !== undefined;
+    const isWhole = Math.abs(val % 1) < 1e-9;
+    const minDigits = hasDecimals ? options.decimals! : (isWhole ? 0 : 2);
+    const maxDigits = hasDecimals ? options.decimals! : 2;
+    const formattedNum = val.toLocaleString(undefined, {
+      minimumFractionDigits: minDigits,
+      maximumFractionDigits: maxDigits,
     });
     return `৳${formattedNum}`;
   },
   formatAmount: (amount: number, options?: { decimals?: number }) => {
-    const decimals = options?.decimals ?? 2;
-    return Number(amount || 0).toLocaleString(undefined, {
-      minimumFractionDigits: decimals,
-      maximumFractionDigits: decimals,
+    const val = Number(amount || 0);
+    const hasDecimals = options?.decimals !== undefined;
+    const isWhole = Math.abs(val % 1) < 1e-9;
+    const minDigits = hasDecimals ? options.decimals! : (isWhole ? 0 : 2);
+    const maxDigits = hasDecimals ? options.decimals! : 2;
+    return val.toLocaleString(undefined, {
+      minimumFractionDigits: minDigits,
+      maximumFractionDigits: maxDigits,
     });
   },
-  formatMoney: (amount: number, decimals: number = 2) => {
-    const formattedNum = Number(amount || 0).toLocaleString(undefined, {
-      minimumFractionDigits: decimals,
-      maximumFractionDigits: decimals,
+  formatMoney: (amount: number, decimals?: number) => {
+    const val = Number(amount || 0);
+    const hasDecimals = decimals !== undefined;
+    const isWhole = Math.abs(val % 1) < 1e-9;
+    const minDigits = hasDecimals ? decimals! : (isWhole ? 0 : 2);
+    const maxDigits = hasDecimals ? decimals! : 2;
+    const formattedNum = val.toLocaleString(undefined, {
+      minimumFractionDigits: minDigits,
+      maximumFractionDigits: maxDigits,
     });
     return `৳${formattedNum}`;
   }
@@ -67,24 +80,32 @@ export function RegionalProvider({
   const language = settings?.language || "en";
 
   const formatCurrency = (amount: number, options?: { decimals?: number }) => {
-    const decimals = options?.decimals ?? 2;
-    const formattedNum = Number(amount || 0).toLocaleString(undefined, {
-      minimumFractionDigits: decimals,
-      maximumFractionDigits: decimals,
+    const val = Number(amount || 0);
+    const hasDecimals = options?.decimals !== undefined;
+    const isWhole = Math.abs(val % 1) < 1e-9;
+    const minDigits = hasDecimals ? options.decimals! : (isWhole ? 0 : 2);
+    const maxDigits = hasDecimals ? options.decimals! : 2;
+    const formattedNum = val.toLocaleString(undefined, {
+      minimumFractionDigits: minDigits,
+      maximumFractionDigits: maxDigits,
     });
     return `${currencySymbol}${formattedNum}`;
   };
 
   const formatAmount = (amount: number, options?: { decimals?: number }) => {
-    const decimals = options?.decimals ?? 2;
-    return Number(amount || 0).toLocaleString(undefined, {
-      minimumFractionDigits: decimals,
-      maximumFractionDigits: decimals,
+    const val = Number(amount || 0);
+    const hasDecimals = options?.decimals !== undefined;
+    const isWhole = Math.abs(val % 1) < 1e-9;
+    const minDigits = hasDecimals ? options.decimals! : (isWhole ? 0 : 2);
+    const maxDigits = hasDecimals ? options.decimals! : 2;
+    return val.toLocaleString(undefined, {
+      minimumFractionDigits: minDigits,
+      maximumFractionDigits: maxDigits,
     });
   };
 
-  const formatMoney = (amount: number, decimals: number = 2) => {
-    return formatCurrency(amount, { decimals });
+  const formatMoney = (amount: number, decimals?: number) => {
+    return formatCurrency(amount, decimals !== undefined ? { decimals } : undefined);
   };
 
   return (
