@@ -102,6 +102,8 @@ import ProfilePage from "./app/profile/page";
 
 import GeneralLedgerPage from "./app/ledger/page";
 
+import EditProductPage from "./app/products/edit/[id]/page";
+
 export const eggTastaPageMap: Record<string, any> = {
   "": DashboardPage,
   "dashboard": DashboardPage,
@@ -110,6 +112,7 @@ export const eggTastaPageMap: Record<string, any> = {
   "products/list": ProductListPage,
   "products/new": NewProductPage,
   "products/manage": ManageProductsPage,
+  "products/edit/[id]": EditProductPage,
   "customers": CustomersManagePage,
   "customers/manage": CustomersManagePage,
   "customers/due": CustomersDuePage,

@@ -1,59 +1,83 @@
 "use client";
 
 import React, { useState, useEffect, useTransition } from "react";
-import { Search, Filter, Plus, FileDown, ArrowUpDown, Archive, Edit, Eye, RotateCcw, AlertTriangle } from "lucide-react";
+import { Search, Plus, FileDown, ArrowUpDown, Edit, Eye, RotateCcw, AlertTriangle, Copy, Trash2, ShieldAlert } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { listProductsAction, bulkUpdateStatusAction } from "@/templates/egg-tasta/actions/products";
+import {
+  listProductsAction,
+  bulkUpdateStatusAction,
+  softDeleteProductAction,
+  restoreProductAction,
+  hardDeleteProductAction,
+  duplicateProductAction,
+} from "@/templates/egg-tasta/actions/products";
 import { Button, Table, Thead, Tbody, Tr, Th, Td, EmptyState, StatusBadge } from "@/templates/egg-tasta/components";
 import { PermissionGuard } from "@/shared/components/permission-context";
 import { useCurrency } from "@/shared/components/regional-context";
 
-export function ManageProductsClient({ initialData, initialTotal }: { initialData: any[], initialTotal: number }) {
+export function ManageProductsClient({
+  initialData,
+  initialTotal,
+}: {
+  initialData: any[];
+  initialTotal: number;
+}) {
   const { symbol } = useCurrency();
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
-  
+
   const [data, setData] = useState(initialData);
   const [total, setTotal] = useState(initialTotal);
-  
-  // Table State
+
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [lowStockFilter, setLowStockFilter] = useState(false);
   const [sortBy, setSortBy] = useState("createdAt");
-  const [sortDir, setSortDir] = useState<'asc'|'desc'>("desc");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
   const [page, setPage] = useState(1);
   const limit = 10;
-  
+
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
+  // Error modal / message state
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [actionSuccess, setActionSuccess] = useState<string | null>(null);
+
+  const fetchProducts = async () => {
+    startTransition(() => {});
+    const res = await listProductsAction({
+      search,
+      status: statusFilter,
+      lowStock: lowStockFilter,
+      sortBy,
+      sortDir,
+      page,
+      limit,
+    });
+    if (res.success) {
+      setData(res.data);
+      setTotal(res.total);
+    }
+  };
+
   useEffect(() => {
-    const fetch = async () => {
-      startTransition(() => {});
-      const res = await listProductsAction({ search, status: statusFilter, lowStock: lowStockFilter, sortBy, sortDir, page, limit });
-      if (res.success) {
-        setData(res.data);
-        setTotal(res.total);
-      }
-    };
-    
-    const timer = setTimeout(() => fetch(), 300);
+    const timer = setTimeout(() => fetchProducts(), 300);
     return () => clearTimeout(timer);
   }, [search, statusFilter, lowStockFilter, sortBy, sortDir, page, limit]);
 
   const toggleSort = (column: string) => {
     if (sortBy === column) {
-      setSortDir(sortDir === 'asc' ? 'desc' : 'asc');
+      setSortDir(sortDir === "asc" ? "desc" : "asc");
     } else {
       setSortBy(column);
-      setSortDir('asc');
+      setSortDir("asc");
     }
   };
 
   const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.checked) {
-      setSelectedIds(new Set(data.map(d => d.productCode)));
+      setSelectedIds(new Set(data.map((d) => d.productCode)));
     } else {
       setSelectedIds(new Set());
     }
@@ -66,71 +90,139 @@ export function ManageProductsClient({ initialData, initialTotal }: { initialDat
     setSelectedIds(newSet);
   };
 
-  const handleBulkAction = async (status: 'ACTIVE' | 'INACTIVE' | 'ARCHIVED') => {
+  const handleBulkAction = async (status: "ACTIVE" | "INACTIVE" | "SOFT_DELETED") => {
     if (selectedIds.size === 0) return;
-    if (status === 'ARCHIVED' && !confirm("Are you sure you want to archive selected products?")) return;
-    
+    if (status === "SOFT_DELETED" && !confirm("Soft delete selected products?")) return;
+
+    setActionError(null);
+    setActionSuccess(null);
+
     const codes = Array.from(selectedIds);
-    await bulkUpdateStatusAction(codes, status);
-    
-    const res = await listProductsAction({ search, status: statusFilter, lowStock: lowStockFilter, sortBy, sortDir, page, limit });
+    const res = await bulkUpdateStatusAction(codes, status);
     if (res.success) {
-      setData(res.data);
-      setTotal(res.total);
-    }
-    setSelectedIds(new Set());
-  };
-
-  const handleArchive = async (code: string) => {
-    if (!confirm("Are you sure you want to archive this product?")) return;
-    await bulkUpdateStatusAction([code], 'ARCHIVED');
-    const res = await listProductsAction({ search, status: statusFilter, lowStock: lowStockFilter, sortBy, sortDir, page, limit });
-    if (res.success) {
-      setData(res.data);
-      setTotal(res.total);
+      setActionSuccess(`Updated ${codes.length} products.`);
+      fetchProducts();
+      setSelectedIds(new Set());
+    } else {
+      setActionError(res.error || "Bulk action failed.");
     }
   };
 
-  const handleRestore = async (code: string) => {
-    await bulkUpdateStatusAction([code], 'ACTIVE');
-    const res = await listProductsAction({ search, status: statusFilter, lowStock: lowStockFilter, sortBy, sortDir, page, limit });
+  const handleEdit = (productCode: string) => {
+    router.push(`/app/products/edit/${productCode}`);
+  };
+
+  const handleDuplicate = async (productCode: string) => {
+    setActionError(null);
+    setActionSuccess(null);
+    const res = await duplicateProductAction(productCode);
     if (res.success) {
-      setData(res.data);
-      setTotal(res.total);
+      setActionSuccess(`Product duplicated! New Code: ${res.productCode}`);
+      fetchProducts();
+    } else {
+      setActionError(res.error || "Failed to duplicate product.");
+    }
+  };
+
+  const handleSoftDelete = async (productCode: string) => {
+    if (!confirm("Are you sure you want to Soft Delete this product? History will be preserved.")) return;
+    setActionError(null);
+    setActionSuccess(null);
+    const res = await softDeleteProductAction(productCode);
+    if (res.success) {
+      setActionSuccess(`Product ${productCode} soft-deleted.`);
+      fetchProducts();
+    } else {
+      setActionError(res.error || "Soft delete failed.");
+    }
+  };
+
+  const handleRestore = async (productCode: string) => {
+    setActionError(null);
+    setActionSuccess(null);
+    const res = await restoreProductAction(productCode);
+    if (res.success) {
+      setActionSuccess(`Product ${productCode} restored to Active.`);
+      fetchProducts();
+    } else {
+      setActionError(res.error || "Restore failed.");
+    }
+  };
+
+  const handleHardDelete = async (productCode: string) => {
+    if (
+      !confirm(
+        "WARNING: Permanent Deletion!\n\nThis will PERMANENTLY remove the product from the database.\n\nContinue?"
+      )
+    )
+      return;
+
+    setActionError(null);
+    setActionSuccess(null);
+    const res = await hardDeleteProductAction(productCode);
+    if (res.success) {
+      setActionSuccess(`Product ${productCode} permanently deleted.`);
+      fetchProducts();
+    } else {
+      setActionError(res.error || "Hard delete blocked.");
     }
   };
 
   return (
-    <div className="space-y-6">
-      {/* Top Bar Actions */}
+    <div className="space-y-6 max-w-full">
+      {/* Alert Messages */}
+      {actionError && (
+        <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 p-4 rounded-lg flex items-start gap-3 shadow-sm text-sm font-medium">
+          <ShieldAlert className="h-5 w-5 mt-0.5 shrink-0 text-red-600" />
+          <div>
+            <h4 className="font-bold">Action Warning</h4>
+            <p className="mt-0.5">{actionError}</p>
+          </div>
+        </div>
+      )}
+
+      {actionSuccess && (
+        <div className="bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400 p-3 rounded-lg flex items-center justify-between text-sm font-medium shadow-sm">
+          <span>{actionSuccess}</span>
+          <button onClick={() => setActionSuccess(null)} className="text-emerald-600 hover:text-emerald-800">
+            ×
+          </button>
+        </div>
+      )}
+
+      {/* Top Controls Bar */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
           <div className="relative w-full sm:w-64">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-            <input 
-              type="text" 
-              placeholder="Search products..." 
+            <input
+              type="text"
+              placeholder="Search product name or code..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-9 pr-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-full"
+              className="pl-9 pr-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-full"
             />
           </div>
-          
+
           <div className="flex gap-2">
-            <select 
+            <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"
             >
               <option value="">All Status</option>
               <option value="ACTIVE">Active</option>
               <option value="INACTIVE">Inactive</option>
-              <option value="ARCHIVED">Archived</option>
+              <option value="SOFT_DELETED">Soft Deleted</option>
             </select>
-            
-            <button 
+
+            <button
               onClick={() => setLowStockFilter(!lowStockFilter)}
-              className={`px-3 py-2 border rounded-md text-sm flex items-center gap-2 transition-colors ${lowStockFilter ? 'bg-amber-50 border-amber-200 text-amber-700 dark:bg-amber-900/30 dark:border-amber-800 dark:text-amber-400' : 'bg-white border-slate-200 text-slate-700 dark:bg-slate-900 dark:border-slate-800 dark:text-slate-300'}`}
+              className={`px-3 py-2 border rounded-lg text-sm flex items-center gap-2 transition-colors font-medium ${
+                lowStockFilter
+                  ? "bg-amber-50 border-amber-200 text-amber-700 dark:bg-amber-900/30 dark:border-amber-800 dark:text-amber-400"
+                  : "bg-white border-slate-200 text-slate-700 dark:bg-slate-900 dark:border-slate-800 dark:text-slate-300"
+              }`}
             >
               <AlertTriangle className="h-4 w-4" />
               Low Stock
@@ -140,14 +232,14 @@ export function ManageProductsClient({ initialData, initialTotal }: { initialDat
 
         <div className="flex gap-2 w-full sm:w-auto">
           <PermissionGuard permission="export:products">
-            <Button variant="outline" className="hidden sm:flex" onClick={() => alert('Export feature coming soon.')}>
+            <Button variant="outline" className="hidden sm:flex" onClick={() => alert("Export feature initialized.")}>
               <FileDown className="h-4 w-4 mr-2" />
               Export
             </Button>
           </PermissionGuard>
           <PermissionGuard permission="create:products">
             <Link href="/app/products/new">
-              <Button variant="primary">
+              <Button variant="primary" className="bg-blue-600 hover:bg-blue-700 text-white font-semibold">
                 <Plus className="h-4 w-4 mr-2" />
                 Add Product
               </Button>
@@ -156,18 +248,29 @@ export function ManageProductsClient({ initialData, initialTotal }: { initialDat
         </div>
       </div>
 
-      {/* Bulk Actions Bar */}
+      {/* Bulk Actions */}
       {selectedIds.size > 0 && (
         <PermissionGuard permission="edit:products">
-          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-md p-3 flex items-center justify-between animate-in fade-in slide-in-from-top-2">
+          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3 flex items-center justify-between animate-in fade-in">
             <span className="text-sm font-medium text-blue-800 dark:text-blue-300">
               {selectedIds.size} products selected
             </span>
             <div className="flex gap-2">
-              <Button variant="outline" size="sm" onClick={() => handleBulkAction('ACTIVE')}>Activate</Button>
-              <Button variant="outline" size="sm" onClick={() => handleBulkAction('INACTIVE')}>Deactivate</Button>
+              <Button variant="outline" size="sm" onClick={() => handleBulkAction("ACTIVE")}>
+                Activate
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => handleBulkAction("INACTIVE")}>
+                Deactivate
+              </Button>
               <PermissionGuard permission="delete:products">
-                <Button variant="outline" size="sm" onClick={() => handleBulkAction('ARCHIVED')} className="text-amber-600 hover:text-amber-700 border-amber-200 hover:bg-amber-50 dark:text-amber-400 dark:border-amber-900/50 dark:hover:bg-amber-900/30">Archive</Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleBulkAction("SOFT_DELETED")}
+                  className="text-red-600 border-red-200 hover:bg-red-50 dark:text-red-400"
+                >
+                  Soft Delete
+                </Button>
               </PermissionGuard>
             </div>
           </div>
@@ -175,31 +278,41 @@ export function ManageProductsClient({ initialData, initialTotal }: { initialDat
       )}
 
       {/* Table */}
-      <Table className={isPending ? 'opacity-60 pointer-events-none transition-opacity' : 'transition-opacity'}>
+      <Table className={isPending ? "opacity-60 pointer-events-none transition-opacity" : "transition-opacity"}>
         <Thead>
           <Tr>
-            <Th className="w-12">
-              <input 
-                type="checkbox" 
+            <Th className="w-10">
+              <input
+                type="checkbox"
                 checked={data.length > 0 && selectedIds.size === data.length}
                 onChange={handleSelectAll}
                 className="rounded border-slate-300 text-blue-600 focus:ring-blue-500"
               />
             </Th>
-            <Th className="cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800" onClick={() => toggleSort('productCode')}>
-              <div className="flex items-center gap-1">Code {sortBy === 'productCode' && <ArrowUpDown className="h-3 w-3" />}</div>
+            <Th className="cursor-pointer" onClick={() => toggleSort("productCode")}>
+              <div className="flex items-center gap-1">
+                Code {sortBy === "productCode" && <ArrowUpDown className="h-3 w-3" />}
+              </div>
             </Th>
-            <Th className="cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800" onClick={() => toggleSort('name')}>
-              <div className="flex items-center gap-1">Product {sortBy === 'name' && <ArrowUpDown className="h-3 w-3" />}</div>
+            <Th className="cursor-pointer" onClick={() => toggleSort("name")}>
+              <div className="flex items-center gap-1">
+                Product {sortBy === "name" && <ArrowUpDown className="h-3 w-3" />}
+              </div>
             </Th>
-            <Th className="cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 text-right" onClick={() => toggleSort('purchasePrice')}>
-              <div className="flex items-center justify-end gap-1">Opening Purchase {sortBy === 'purchasePrice' && <ArrowUpDown className="h-3 w-3" />}</div>
+            <Th className="cursor-pointer text-right" onClick={() => toggleSort("purchasePrice")}>
+              <div className="flex items-center justify-end gap-1">
+                Purchase Price {sortBy === "purchasePrice" && <ArrowUpDown className="h-3 w-3" />}
+              </div>
             </Th>
-            <Th className="cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 text-right" onClick={() => toggleSort('sellingPrice')}>
-              <div className="flex items-center justify-end gap-1">Selling {sortBy === 'sellingPrice' && <ArrowUpDown className="h-3 w-3" />}</div>
+            <Th className="cursor-pointer text-right" onClick={() => toggleSort("sellingPrice")}>
+              <div className="flex items-center justify-end gap-1">
+                Selling Price {sortBy === "sellingPrice" && <ArrowUpDown className="h-3 w-3" />}
+              </div>
             </Th>
-            <Th className="cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 text-right" onClick={() => toggleSort('currentStock')}>
-              <div className="flex items-center justify-end gap-1">Stock {sortBy === 'currentStock' && <ArrowUpDown className="h-3 w-3" />}</div>
+            <Th className="cursor-pointer text-right" onClick={() => toggleSort("currentStock")}>
+              <div className="flex items-center justify-end gap-1">
+                Stock {sortBy === "currentStock" && <ArrowUpDown className="h-3 w-3" />}
+              </div>
             </Th>
             <Th>Status</Th>
             <Th className="text-right">Actions</Th>
@@ -209,14 +322,16 @@ export function ManageProductsClient({ initialData, initialTotal }: { initialDat
           {data.length === 0 ? (
             <Tr>
               <Td colSpan={8}>
-                <EmptyState 
-                  title="No products found" 
-                  description="Try adjusting your filters or search query." 
-                  icon={Search} 
+                <EmptyState
+                  title="No products found"
+                  description="Try adjusting search or status filters."
+                  icon={Search}
                   action={
                     <PermissionGuard permission="create:products">
                       <Link href="/app/products/new">
-                        <Button variant="outline" size="sm">Add Product</Button>
+                        <Button variant="outline" size="sm">
+                          Add Product
+                        </Button>
                       </Link>
                     </PermissionGuard>
                   }
@@ -225,60 +340,121 @@ export function ManageProductsClient({ initialData, initialTotal }: { initialDat
             </Tr>
           ) : (
             data.map((item) => {
-              const stockToDisplay = item.currentStock ?? item.openingStock;
+              const stockToDisplay = item.currentStock ?? item.openingStock ?? 0;
               const isLowStock = stockToDisplay <= item.minimumStockAlert;
-              const hasVariants = item.hasVariants && item.variants?.length > 0;
+              const hasVariants = item.hasVariants && Array.isArray(item.variants) && item.variants.length > 0;
+              const isSoftDeleted = item.isDeleted || item.status === "SOFT_DELETED";
+
               return (
-                <Tr key={item.id} className={selectedIds.has(item.productCode) ? 'bg-blue-50/50 dark:bg-blue-900/10' : ''}>
+                <Tr
+                  key={item.id}
+                  className={
+                    isSoftDeleted
+                      ? "bg-slate-100/70 dark:bg-slate-800/40 opacity-75"
+                      : selectedIds.has(item.productCode)
+                      ? "bg-blue-50/50 dark:bg-blue-900/10"
+                      : ""
+                  }
+                >
                   <Td>
-                    <input 
-                      type="checkbox" 
+                    <input
+                      type="checkbox"
                       checked={selectedIds.has(item.productCode)}
                       onChange={() => handleSelectOne(item.productCode)}
                       className="rounded border-slate-300 text-blue-600 focus:ring-blue-500"
                     />
                   </Td>
-                  <Td className="font-mono text-xs font-medium text-slate-500">{item.productCode}</Td>
-                  <Td className="font-medium">
+                  <Td className="font-mono text-xs font-semibold text-slate-500">{item.productCode}</Td>
+                  <Td className="font-semibold text-slate-900 dark:text-white">
                     {item.name}
                     {hasVariants && (
-                      <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400">
+                      <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400">
                         {item.variants.length} Variants
                       </span>
                     )}
                   </Td>
-                  <Td className="text-right text-slate-600 dark:text-slate-400">{symbol}{item.purchasePrice?.toFixed(2)}</Td>
-                  <Td className="text-right font-medium">{symbol}{item.sellingPrice?.toFixed(2)}</Td>
+                  <Td className="text-right font-medium text-slate-700 dark:text-slate-300">
+                    {symbol}
+                    {item.purchasePrice?.toFixed(2)}
+                  </Td>
+                  <Td className="text-right font-bold text-slate-900 dark:text-white">
+                    {symbol}
+                    {item.sellingPrice?.toFixed(2)}
+                  </Td>
                   <Td className="text-right">
-                    <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${isLowStock ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400' : 'bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-300'}`}>
+                    <span
+                      className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-bold ${
+                        isLowStock
+                          ? "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400"
+                          : "bg-emerald-50 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300"
+                      }`}
+                    >
                       {stockToDisplay}
                     </span>
                   </Td>
                   <Td>
-                    <StatusBadge status={item.status} />
+                    {isSoftDeleted ? (
+                      <span className="px-2 py-0.5 rounded text-xs font-semibold bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">
+                        Soft Deleted
+                      </span>
+                    ) : (
+                      <StatusBadge status={item.status} />
+                    )}
                   </Td>
                   <Td className="text-right">
                     <div className="flex items-center justify-end gap-1">
-                      <PermissionGuard permission="view:products">
-                        <button className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded dark:hover:text-slate-300 dark:hover:bg-slate-800 transition-colors" title="View">
-                          <Eye className="h-4 w-4" />
-                        </button>
-                      </PermissionGuard>
+                      {/* Edit */}
                       <PermissionGuard permission="edit:products">
-                        <button className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded dark:hover:text-blue-400 dark:hover:bg-blue-900/30 transition-colors" title="Edit">
+                        <button
+                          onClick={() => handleEdit(item.productCode)}
+                          className="p-1.5 text-slate-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded transition-colors"
+                          title="Edit Product"
+                        >
                           <Edit className="h-4 w-4" />
                         </button>
                       </PermissionGuard>
+
+                      {/* Duplicate */}
+                      <PermissionGuard permission="create:products">
+                        <button
+                          onClick={() => handleDuplicate(item.productCode)}
+                          className="p-1.5 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded transition-colors"
+                          title="Duplicate Product"
+                        >
+                          <Copy className="h-4 w-4" />
+                        </button>
+                      </PermissionGuard>
+
+                      {/* Restore or Soft Delete */}
                       <PermissionGuard permission="delete:products">
-                        {item.status === 'ARCHIVED' ? (
-                          <button onClick={() => handleRestore(item.productCode)} className="p-1.5 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded dark:hover:text-emerald-400 dark:hover:bg-emerald-900/30 transition-colors" title="Restore">
+                        {isSoftDeleted ? (
+                          <button
+                            onClick={() => handleRestore(item.productCode)}
+                            className="p-1.5 text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 rounded transition-colors"
+                            title="Restore Product"
+                          >
                             <RotateCcw className="h-4 w-4" />
                           </button>
                         ) : (
-                          <button onClick={() => handleArchive(item.productCode)} className="p-1.5 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded dark:hover:text-amber-400 dark:hover:bg-amber-900/30 transition-colors" title="Archive">
-                            <Archive className="h-4 w-4" />
+                          <button
+                            onClick={() => handleSoftDelete(item.productCode)}
+                            className="p-1.5 text-slate-500 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/30 rounded transition-colors"
+                            title="Soft Delete Product"
+                          >
+                            <Trash2 className="h-4 w-4" />
                           </button>
                         )}
+                      </PermissionGuard>
+
+                      {/* Hard Delete */}
+                      <PermissionGuard permission="delete:products">
+                        <button
+                          onClick={() => handleHardDelete(item.productCode)}
+                          className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded transition-colors"
+                          title="Hard Delete Product (Permanent)"
+                        >
+                          <Trash2 className="h-4 w-4 text-red-600" />
+                        </button>
                       </PermissionGuard>
                     </div>
                   </Td>
@@ -292,23 +468,25 @@ export function ManageProductsClient({ initialData, initialTotal }: { initialDat
       {/* Pagination */}
       {total > 0 && (
         <div className="flex items-center justify-between mt-4">
-          <div className="text-sm text-slate-500 dark:text-slate-400">
-            Showing <span className="font-medium">{(page - 1) * limit + 1}</span> to <span className="font-medium">{Math.min(page * limit, total)}</span> of <span className="font-medium">{total}</span> results
+          <div className="text-xs text-slate-500 dark:text-slate-400">
+            Showing <span className="font-semibold">{(page - 1) * limit + 1}</span> to{" "}
+            <span className="font-semibold">{Math.min(page * limit, total)}</span> of{" "}
+            <span className="font-semibold">{total}</span> results
           </div>
           <div className="flex gap-2">
-            <Button 
-              variant="outline" 
-              size="sm" 
+            <Button
+              variant="outline"
+              size="sm"
               disabled={page === 1}
-              onClick={() => setPage(p => p - 1)}
+              onClick={() => setPage((p) => p - 1)}
             >
               Previous
             </Button>
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               size="sm"
               disabled={page * limit >= total}
-              onClick={() => setPage(p => p + 1)}
+              onClick={() => setPage((p) => p + 1)}
             >
               Next
             </Button>
