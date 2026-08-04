@@ -1,4 +1,4 @@
-import { sqliteTable, text, integer } from 'drizzle-orm/sqlite-core';
+import { sqliteTable, text, integer, index } from 'drizzle-orm/sqlite-core';
 import { users } from './users';
 
 export const sessions = sqliteTable('sessions', {
@@ -9,4 +9,6 @@ export const sessions = sqliteTable('sessions', {
   ipAddress: text('ip_address'),
   userAgent: text('user_agent'),
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
-});
+}, (t) => ({
+  userIdIdx: index('sessions_user_id_idx').on(t.userId),
+}));

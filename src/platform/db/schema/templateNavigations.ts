@@ -1,4 +1,4 @@
-import { sqliteTable, text, integer } from 'drizzle-orm/sqlite-core';
+import { sqliteTable, text, integer, index } from 'drizzle-orm/sqlite-core';
 import { templates } from './templates';
 
 export const templateNavigations = sqliteTable('template_navigations', {
@@ -14,4 +14,6 @@ export const templateNavigations = sqliteTable('template_navigations', {
   isActive: integer('is_active', { mode: 'boolean' }).notNull().default(true),
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull().defaultNow(),
   updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().defaultNow(),
-});
+}, (t) => ({
+  templateActiveIdx: index('template_navs_template_active_idx').on(t.templateId, t.isActive),
+}));

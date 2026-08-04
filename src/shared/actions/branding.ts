@@ -14,15 +14,23 @@ export interface TenantBrandingData {
   tenantName?: string;
 }
 
-export async function getTenantBrandingAction(): Promise<{
+import { cache } from "react";
+
+export const getTenantBrandingAction = cache(async (): Promise<{
   success: boolean;
   data?: TenantBrandingData;
   error?: string;
-}> {
+}> => {
   try {
     const { tenantId } = await getTenantId();
 
-    const tenant = await db.select().from(tenants).where(eq(tenants.id, tenantId)).get();
+    const tenant = await db.select({
+      logoUrl: tenants.logoUrl,
+      faviconUrl: tenants.faviconUrl,
+      iconUrl: tenants.iconUrl,
+      bannerUrl: tenants.bannerUrl,
+      name: tenants.name
+    }).from(tenants).where(eq(tenants.id, tenantId)).get();
     if (!tenant) {
       return { success: false, error: "Tenant not found" };
     }
@@ -41,7 +49,7 @@ export async function getTenantBrandingAction(): Promise<{
     console.error("[getTenantBrandingAction Error]:", error);
     return { success: false, error: error.message || "Failed to load tenant branding" };
   }
-}
+});
 
 export async function updateTenantBrandingAction(branding: {
   logoUrl?: string | null;

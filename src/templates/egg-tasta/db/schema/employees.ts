@@ -1,4 +1,4 @@
-import { sqliteTable, text, integer } from "drizzle-orm/sqlite-core";
+import { sqliteTable, text, integer, index } from "drizzle-orm/sqlite-core";
 import { tenants } from "@/platform/db/schema/tenants";
 import { users } from "@/platform/db/schema/users";
 
@@ -16,4 +16,7 @@ export const employees = sqliteTable("employees", {
   userId: text("user_id").references(() => users.id),
   createdAt: integer("created_at", { mode: "timestamp" }).notNull().defaultNow(),
   updatedAt: integer("updated_at", { mode: "timestamp" }).notNull().defaultNow(),
-});
+}, (t) => ({
+  tenantIdIdx: index("employees_tenant_id_idx").on(t.tenantId),
+  userIdIdx: index("employees_user_id_idx").on(t.userId),
+}));

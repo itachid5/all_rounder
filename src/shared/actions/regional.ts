@@ -15,14 +15,16 @@ export interface RegionalSettingsData {
   language: string;
 }
 
-export async function getRegionalSettingsAction(): Promise<{
+import { cache } from "react";
+
+export const getRegionalSettingsAction = cache(async (): Promise<{
   success: boolean;
   data: RegionalSettingsData;
   error?: string;
-}> {
+}> => {
   try {
     const { tenantId } = await getTenantId();
-    const tenant = await db.select().from(tenants).where(eq(tenants.id, tenantId)).get();
+    const tenant = await db.select({ settings: tenants.settings }).from(tenants).where(eq(tenants.id, tenantId)).get();
 
     let settingsObj: any = {};
     if (tenant?.settings) {
@@ -58,7 +60,7 @@ export async function getRegionalSettingsAction(): Promise<{
       }
     };
   }
-}
+});
 
 export async function updateRegionalSettingsAction(data: {
   currency: string;

@@ -29,9 +29,9 @@ export function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL('/', request.url));
   }
   
-  // Add cache control to prevent back-button access after logout
+  // Add cache control to prevent sensitive data caching while enabling client-side router caching
   const response = NextResponse.next();
-  response.headers.set('Cache-Control', 'no-store, max-age=0');
+  response.headers.set('Cache-Control', 'private, no-cache, no-transform');
   return response;
 }
 

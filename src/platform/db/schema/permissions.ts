@@ -1,4 +1,4 @@
-import { sqliteTable, text, integer, primaryKey } from 'drizzle-orm/sqlite-core';
+import { sqliteTable, text, integer, primaryKey, index } from 'drizzle-orm/sqlite-core';
 import { roles } from './roles';
 import { users } from './users';
 import { tenants } from './tenants';
@@ -18,6 +18,7 @@ export const rolePermissions = sqliteTable('role_permissions', {
   permissionId: text('permission_id').notNull().references(() => permissions.id),
 }, (t) => ({
   pk: primaryKey({ columns: [t.roleId, t.permissionId] }),
+  roleIdIdx: index('role_permissions_role_id_idx').on(t.roleId),
 }));
 
 export const userRoles = sqliteTable('user_roles', {
@@ -27,4 +28,6 @@ export const userRoles = sqliteTable('user_roles', {
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull().defaultNow(),
 }, (t) => ({
   pk: primaryKey({ columns: [t.userId, t.roleId] }),
+  userIdIdx: index('user_roles_user_id_idx').on(t.userId),
+  tenantIdIdx: index('user_roles_tenant_id_idx').on(t.tenantId),
 }));

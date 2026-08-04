@@ -1,4 +1,4 @@
-import { sqliteTable, text, integer, real } from 'drizzle-orm/sqlite-core';
+import { sqliteTable, text, integer, real, index } from 'drizzle-orm/sqlite-core';
 import { sql } from 'drizzle-orm';
 import { tenants  } from "@/platform/db/schema";
 import { suppliers } from './suppliers';
@@ -23,7 +23,11 @@ export const purchases = sqliteTable('purchases', {
   status: text('status').notNull().default('COMPLETED'), // COMPLETED, CANCELLED
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
   updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
-});
+}, (t) => ({
+  tenantIdIdx: index('purchases_tenant_id_idx').on(t.tenantId),
+  tenantDateIdx: index('purchases_tenant_date_idx').on(t.tenantId, t.date),
+  supplierIdIdx: index('purchases_supplier_id_idx').on(t.supplierId),
+}));
 
 export const purchaseItems = sqliteTable('purchase_items', {
   id: text('id').primaryKey(),
@@ -34,4 +38,8 @@ export const purchaseItems = sqliteTable('purchase_items', {
   purchasePrice: real('purchase_price').notNull().default(0),
   quantity: integer('quantity').notNull().default(0),
   total: real('total').notNull().default(0),
-});
+}, (t) => ({
+  tenantIdIdx: index('purchase_items_tenant_id_idx').on(t.tenantId),
+  purchaseIdIdx: index('purchase_items_purchase_id_idx').on(t.purchaseId),
+  productIdIdx: index('purchase_items_product_id_idx').on(t.productId),
+}));

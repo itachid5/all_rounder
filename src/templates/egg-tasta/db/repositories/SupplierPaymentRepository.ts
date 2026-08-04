@@ -163,25 +163,26 @@ export class SupplierPaymentRepository {
     
     const orderBy = sortDir === 'asc' ? asc(orderByColumn) : desc(orderByColumn);
 
-    const data = await db.select({
-            payment: supplierPayments,
-            supplierName: suppliers.name,
-            accountName: accounts.name,
-          })
-          .from(supplierPayments)
-          .leftJoin(suppliers, eq(supplierPayments.supplierId, suppliers.id))
-          .leftJoin(accounts, eq(supplierPayments.accountId, accounts.id))
-          .where(whereClause)
-          .orderBy(orderBy)
-          .limit(limit)
-          .offset(offset)
-          .all();
+    const [data, countResult] = await Promise.all([
+      db.select({
+        payment: supplierPayments,
+        supplierName: suppliers.name,
+        accountName: accounts.name,
+      })
+      .from(supplierPayments)
+      .leftJoin(suppliers, eq(supplierPayments.supplierId, suppliers.id))
+      .leftJoin(accounts, eq(supplierPayments.accountId, accounts.id))
+      .where(whereClause)
+      .orderBy(orderBy)
+      .limit(limit)
+      .offset(offset)
+      .all(),
+      db.select({ count: sql`count(*)`.mapWith(Number) })
+      .from(supplierPayments)
+      .where(whereClause)
+      .get()
+    ]);
 
-    const countResult = await db.select({ count: sql`count(*)`.mapWith(Number) })
-          .from(supplierPayments)
-          .where(whereClause)
-          .get();
-      
     return { data, total: countResult?.count || 0 };
   }
 

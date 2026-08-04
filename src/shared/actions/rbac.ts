@@ -3,64 +3,72 @@
 import { db } from "@/shared/db/database";
 import { roles, permissions, rolePermissions, userRoles, users, tenants } from "@/platform/db/schema";
 import { employees } from "@/templates/egg-tasta/db/schema/employees";
-import { eq, and, inArray } from "drizzle-orm";
+import { eq, and, inArray, or } from "drizzle-orm";
 import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { sessions } from "@/platform/db/schema/sessions";
 import crypto from "crypto";
 
-async function getSessionContext(): Promise<{ userId: string; tenantId: string } | null> {
+import { cache } from "react";
+
+const getSessionContext = cache(async (): Promise<{ userId: string; tenantId: string } | null> => {
   const cookieStore = await cookies();
   const token = cookieStore.get("auth-token")?.value;
   const sessionToken = cookieStore.get("session-token")?.value;
   if (!token || !sessionToken) return null;
 
-  const session = await db.select().from(sessions).where(eq(sessions.id, sessionToken)).get();
+  const session = await db.select({ id: sessions.id, userId: sessions.userId, expiresAt: sessions.expiresAt })
+    .from(sessions)
+    .where(eq(sessions.id, sessionToken))
+    .get();
   if (!session || session.userId !== token || session.expiresAt < new Date()) return null;
 
-  const user = await db.select().from(users).where(eq(users.id, token)).get();
+  const user = await db.select({ id: users.id, status: users.status })
+    .from(users)
+    .where(eq(users.id, token))
+    .get();
   if (!user || user.status !== 'ACTIVE') return null;
 
   // 1. Check if user is owner of a tenant
-  const ownedTenant = await db.select().from(tenants).where(eq(tenants.ownerId, token)).get();
+  const ownedTenant = await db.select({ id: tenants.id }).from(tenants).where(eq(tenants.ownerId, token)).get();
   if (ownedTenant) {
     return { userId: token, tenantId: ownedTenant.id };
   }
 
   // 2. Check userRoles
-  const userRoleInfo = await db.select().from(userRoles).where(eq(userRoles.userId, token)).get();
+  const userRoleInfo = await db.select({ tenantId: userRoles.tenantId }).from(userRoles).where(eq(userRoles.userId, token)).get();
   if (userRoleInfo?.tenantId) {
     return { userId: token, tenantId: userRoleInfo.tenantId };
   }
 
   // 3. Check employees
-  const emp = await db.select().from(employees).where(eq(employees.userId, token)).get();
+  const emp = await db.select({ tenantId: employees.tenantId }).from(employees).where(eq(employees.userId, token)).get();
   if (emp?.tenantId) {
     return { userId: token, tenantId: emp.tenantId };
   }
 
   return null;
-}
+});
 
-export async function getCurrentUserPermissionsAction(): Promise<{
+export const getCurrentUserPermissionsAction = cache(async (): Promise<{
   success: boolean;
   permissions: string[];
   isOwner: boolean;
-}> {
+}> => {
   try {
     const ctx = await getSessionContext();
     if (!ctx) return { success: false, permissions: [], isOwner: false };
 
-    const tenant = await db.select().from(tenants).where(eq(tenants.id, ctx.tenantId)).get();
+    const tenant = await db.select({ ownerId: tenants.ownerId }).from(tenants).where(eq(tenants.id, ctx.tenantId)).get();
     const isTenantOwner = tenant?.ownerId === ctx.userId;
 
-    const user = await db.select().from(users).where(eq(users.id, ctx.userId)).get();
+    const user = await db.select({ userType: users.userType, isInternal: users.isInternal }).from(users).where(eq(users.id, ctx.userId)).get();
     const isPlatformAdmin = user?.userType === 'PLATFORM';
 
     // Get user roles
-    const uRoles = await db.select().from(userRoles).where(eq(userRoles.userId, ctx.userId)).all();
+    const uRoles = await db.select({ roleId: userRoles.roleId }).from(userRoles).where(eq(userRoles.userId, ctx.userId)).all();
     const roleIds = uRoles.map((ur) => ur.roleId);
-    const dbRoles = roleIds.length > 0 ? await db.select().from(roles).where(inArray(roles.id, roleIds)).all() : [];
+    const dbRoles = roleIds.length > 0 ? await db.select({ slug: roles.slug, isInternal: roles.isInternal }).from(roles).where(inArray(roles.id, roleIds)).all() : [];
 
     // Check if Business Owner, Internal Admin, or Super Admin
     const isOwner = isTenantOwner || isPlatformAdmin || Boolean(user?.isInternal) || dbRoles.some(
@@ -74,7 +82,7 @@ export async function getCurrentUserPermissionsAction(): Promise<{
 
     if (isOwner) {
       // Business Owners, Internal Admins, and Super Admins receive ALL permissions automatically
-      const allPerms = await db.select().from(permissions).all();
+      const allPerms = await db.select({ slug: permissions.slug }).from(permissions).all();
       return {
         success: true,
         permissions: allPerms.map((p) => p.slug),
@@ -100,7 +108,7 @@ export async function getCurrentUserPermissionsAction(): Promise<{
     console.error("[getCurrentUserPermissionsAction Error]:", error);
     return { success: false, permissions: [], isOwner: false };
   }
-}
+});
 
 export async function requirePermissionAction(permissionSlug: string): Promise<void> {
   const permsRes = await getCurrentUserPermissionsAction();
@@ -123,38 +131,56 @@ export async function getRolesAction() {
     const ctx = await getSessionContext();
     if (!ctx) return { success: false, error: "Unauthorized", data: [] };
 
-    // Fetch tenant roles, strictly excluding isInternal roles from business view
-    const roleList = await db.select().from(roles).all();
-    const tenantRoles = roleList.filter(
-      (r) => !r.isInternal && (r.tenantId === ctx.tenantId || (r.isSystem && r.tenantId === ctx.tenantId))
-    );
+    // Fetch tenant roles directly via DB query
+    const tenantRoles = await db.select()
+      .from(roles)
+      .where(
+        and(
+          eq(roles.isInternal, false),
+          or(eq(roles.tenantId, ctx.tenantId), eq(roles.isSystem, true))
+        )
+      )
+      .all();
 
-    // For each role, calculate user count & assigned permission IDs
-    const result = await Promise.all(
-      tenantRoles.map(async (role) => {
-        const userCount = await db
-          .select()
-          .from(userRoles)
-          .where(and(eq(userRoles.roleId, role.id), eq(userRoles.tenantId, ctx.tenantId)))
-          .all();
+    if (tenantRoles.length === 0) {
+      return { success: true, data: [] };
+    }
 
-        const rPerms = await db
-          .select({ permissionId: rolePermissions.permissionId })
-          .from(rolePermissions)
-          .where(eq(rolePermissions.roleId, role.id))
-          .all();
+    const roleIds = tenantRoles.map((r) => r.id);
 
-        return {
-          id: role.id,
-          name: role.name,
-          slug: role.slug,
-          description: role.description || "",
-          isSystem: role.isSystem,
-          userCount: userCount.length,
-          permissionIds: rPerms.map((p) => p.permissionId),
-        };
-      })
-    );
+    // Batch fetch user counts and role permissions in 2 bulk queries instead of 2*N queries
+    const [allUserRoles, allRolePerms] = await Promise.all([
+      db.select({ roleId: userRoles.roleId })
+        .from(userRoles)
+        .where(and(inArray(userRoles.roleId, roleIds), eq(userRoles.tenantId, ctx.tenantId)))
+        .all(),
+      db.select({ roleId: rolePermissions.roleId, permissionId: rolePermissions.permissionId })
+        .from(rolePermissions)
+        .where(inArray(rolePermissions.roleId, roleIds))
+        .all(),
+    ]);
+
+    const userCountMap = new Map<string, number>();
+    allUserRoles.forEach((ur) => {
+      userCountMap.set(ur.roleId, (userCountMap.get(ur.roleId) || 0) + 1);
+    });
+
+    const permMap = new Map<string, string[]>();
+    allRolePerms.forEach((rp) => {
+      const existing = permMap.get(rp.roleId) || [];
+      existing.push(rp.permissionId);
+      permMap.set(rp.roleId, existing);
+    });
+
+    const result = tenantRoles.map((role) => ({
+      id: role.id,
+      name: role.name,
+      slug: role.slug,
+      description: role.description || "",
+      isSystem: role.isSystem,
+      userCount: userCountMap.get(role.id) || 0,
+      permissionIds: permMap.get(role.id) || [],
+    }));
 
     return { success: true, data: result };
   } catch (error: any) {

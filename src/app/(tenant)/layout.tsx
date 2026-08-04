@@ -12,16 +12,25 @@ export default async function TenantLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const navigation = await getBusinessNavigation();
-  const user = await getCurrentUser();
-  const templateSlug = await getTemplateSlug();
-  const contract = await loadTemplateContract(templateSlug);
-  const brandingRes = await getTenantBrandingAction();
-  const branding = brandingRes.success ? brandingRes.data : {};
-  const regionalRes = await getRegionalSettingsAction();
-  const regional = regionalRes.success ? regionalRes.data : { currency: 'BDT', currencySymbol: '৳', timezone: 'Asia/Dhaka', language: 'en' };
+  const [
+    navigation,
+    user,
+    templateSlug,
+    brandingRes,
+    regionalRes,
+    permsRes
+  ] = await Promise.all([
+    getBusinessNavigation(),
+    getCurrentUser(),
+    getTemplateSlug(),
+    getTenantBrandingAction(),
+    getRegionalSettingsAction(),
+    getCurrentUserPermissionsAction()
+  ]);
 
-  const permsRes = await getCurrentUserPermissionsAction();
+  const contract = await loadTemplateContract(templateSlug);
+  const branding = brandingRes.success ? brandingRes.data : {};
+  const regional = regionalRes.success ? regionalRes.data : { currency: 'BDT', currencySymbol: '৳', timezone: 'Asia/Dhaka', language: 'en' };
   const userPermissions = permsRes.permissions || [];
   const isOwner = permsRes.isOwner || false;
 

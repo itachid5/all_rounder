@@ -1,4 +1,4 @@
-import { sqliteTable, text, integer, real } from 'drizzle-orm/sqlite-core';
+import { sqliteTable, text, integer, real, index } from 'drizzle-orm/sqlite-core';
 import { sql } from 'drizzle-orm';
 import { tenants } from "@/platform/db/schema";
 import { customers } from './customers';
@@ -23,4 +23,9 @@ export const ledgerEntries = sqliteTable('ledger_entries', {
   createdBy: text('created_by'),
   createdAt: integer('created_at', { mode: 'timestamp' }).default(sql`(strftime('%s', 'now'))`),
   updatedAt: integer('updated_at', { mode: 'timestamp' }).default(sql`(strftime('%s', 'now'))`),
-});
+}, (t) => ({
+  tenantIdIdx: index('ledger_entries_tenant_id_idx').on(t.tenantId),
+  tenantDateIdx: index('ledger_entries_tenant_date_idx').on(t.tenantId, t.entryDate),
+  customerIdIdx: index('ledger_entries_customer_id_idx').on(t.customerId),
+  supplierIdIdx: index('ledger_entries_supplier_id_idx').on(t.supplierId),
+}));

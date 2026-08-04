@@ -250,23 +250,24 @@ export class SaleRepository {
     const orderBy = sortDir === 'asc' ? asc(orderByColumn) : desc(orderByColumn);
 
     // Join with customers to get customer name
-    const data = await db.select({
-            sale: sales,
-            customerName: customers.name
-          })
-          .from(sales)
-          .leftJoin(customers, eq(sales.customerId, customers.id))
-          .where(whereClause)
-          .orderBy(orderBy)
-          .limit(limit)
-          .offset(offset)
-          .all();
+    const [data, countResult] = await Promise.all([
+      db.select({
+        sale: sales,
+        customerName: customers.name
+      })
+      .from(sales)
+      .leftJoin(customers, eq(sales.customerId, customers.id))
+      .where(whereClause)
+      .orderBy(orderBy)
+      .limit(limit)
+      .offset(offset)
+      .all(),
+      db.select({ count: sql`count(*)`.mapWith(Number) })
+      .from(sales)
+      .where(whereClause)
+      .get()
+    ]);
 
-    const countResult = await db.select({ count: sql`count(*)`.mapWith(Number) })
-          .from(sales)
-          .where(whereClause)
-          .get();
-      
     return { data, total: countResult?.count || 0 };
   }
 

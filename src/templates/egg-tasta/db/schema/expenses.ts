@@ -1,4 +1,4 @@
-import { sqliteTable, text, integer, real } from "drizzle-orm/sqlite-core";
+import { sqliteTable, text, integer, real, index } from "drizzle-orm/sqlite-core";
 import { sql } from "drizzle-orm";
 import { tenants  } from "@/platform/db/schema";
 import { expenseCategories } from "./expenseCategories";
@@ -17,4 +17,8 @@ export const expenses = sqliteTable("expenses", {
   status: text("status", { enum: ["COMPLETED", "CANCELLED"] }).default("COMPLETED").notNull(),
   createdAt: integer("created_at", { mode: "timestamp" }).default(sql`(strftime('%s', 'now'))`),
   updatedAt: integer("updated_at", { mode: "timestamp" }).default(sql`(strftime('%s', 'now'))`),
-});
+}, (t) => ({
+  tenantIdIdx: index("expenses_tenant_id_idx").on(t.tenantId),
+  tenantDateIdx: index("expenses_tenant_date_idx").on(t.tenantId, t.expenseDate),
+  categoryIdIdx: index("expenses_category_id_idx").on(t.categoryId),
+}));

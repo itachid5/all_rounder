@@ -1,4 +1,4 @@
-import { sqliteTable, text, integer, real } from 'drizzle-orm/sqlite-core';
+import { sqliteTable, text, integer, real, index } from 'drizzle-orm/sqlite-core';
 import { sql } from 'drizzle-orm';
 import { tenants  } from "@/platform/db/schema";
 import { customers } from './customers';
@@ -22,7 +22,11 @@ export const sales = sqliteTable('sales', {
   status: text('status').notNull().default('COMPLETED'), // COMPLETED, CANCELLED
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
   updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
-});
+}, (t) => ({
+  tenantIdIdx: index('sales_tenant_id_idx').on(t.tenantId),
+  tenantDateIdx: index('sales_tenant_date_idx').on(t.tenantId, t.date),
+  customerIdIdx: index('sales_customer_id_idx').on(t.customerId),
+}));
 
 export const saleItems = sqliteTable('sale_items', {
   id: text('id').primaryKey(),
@@ -34,4 +38,8 @@ export const saleItems = sqliteTable('sale_items', {
   quantity: integer('quantity').notNull().default(0),
   itemDiscount: real('item_discount').notNull().default(0),
   total: real('total').notNull().default(0),
-});
+}, (t) => ({
+  tenantIdIdx: index('sale_items_tenant_id_idx').on(t.tenantId),
+  saleIdIdx: index('sale_items_sale_id_idx').on(t.saleId),
+  productIdIdx: index('sale_items_product_id_idx').on(t.productId),
+}));

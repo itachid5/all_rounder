@@ -115,17 +115,19 @@ const DEFAULT_BUSINESS_NAV: NavItem[] = [
   { label: "Settings", href: "/app/settings", icon: "settings" },
 ];
 
-export async function getBusinessNavigation(): Promise<NavItem[]> {
+import { cache } from "react";
+
+export const getBusinessNavigation = cache(async (): Promise<NavItem[]> => {
   const cookieStore = await cookies();
   const token = cookieStore.get('auth-token')?.value;
   const sessionToken = cookieStore.get('session-token')?.value;
 
   if (!token || !sessionToken) return DEFAULT_BUSINESS_NAV;
 
-  const session = await db.select().from(sessions).where(eq(sessions.id, sessionToken)).get();
+  const session = await db.select({ id: sessions.id, userId: sessions.userId, expiresAt: sessions.expiresAt }).from(sessions).where(eq(sessions.id, sessionToken)).get();
   if (!session || session.userId !== token || session.expiresAt < new Date()) return DEFAULT_BUSINESS_NAV;
 
-  const user = await db.select().from(users).where(eq(users.id, token)).get();
+  const user = await db.select({ id: users.id, status: users.status }).from(users).where(eq(users.id, token)).get();
   if (!user || user.status !== 'ACTIVE') return DEFAULT_BUSINESS_NAV;
 
   let tenantId: string;
@@ -136,7 +138,7 @@ export async function getBusinessNavigation(): Promise<NavItem[]> {
     return DEFAULT_BUSINESS_NAV;
   }
   
-  const tenant = await db.select().from(tenants).where(eq(tenants.id, tenantId)).get();
+  const tenant = await db.select({ templateId: tenants.templateId }).from(tenants).where(eq(tenants.id, tenantId)).get();
   if (!tenant?.templateId) return DEFAULT_BUSINESS_NAV;
 
   const userPermsRes = await getCurrentUserPermissionsAction();
@@ -250,23 +252,23 @@ export async function getBusinessNavigation(): Promise<NavItem[]> {
 
   const filtered = rootItems.filter(item => item.href !== '#' || (item.subItems && item.subItems.length > 0));
   return filtered.length > 0 ? filtered : DEFAULT_BUSINESS_NAV;
-}
+});
 
-export async function getCurrentUser() {
+export const getCurrentUser = cache(async () => {
   const cookieStore = await cookies();
   const token = cookieStore.get('auth-token')?.value;
   const sessionToken = cookieStore.get('session-token')?.value;
 
   if (!token || !sessionToken) return { username: "Guest" };
   
-  const session = await db.select().from(sessions).where(eq(sessions.id, sessionToken)).get();
+  const session = await db.select({ id: sessions.id, userId: sessions.userId, expiresAt: sessions.expiresAt }).from(sessions).where(eq(sessions.id, sessionToken)).get();
   if (!session || session.userId !== token || session.expiresAt < new Date()) return { username: "Guest" };
 
-  const user = await db.select().from(users).where(eq(users.id, token)).get();
+  const user = await db.select({ id: users.id, username: users.username, firstName: users.firstName, lastName: users.lastName, avatarUrl: users.avatarUrl, userType: users.userType }).from(users).where(eq(users.id, token)).get();
   return user || { username: "Guest" };
-}
+});
 
-export async function getTemplateSlug(): Promise<string> {
+export const getTemplateSlug = cache(async (): Promise<string> => {
   let tenantId: string;
   try {
     const res = await getTenantId();
@@ -275,9 +277,9 @@ export async function getTemplateSlug(): Promise<string> {
     return 'egg-shop';
   }
 
-  const tenant = await db.select().from(tenants).where(eq(tenants.id, tenantId)).get();
+  const tenant = await db.select({ templateId: tenants.templateId }).from(tenants).where(eq(tenants.id, tenantId)).get();
   if (!tenant?.templateId) return 'egg-shop';
 
-  const template = await db.select().from(templates).where(eq(templates.id, tenant.templateId)).get();
+  const template = await db.select({ slug: templates.slug }).from(templates).where(eq(templates.id, tenant.templateId)).get();
   return template?.slug || 'egg-shop';
-}
+});

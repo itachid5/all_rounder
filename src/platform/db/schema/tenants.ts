@@ -1,4 +1,4 @@
-import { sqliteTable, text, integer } from 'drizzle-orm/sqlite-core';
+import { sqliteTable, text, integer, index } from 'drizzle-orm/sqlite-core';
 import { users } from './users';
 
 export const tenants = sqliteTable('tenants', {
@@ -16,4 +16,7 @@ export const tenants = sqliteTable('tenants', {
   description: text('description'),
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull().defaultNow(),
   updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().defaultNow(),
-});
+}, (t) => ({
+  ownerIdIdx: index('tenants_owner_id_idx').on(t.ownerId),
+  templateIdIdx: index('tenants_template_id_idx').on(t.templateId),
+}));

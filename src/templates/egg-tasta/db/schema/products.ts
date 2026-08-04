@@ -1,4 +1,4 @@
-import { sqliteTable, text, integer, real } from 'drizzle-orm/sqlite-core';
+import { sqliteTable, text, integer, real, index } from 'drizzle-orm/sqlite-core';
 import { tenants  } from "@/platform/db/schema";
 import { productCategories } from './productCategories';
 import { productUnits } from './productUnits';
@@ -24,4 +24,8 @@ export const products = sqliteTable('products', {
   isDeleted: integer('is_deleted', { mode: 'boolean' }).notNull().default(false),
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull().defaultNow(),
   updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().defaultNow(),
-});
+}, (t) => ({
+  tenantIdIdx: index('products_tenant_id_idx').on(t.tenantId),
+  categoryIdIdx: index('products_category_id_idx').on(t.categoryId),
+  statusIdx: index('products_status_idx').on(t.status),
+}));

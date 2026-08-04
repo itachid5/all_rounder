@@ -1,4 +1,4 @@
-import { sqliteTable, text, integer, real } from "drizzle-orm/sqlite-core";
+import { sqliteTable, text, integer, real, index } from "drizzle-orm/sqlite-core";
 import { sql } from "drizzle-orm";
 
 export const customerCollections = sqliteTable("customer_collections", {
@@ -15,4 +15,8 @@ export const customerCollections = sqliteTable("customer_collections", {
   status: text("status").default('COMPLETED').notNull(),
   createdBy: text("created_by"),
   createdAt: text("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
-});
+}, (t) => ({
+  tenantIdIdx: index("customer_collections_tenant_id_idx").on(t.tenantId),
+  tenantDateIdx: index("customer_collections_tenant_date_idx").on(t.tenantId, t.date),
+  customerIdIdx: index("customer_collections_customer_id_idx").on(t.customerId),
+}));

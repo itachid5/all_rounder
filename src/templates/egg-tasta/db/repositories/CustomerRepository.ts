@@ -261,38 +261,35 @@ export class CustomerRepository {
 
     if (!customer) throw new Error("Customer not found.");
 
-    // Recent Transactions
-    const recentTransactions = await db.select().from(customerLedgers)
-          .where(eq(customerLedgers.customerId, customer.id))
-          .orderBy(desc(customerLedgers.date), desc(customerLedgers.createdAt))
-          .limit(10)
-          .all();
-
-    // Stats
-    const salesStats = await db.select({
-          totalPurchases: sql`sum(${sales.grandTotal})`.mapWith(Number),
-          totalPaid: sql`sum(${sales.paidAmount})`.mapWith(Number),
-          cashPurchases: sql`sum(case when ${sales.dueAmount} = 0 then 1 else 0 end)`.mapWith(Number),
-          creditPurchases: sql`sum(case when ${sales.dueAmount} > 0 then 1 else 0 end)`.mapWith(Number),
-          purchaseCount: sql`count(${sales.id})`.mapWith(Number),
-          lastPurchaseDate: sql`max(${sales.date})`,
-        }).from(sales).where(eq(sales.customerId, customer.id)).get();
-
-    const collectionsStats = await db.select({
-          totalCollections: sql`sum(${customerCollections.amount})`.mapWith(Number),
-          lastCollectionDate: sql`max(${customerCollections.date})`,
-        }).from(customerCollections).where(eq(customerCollections.customerId, customer.id)).get();
-
-    // Audit Logs (Timeline)
-    const timeline = await db.select().from(auditLogs)
-          .where(and(
-            eq(auditLogs.tenantId, tenantId), 
-            eq(auditLogs.resource, 'customers'), 
-            eq(auditLogs.resourceId, customerCode)
-          ))
-          .orderBy(desc(auditLogs.createdAt))
-          .limit(15)
-          .all();
+    // Run profile queries in parallel
+    const [recentTransactions, salesStats, collectionsStats, timeline] = await Promise.all([
+      db.select().from(customerLedgers)
+        .where(eq(customerLedgers.customerId, customer.id))
+        .orderBy(desc(customerLedgers.date), desc(customerLedgers.createdAt))
+        .limit(10)
+        .all(),
+      db.select({
+        totalPurchases: sql`sum(${sales.grandTotal})`.mapWith(Number),
+        totalPaid: sql`sum(${sales.paidAmount})`.mapWith(Number),
+        cashPurchases: sql`sum(case when ${sales.dueAmount} = 0 then 1 else 0 end)`.mapWith(Number),
+        creditPurchases: sql`sum(case when ${sales.dueAmount} > 0 then 1 else 0 end)`.mapWith(Number),
+        purchaseCount: sql`count(${sales.id})`.mapWith(Number),
+        lastPurchaseDate: sql`max(${sales.date})`,
+      }).from(sales).where(eq(sales.customerId, customer.id)).get(),
+      db.select({
+        totalCollections: sql`sum(${customerCollections.amount})`.mapWith(Number),
+        lastCollectionDate: sql`max(${customerCollections.date})`,
+      }).from(customerCollections).where(eq(customerCollections.customerId, customer.id)).get(),
+      db.select().from(auditLogs)
+        .where(and(
+          eq(auditLogs.tenantId, tenantId), 
+          eq(auditLogs.resource, 'customers'), 
+          eq(auditLogs.resourceId, customerCode)
+        ))
+        .orderBy(desc(auditLogs.createdAt))
+        .limit(15)
+        .all()
+    ]);
 
     return {
       customer,

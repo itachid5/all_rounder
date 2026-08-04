@@ -40,32 +40,33 @@ export class DashboardRepository {
       return and(...conds);
     };
 
-    // Period Stats
-    const periodSales = await db.select({ total: sum(sales.grandTotal), count: count() })
-      .from(sales).where(makeWhere(sales)).get();
-    
-    const periodPurchase = await db.select({ total: sum(purchases.grandTotal), count: count() })
-      .from(purchases).where(makeWhere(purchases)).get();
-    
-    const periodCollection = await db.select({ total: sum(customerCollections.amount) })
-      .from(customerCollections).where(makeWhere(customerCollections)).get();
-    
-    const periodPayment = await db.select({ total: sum(supplierPayments.amount) })
-      .from(supplierPayments).where(makeWhere(supplierPayments)).get();
-    
     const expConds = [eq(expenses.tenantId, tenantId)];
     if (startDate && endDate) {
       expConds.push(gte(expenses.expenseDate, startDate.toISOString()));
       expConds.push(lte(expenses.expenseDate, endDate.toISOString()));
     }
-    const periodExpense = await db.select({ total: sum(expenses.amount) })
-      .from(expenses).where(and(...expConds)).get();
 
-    // All-time Stats
-    const totalSales = await db.select({ total: sum(sales.grandTotal) }).from(sales).where(eq(sales.tenantId, tenantId)).get();
-    const totalPurchase = await db.select({ total: sum(purchases.grandTotal) }).from(purchases).where(eq(purchases.tenantId, tenantId)).get();
-    const totalCollection = await db.select({ total: sum(customerCollections.amount) }).from(customerCollections).where(eq(customerCollections.tenantId, tenantId)).get();
-    const totalExpense = await db.select({ total: sum(expenses.amount) }).from(expenses).where(eq(expenses.tenantId, tenantId)).get();
+    const [
+      periodSales,
+      periodPurchase,
+      periodCollection,
+      periodPayment,
+      periodExpense,
+      totalSales,
+      totalPurchase,
+      totalCollection,
+      totalExpense
+    ] = await Promise.all([
+      db.select({ total: sum(sales.grandTotal), count: count() }).from(sales).where(makeWhere(sales)).get(),
+      db.select({ total: sum(purchases.grandTotal), count: count() }).from(purchases).where(makeWhere(purchases)).get(),
+      db.select({ total: sum(customerCollections.amount) }).from(customerCollections).where(makeWhere(customerCollections)).get(),
+      db.select({ total: sum(supplierPayments.amount) }).from(supplierPayments).where(makeWhere(supplierPayments)).get(),
+      db.select({ total: sum(expenses.amount) }).from(expenses).where(and(...expConds)).get(),
+      db.select({ total: sum(sales.grandTotal) }).from(sales).where(eq(sales.tenantId, tenantId)).get(),
+      db.select({ total: sum(purchases.grandTotal) }).from(purchases).where(eq(purchases.tenantId, tenantId)).get(),
+      db.select({ total: sum(customerCollections.amount) }).from(customerCollections).where(eq(customerCollections.tenantId, tenantId)).get(),
+      db.select({ total: sum(expenses.amount) }).from(expenses).where(eq(expenses.tenantId, tenantId)).get(),
+    ]);
 
     return {
       period: {

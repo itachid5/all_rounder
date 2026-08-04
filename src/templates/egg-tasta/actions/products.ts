@@ -71,8 +71,11 @@ export async function createProductAction(formData: FormData) {
 export async function getCategoriesAndUnits() {
   try {
     const tenantId = await getTenantId();
-    const categories = await db.select().from(productCategories).where(eq(productCategories.tenantId, tenantId)).all();
-    let units = await db.select().from(productUnits).where(eq(productUnits.tenantId, tenantId)).all();
+    const [categories, fetchedUnits] = await Promise.all([
+      db.select().from(productCategories).where(eq(productCategories.tenantId, tenantId)).all(),
+      db.select().from(productUnits).where(eq(productUnits.tenantId, tenantId)).all()
+    ]);
+    let units = fetchedUnits;
     
     // Seed default Egg Shop units if empty
     if (units.length === 0) {

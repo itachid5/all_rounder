@@ -179,13 +179,19 @@ export class ProductRepository {
     
     const orderBy = sortDir === 'asc' ? asc(orderByColumn) : desc(orderByColumn);
 
-    const data = await db.select()
-          .from(products)
-          .where(whereClause)
-          .orderBy(orderBy)
-          .limit(limit)
-          .offset(offset)
-          .all();
+    const [data, countResult] = await Promise.all([
+      db.select()
+        .from(products)
+        .where(whereClause)
+        .orderBy(orderBy)
+        .limit(limit)
+        .offset(offset)
+        .all(),
+      db.select({ count: sql`count(*)`.mapWith(Number) })
+        .from(products)
+        .where(whereClause)
+        .get()
+    ]);
 
     // Fetch variants for these products
     if (data.length > 0) {
@@ -203,11 +209,6 @@ export class ProductRepository {
       });
     }
 
-    const countResult = await db.select({ count: sql`count(*)`.mapWith(Number) })
-          .from(products)
-          .where(whereClause)
-          .get();
-      
     return { data, total: countResult?.count || 0 };
   }
 

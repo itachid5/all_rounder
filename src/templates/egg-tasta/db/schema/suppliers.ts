@@ -1,4 +1,4 @@
-import { sqliteTable, text, integer, real, unique } from 'drizzle-orm/sqlite-core';
+import { sqliteTable, text, integer, real, unique, index } from 'drizzle-orm/sqlite-core';
 import { sql } from 'drizzle-orm';
 import { tenants  } from "@/platform/db/schema";
 
@@ -31,5 +31,7 @@ export const suppliers = sqliteTable(
     tenantMobileUnique: unique('tenant_mobile_unique').on(table.tenantId, table.mobile),
     // Ensure supplierCode is unique within a tenant
     tenantSupplierCodeUnique: unique('tenant_supplier_code_unique').on(table.tenantId, table.supplierCode),
+    tenantIdIdx: index('suppliers_tenant_id_idx').on(table.tenantId),
+    statusIdx: index('suppliers_status_idx').on(table.status),
   })
 );

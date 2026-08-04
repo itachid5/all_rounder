@@ -1,4 +1,4 @@
-import { sqliteTable, text, integer, unique } from 'drizzle-orm/sqlite-core';
+import { sqliteTable, text, integer, unique, index } from 'drizzle-orm/sqlite-core';
 import { tenants } from './tenants';
 
 export const roles = sqliteTable('roles', {
@@ -13,5 +13,6 @@ export const roles = sqliteTable('roles', {
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull().defaultNow(),
   updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().defaultNow(),
 }, (t) => ({
-  tenantSlugUnique: unique('roles_tenant_slug_unique').on(t.tenantId, t.slug)
+  tenantSlugUnique: unique('roles_tenant_slug_unique').on(t.tenantId, t.slug),
+  tenantIdIdx: index('roles_tenant_id_idx').on(t.tenantId),
 }));
